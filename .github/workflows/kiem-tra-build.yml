@@ -1,0 +1,44 @@
+# Moi Pull Request vao main se duoc GitHub build thu tren 1 may sach.
+# Neu may sach build duoc -> may cac thanh vien clone ve cung chay duoc.
+# Ket qua hien o cuoi trang Pull Request (dau tick xanh / X do).
+name: Kiem tra build
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Doc phien ban Flutter cua nhom (.flutter-version)
+        run: echo "FLUTTER_VERSION=$(tr -d ' \r\n' < .flutter-version)" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Tai package dung theo pubspec.lock
+        run: flutter pub get --enforce-lockfile
+
+      - name: Kiem tra code (chi chan khi co loi nang)
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Build APK debug
+        run: flutter build apk --debug

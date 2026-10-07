@@ -1,0 +1,27 @@
+# Thong nhat ky tu xuong dong (LF) giua Windows va macOS
+# -> tranh loi "file thay doi toan bo" va loi gradlew tren may khac.
+* text=auto eol=lf
+
+# Script Windows bat buoc dung CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Script macOS/Linux bat buoc dung LF
+*.sh text eol=lf
+gradlew text eol=lf
+
+# File nhi phan - khong dong vao
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.jar binary
+*.keystore binary
+*.jks binary
+*.apk binary
+*.aab binary

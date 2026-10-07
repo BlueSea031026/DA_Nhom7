@@ -1,0 +1,85 @@
+# =========================================================
+#  .gitignore cho du an Flutter - Dang ky kham chua benh
+#  Muc dich: KHONG dua file rieng cua tung may len GitHub
+#  (duong dan SDK, file build, cache) -> may nao clone ve
+#  cung chay duoc sau khi "flutter pub get".
+#  LUU Y: KHONG ignore pubspec.lock (phai commit de ca nhom
+#  dung cung phien ban package).
+# =========================================================
+
+# ---- He dieu hanh / editor ----
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.log
+*.class
+*.pyc
+.history
+.atom/
+.build/
+.buildlog/
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# ---- IntelliJ / Android Studio ----
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# ---- VS Code: chi giu file cau hinh dung chung ----
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# ---- Flutter / Dart / Pub ----
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+**/build/
+**/doc/api/
+app.*.symbols
+app.*.map.json
+coverage/
+
+# ---- Android: file chua DUONG DAN RIENG CUA MAY ----
+android/local.properties
+android/.gradle/
+android/captures/
+android/.kotlin/
+android/app/.cxx/
+android/app/debug
+android/app/profile
+android/app/release
+**/GeneratedPluginRegistrant.java
+**/GeneratedPluginRegistrant.kt
+# Khoa ky ung dung - tuyet doi khong dua len
+android/key.properties
+**/*.keystore
+**/*.jks
+
+# ---- iOS / macOS ----
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/ephemeral/
+**/ios/Pods/
+**/ios/.symlinks/
+**/xcuserdata/
+**/DerivedData/
+**/macos/Flutter/ephemeral/
+**/macos/Pods/
+
+# ---- Windows / Linux desktop ----
+**/windows/flutter/ephemeral/
+**/linux/flutter/ephemeral/
+
+# ---- Bien moi truong / file rieng ----
+.env
+.env.*
+*.local
