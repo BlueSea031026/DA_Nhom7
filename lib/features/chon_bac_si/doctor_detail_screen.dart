@@ -10,30 +10,13 @@ import '../../models/models.dart';
 class DoctorDetailScreen extends StatelessWidget {
   const DoctorDetailScreen({super.key});
 
-  static const String routeName = '/doctor-detail';
-
   @override
   Widget build(BuildContext context) {
-    // Nhận bác sĩ từ màn Chọn bác sĩ truyền sang
     final args = ModalRoute.of(context)?.settings.arguments;
-    final BacSi? bacSi = args is BacSi ? args : null;
-
-    // Nếu không có dữ liệu thì hiển thị thông báo
-    if (bacSi == null) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: const AppHeader(title: 'THÔNG TIN BÁC SĨ'),
-        body: const EmptyState(
-          icon: Icons.person_off_outlined,
-          message: 'Không có thông tin bác sĩ',
-        ),
-      );
-    }
-
-    // Lấy chuyên khoa, lịch làm việc, đánh giá từ MockData
+    // Nếu mở từ DevMenu không có args → lấy bác sĩ đầu tiên
+    final BacSi bacSi = args is BacSi ? args : MockData.bacSi.first;
     final chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
-    final lichLamViec = MockData.lichCuaBacSi(bacSi.maBacSi);
-    final danhSachDanhGia = MockData.danhGiaCuaBacSi(bacSi.maBacSi);
+    final danhGia = MockData.danhGiaCuaBacSi(bacSi.maBacSi);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -43,165 +26,150 @@ class DoctorDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ---- Khối thông tin cơ bản ----
-            AppCard(
+            // Avatar + tên + đánh giá
+            Center(
               child: Column(
                 children: [
-                  // Ảnh + tên
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 36,
-                        backgroundColor: AppColors.infoLight,
-                        child: Text(
-                          bacSi.hoTen.isNotEmpty
-                              ? bacSi.hoTen[0].toUpperCase()
-                              : '?',
-                          style: AppTextStyles.h1.copyWith(
-                            color: AppColors.primary,
-                          ),
-                        ),
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.infoLight,
+                      border: Border.all(
+                          color: AppColors.secondary, width: 3),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      bacSi.hoTen.isNotEmpty
+                          ? bacSi.hoTen[0].toUpperCase()
+                          : '?',
+                      style: AppTextStyles.h1.copyWith(
+                        color: AppColors.primary,
+                        fontSize: 46,
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${bacSi.hocHamHocVi ?? ''} ${bacSi.hoTen}'
-                                  .trim(),
-                              style: AppTextStyles.h2,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              chuyenKhoa.tenChuyenKhoa,
-                              style: AppTextStyles.bodySecondary,
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                const Icon(Icons.star,
-                                    color: AppColors.warning, size: 16),
-                                const SizedBox(width: 4),
-                                Text(
-                                  bacSi.diemDanhGiaTb.toStringAsFixed(1),
-                                  style: AppTextStyles.caption.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '(${danhSachDanhGia.length} đánh giá)',
-                                  style: AppTextStyles.caption,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    bacSi.hoTen,
+                    style: AppTextStyles.h2
+                        .copyWith(color: AppColors.secondary),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Chuyên khoa ${chuyenKhoa.tenChuyenKhoa}',
+                    style: AppTextStyles.caption,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.star,
+                          color: Color(0xFFE69A1C), size: 18),
+                      const SizedBox(width: 4),
+                      Text(
+                        bacSi.diemDanhGiaTb.toStringAsFixed(1),
+                        style: AppTextStyles.body
+                            .copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${danhGia.length} đánh giá',
+                        style: AppTextStyles.caption,
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Divider(height: 1),
-                  const SizedBox(height: 12),
-
-                  // Số điện thoại
-                  InfoRow(
-                    label: 'Điện thoại',
-                    value: bacSi.soDienThoai ?? '—',
-                    icon: Icons.phone_outlined,
-                  ),
-                  InfoRow(
-                    label: 'Chuyên khoa',
-                    value: chuyenKhoa.tenChuyenKhoa,
-                    icon: Icons.medical_services_outlined,
-                  ),
-                  InfoRow(
-                    label: 'Giá khám',
-                    value:
-                        '${chuyenKhoa.giaKhamCoBan.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')} đ',
-                    icon: Icons.attach_money,
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 20),
 
-            // ---- Giới thiệu ----
-            const SectionTitle('Giới thiệu'),
-            AppCard(
-              child: Text(
-                'Bác sĩ ${bacSi.hoTen} hiện đang công tác tại '
-                '${chuyenKhoa.tenChuyenKhoa}. Với nhiều năm kinh nghiệm '
-                'trong lĩnh vực khám và điều trị, bác sĩ luôn tận tâm '
-                'với bệnh nhân.',
-                style: AppTextStyles.body,
-              ),
+            _SectionBlock(
+              tieuDe: 'Chuyên khoa',
+              noiDung: chuyenKhoa.tenChuyenKhoa,
             ),
-
-            // ---- Lịch làm việc ----
-            const SectionTitle('Lịch làm việc'),
-            if (lichLamViec.isEmpty)
-              const AppCard(
-                child: Text(
-                  'Chưa có lịch làm việc',
-                  style: AppTextStyles.bodySecondary,
-                ),
-              )
-            else
-              ...lichLamViec.take(5).map(
-                (lich) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: AppCard(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.calendar_today_outlined,
-                            size: 18, color: AppColors.primary),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${lich.ngay.day}/${lich.ngay.month}/${lich.ngay.year}',
-                                style: AppTextStyles.body,
-                              ),
-                              Text(
-                                '${lich.gioBatDau} - ${lich.gioKetThuc}',
-                                style: AppTextStyles.caption,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          'Còn ${lich.soLuongCho - lich.soLuongDaDat} chỗ',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.success,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
             const SizedBox(height: 12),
-
-            // ---- Nút đặt lịch ----
-            AppButton(
-              label: 'ĐẶT LỊCH KHÁM',
-              icon: Icons.calendar_month,
-              onPressed: () {
-                // TODO: chuyển sang màn chọn ngày giờ (của Hiếu)
-                // Navigator.pushNamed(context, '/dat-lich/chon-ngay-gio',
-                //     arguments: bacSi);
-              },
+            const _SectionBlock(
+              tieuDe: 'Kinh nghiệm',
+              noiDung: '10 năm',
+            ),
+            const SizedBox(height: 12),
+            const _SectionBlock(
+              tieuDe: 'Giới thiệu',
+              noiDung:
+                  'Bác sĩ chuyên khoa tim mạch, có nhiều năm kinh nghiệm...',
+            ),
+            const SizedBox(height: 12),
+            _SectionBlock(
+              tieuDe: 'Cơ sở công tác',
+              noiDung: MockData.coSoYTe.first.tenCoSo,
+              icon: Icons.local_hospital_outlined,
+              mauIcon: AppColors.secondary,
+            ),
+            const SizedBox(height: 12),
+            const _SectionBlock(
+              tieuDe: 'Lịch làm việc',
+              noiDung: 'Thứ 2 - Thứ 6\n8:00 - 17:00',
+              icon: Icons.calendar_today_outlined,
+              mauIcon: AppColors.secondary,
             ),
             const SizedBox(height: 24),
+            AppButton(
+              label: 'Chọn bác sĩ',
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Chưa nối Firebase – chỉ demo'),
+                  ),
+                );
+              },
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SectionBlock extends StatelessWidget {
+  const _SectionBlock({
+    required this.tieuDe,
+    required this.noiDung,
+    this.icon,
+    this.mauIcon,
+  });
+
+  final String tieuDe;
+  final String noiDung;
+  final IconData? icon;
+  final Color? mauIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            tieuDe,
+            style: AppTextStyles.title.copyWith(color: AppColors.secondary),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (icon != null) ...[
+                Icon(icon,
+                    color: mauIcon ?? AppColors.textSecondary, size: 20),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: Text(noiDung, style: AppTextStyles.body),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
