@@ -64,8 +64,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   String _tenGoi(String hoTen) => hoTen.trim().split(' ').last;
 
   // Mở giao diện theo router
-  void _moTrang(String tenRoute, {Object? arguments}) {
-    Navigator.pushNamed(context, tenRoute, arguments: arguments);
+  Future<void> _moTrang(String tenRoute, {Object? arguments}) async {
+    await Navigator.pushNamed(context, tenRoute, arguments: arguments);
+    // Quay lại (vd. vừa đặt lịch xong) → vẽ lại để cập nhật lịch sắp tới
+    if (mounted) setState(() {});
   }
 
   // Giao diện
@@ -98,7 +100,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                   ? null
                   : () => _moTrang(
                       LichSuRoutes.appointmentDetail,
-                      arguments: lichKhamSapToi,
+                      arguments: lichKhamSapToi.maDatLich,
                     ),
               onDatLich: () => _moTrang(HinhThucKhamRoutes.chooseExamType),
             ),

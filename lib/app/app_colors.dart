@@ -24,4 +24,6 @@ class AppColors {
   static const Color dangerLight = Color(0xFFFDE2E3);
   static const Color info = Color(0xFF2196F3);
   static const Color infoLight = Color(0xFFDCEEFE);
+
+  static const Color giamHo = Color(0xFF5B5FD6); // đầu màn Người giám hộ
 }

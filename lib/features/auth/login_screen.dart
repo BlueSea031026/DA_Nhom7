@@ -1,14 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../app/dieu_huong.dart';
 import '../../core/widgets/widgets.dart';
-import '../../models/models.dart';
-import '../admin/admin_home/admin_home_routes.dart';
-import '../bac_si/bac_si_routes.dart';
-import '../benh_nhan_home/benh_nhan_home_routes.dart';
-import '../ho_so_nguoi_than/ho_so_nguoi_than_routes.dart';
-import '../le_tan/le_tan_routes.dart';
-import '../thu_ngan/thu_ngan_routes.dart';
 import 'auth_mock.dart';
 import 'auth_routes.dart';
 import 'widgets/auth_widgets.dart';
@@ -36,16 +30,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  /// Trang chủ của từng vai trò.
-  static String _trangChu(VaiTro vaiTro) => switch (vaiTro) {
-    VaiTro.benhNhan => BenhNhanHomeRoutes.patientHome,
-    VaiTro.nguoiGiamHo => HoSoNguoiThanRoutes.guardianHome,
-    VaiTro.bacSi => BacSiRoutes.bacSiHome,
-    VaiTro.leTan => LeTanRoutes.leTanHome,
-    VaiTro.thuNgan => ThuNganRoutes.thuNganHome,
-    VaiTro.quanTriVien => AdminHomeRoutes.adminHome,
-  };
-
   void _dangNhap() {
     FocusScope.of(context).unfocus();
     setState(() => _loi = null);
@@ -66,12 +50,8 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    AuthMock.dangNhap = taiKhoan;
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      _trangChu(taiKhoan.vaiTro),
-      (route) => route.isFirst,
-    );
+    // Lưu phiên + mở trang chủ đúng vai trò (lib/app/dieu_huong.dart)
+    DieuHuong.vaoTrangChu(context, taiKhoan);
   }
 
   @override

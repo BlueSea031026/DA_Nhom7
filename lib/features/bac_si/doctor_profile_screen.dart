@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../app/dieu_huong.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
+import '../auth/auth_routes.dart';
 
 /// Trang cá nhân Bác sĩ (frame 2 của trang home)
 /// Figma: Bác sĩ › trang home bác sĩ (Trang cá nhân)
@@ -82,7 +84,12 @@ class DoctorProfileScreen extends StatelessWidget {
 
             // Nút chỉnh sửa
             OutlinedButton(
-              onPressed: () {},
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                      'Vui lòng liên hệ Quản trị viên để cập nhật hồ sơ bác sĩ'),
+                ),
+              ),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 48),
                 shape: RoundedRectangleBorder(
@@ -96,7 +103,8 @@ class DoctorProfileScreen extends StatelessWidget {
 
             // Đổi mật khẩu
             AppCard(
-              onTap: () {},
+              onTap: () =>
+                  Navigator.pushNamed(context, AuthRoutes.changePassword),
               padding: const EdgeInsets.symmetric(
                   horizontal: 16, vertical: 14),
               child: Row(
@@ -117,13 +125,7 @@ class DoctorProfileScreen extends StatelessWidget {
             // Đăng xuất
             AppButton(
               label: 'Đăng xuất',
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Chưa nối Firebase – chỉ demo'),
-                  ),
-                );
-              },
+              onPressed: () => DieuHuong.dangXuat(context),
             ),
           ],
         ),

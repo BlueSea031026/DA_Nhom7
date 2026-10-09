@@ -4,6 +4,8 @@ import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import 'bac_si_routes.dart';
+import '../thong_bao/thong_bao_routes.dart';
+import 'danh_gia/danh_gia_routes.dart';
 import 'doctor_profile_screen.dart';
 
 /// Trang chủ Bác sĩ
@@ -79,7 +81,13 @@ class BacSiHomeScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const Icon(Icons.notifications_outlined, size: 26),
+                        IconButton(
+                          tooltip: 'Thông báo',
+                          icon: const Icon(Icons.notifications_outlined,
+                              size: 26),
+                          onPressed: () => Navigator.pushNamed(
+                              context, ThongBaoRoutes.notification),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -182,11 +190,15 @@ class BacSiHomeScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        const Expanded(
+                        Expanded(
                           child: _ChucNangCard(
                             icon: Icons.star_outline,
                             label: 'Đánh giá',
-                            onTap: null,
+                            onTap: () => Navigator.pushNamed(
+                              context,
+                              DanhGiaBacSiRoutes.doctorReviews,
+                              arguments: bacSi.maBacSi,
+                            ),
                           ),
                         ),
                       ],
@@ -214,7 +226,8 @@ class BacSiHomeScreen extends StatelessWidget {
                               gio: l.gioBatDau,
                               tenBn: 'Nguyễn Văn B',
                               chuyenKhoa: chuyenKhoa.tenChuyenKhoa,
-                              onXem: () {},
+                              onXem: () => Navigator.pushNamed(
+                                  context, BacSiRoutes.patientList),
                             );
                           },
                         ),
@@ -340,8 +353,16 @@ class _BottomNav extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           const Icon(Icons.home, color: Colors.white, size: 26),
-          Icon(Icons.calendar_today, color: Colors.white54, size: 22),
-          Icon(Icons.people_outline, color: Colors.white54, size: 24),
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(context, BacSiRoutes.workSchedule),
+            child: const Icon(Icons.calendar_today,
+                color: Colors.white54, size: 22),
+          ),
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(context, BacSiRoutes.patientList),
+            child: const Icon(Icons.people_outline,
+                color: Colors.white54, size: 24),
+          ),
           GestureDetector(
             onTap: onProfile,
             child: Icon(Icons.person_outline, color: Colors.white54, size: 24),

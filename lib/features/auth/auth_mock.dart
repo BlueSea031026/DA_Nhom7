@@ -11,8 +11,10 @@ class AuthMock {
   static const int soLanNhapOtpToiDa = 5;
   static const int thoiGianOtpGiay = 60;
 
-  /// Tài khoản đang đăng nhập.
-  static TaiKhoan? dangNhap;
+  /// Tài khoản đang đăng nhập (lưu chung ở MockData.phienDangNhap để
+  /// màn của các module khác cũng biết ai đang đăng nhập).
+  static TaiKhoan? get dangNhap => MockData.phienDangNhap;
+  static set dangNhap(TaiKhoan? taiKhoan) => MockData.phienDangNhap = taiKhoan;
 
   /// Tìm tài khoản theo số điện thoại hoặc email.
   static TaiKhoan? timTaiKhoan(String soDienThoaiHoacEmail) {
@@ -35,7 +37,7 @@ class AuthMock {
         '${sdt.substring(sdt.length - 1)}';
   }
 
-  static void dangXuat() => dangNhap = null;
+  static void dangXuat() => MockData.phienDangNhap = null;
 }
 
 /// Kiểm tra dữ liệu nhập của các form trong module auth.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/dieu_huong.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
@@ -230,14 +231,7 @@ class _CaNhanTab extends StatelessWidget {
 
   final TaiKhoan taiKhoan;
 
-  void _dangXuat(BuildContext context) {
-    AuthMock.dangXuat();
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      AuthRoutes.welcome,
-      (route) => route.isFirst,
-    );
-  }
+  void _dangXuat(BuildContext context) => DieuHuong.dangXuat(context);
 
   @override
   Widget build(BuildContext context) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/phien_dat_lich.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
@@ -15,7 +16,8 @@ class ChooseSpecialtyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Dữ liệu từ MockData (KHÔNG viết cứng)
-    final coSo = MockData.coSoYTe.first;
+    // Cơ sở đã chọn ở bước trước (lib/app/phien_dat_lich.dart)
+    final coSo = PhienDatLich.coSo;
     final specialties = MockData.chuyenKhoaCuaCoSo(coSo.maCoSo);
 
     return Scaffold(
@@ -59,6 +61,12 @@ class ChooseSpecialtyScreen extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Khung xanh đậm chứa lưới
+            if (specialties.isEmpty)
+              const EmptyState(
+                icon: Icons.medical_services_outlined,
+                message: 'Cơ sở này chưa có chuyên khoa nhận lịch',
+              )
+            else
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(

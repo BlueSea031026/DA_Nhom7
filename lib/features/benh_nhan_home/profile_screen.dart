@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/dieu_huong.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
@@ -62,11 +63,8 @@ class ProfileScreen extends StatelessWidget {
   Future<void> _dangXuat(BuildContext context) async {
     final bool? dongY = await LogoutDialog.hien(context);
     if (dongY != true || !context.mounted) return;
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      AuthRoutes.login,
-      (route) => route.isFirst,
-    );
+    // Đã hỏi bằng LogoutDialog nên không hỏi lại
+    await DieuHuong.dangXuat(context, hoiLai: false);
   }
 
   // Hiện thông tin cá nhân (tài khoản + hồ sơ bản thân) ở bảng trượt từ dưới lên

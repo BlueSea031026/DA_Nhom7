@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/phien_dat_lich.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
@@ -31,7 +32,8 @@ class ChooseDoctorScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Tên cơ sở
-            const Text('BỆNH VIỆN ABC', style: AppTextStyles.title),
+            Text(PhienDatLich.coSo.tenCoSo.toUpperCase(),
+                style: AppTextStyles.title),
             const SizedBox(height: 6),
 
             // Chip chuyên khoa

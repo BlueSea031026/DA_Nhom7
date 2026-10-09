@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/mock/mock_data.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import 'bac_si_routes.dart';
@@ -59,7 +60,7 @@ class PatientDetailScreen extends StatelessWidget {
                   Text(bn.hoTen, style: AppTextStyles.h2),
                   const SizedBox(height: 4),
                   Text(
-                    'Thứ ${lich.ngay.weekday + 1}, '
+                    '${Fmt.thu(lich.ngay)}, '
                     '${lich.ngay.day.toString().padLeft(2, '0')}/${lich.ngay.month.toString().padLeft(2, '0')}/${lich.ngay.year}',
                     style: AppTextStyles.caption,
                   ),
@@ -75,7 +76,11 @@ class PatientDetailScreen extends StatelessWidget {
                 children: [
                   InfoRow(label: 'Ngày sinh', value: nsStr),
                   InfoRow(label: 'Giới tính', value: bn.gioiTinh),
-                  InfoRow(label: 'SĐT', value: bn.soCccd ?? '—'),
+                  InfoRow(
+                    label: 'SĐT',
+                    value: MockData.taiKhoanById(bn.maTaiKhoanQuanLy)
+                        .soDienThoai,
+                  ),
                   InfoRow(label: 'CCCD', value: bn.soCccd ?? '—'),
                 ],
               ),

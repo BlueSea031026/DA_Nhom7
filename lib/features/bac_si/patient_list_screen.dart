@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/mock/mock_data.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import 'bac_si_routes.dart';
@@ -70,7 +71,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Thứ ${MockData.homNay.weekday + 1}, '
+                    '${Fmt.thu(MockData.homNay)}, '
                     '${MockData.homNay.day.toString().padLeft(2, '0')}/${MockData.homNay.month.toString().padLeft(2, '0')}/${MockData.homNay.year}',
                     style: AppTextStyles.caption,
                   ),

@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/widgets/widgets.dart';
 
-// Màu nền tím xanh của phần đầu màn Người giám hộ (Figma: Người thân).
-// TẠM ĐẶT Ở ĐÂY vì AppColors chưa có màu này (mục 4.2: chỉ Hải sửa lib/app/).
-// TODO(Hiếu): nhắn Hải thêm AppColors.giamHo = Color(0xFF5B5FD6) rồi đổi sang dùng.
-const Color kMauTieuDeGiamHo = Color(0xFF5B5FD6);
+// Màu nền tím xanh của phần đầu màn Người giám hộ (Figma: Người thân)
+// → dùng AppColors.giamHo (Hải đã thêm vào lib/app/app_colors.dart).
 
 /// Phần đầu màn hình màu tím xanh, bo tròn 2 góc dưới (theo Figma Người thân).
 /// Dùng cho Trang chủ Người giám hộ và Hồ sơ gia đình.
@@ -26,7 +24,7 @@ class GuardianHeader extends StatelessWidget {
       height: chieuCao,
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: kMauTieuDeGiamHo,
+        color: AppColors.giamHo,
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(60),
           bottomRight: Radius.circular(60),

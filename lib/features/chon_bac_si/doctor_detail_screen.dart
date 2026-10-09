@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../app/phien_dat_lich.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
+import '../dat_lich/dat_lich_routes.dart';
 
 /// Thông tin bác sĩ · FR-07
 /// Figma: Bệnh Nhân › Thông tin bác sĩ
@@ -117,13 +119,13 @@ class DoctorDetailScreen extends StatelessWidget {
             const SizedBox(height: 24),
             AppButton(
               label: 'Chọn bác sĩ',
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Chưa nối Firebase – chỉ demo'),
-                  ),
-                );
-              },
+              // Sang bước chọn ngày giờ (module Đặt lịch của Hiếu)
+              onPressed: () => Navigator.pushNamed(
+                context,
+                DatLichRoutes.chooseDatetime,
+                // Gói hồ sơ + hình thức khám đã chọn + bác sĩ này
+                arguments: PhienDatLich.thongTin(bacSi),
+              ),
             ),
           ],
         ),

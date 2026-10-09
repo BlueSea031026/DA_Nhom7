@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/app_routes.dart';
 import '../../core/widgets/widgets.dart';
 import 'auth_mock.dart';
 import 'auth_routes.dart';
@@ -56,11 +57,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   void _veDangNhap() {
     AuthMock.dangXuat();
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      AuthRoutes.login,
-      (route) => route.isFirst,
+    // Xóa hết màn cũ (kể cả trang chủ vai trò) → Màn chào → Đăng nhập
+    final NavigatorState nav = Navigator.of(context);
+    nav.pushNamedAndRemoveUntil(
+      AuthRoutes.welcome,
+      (route) => route.settings.name == AppRoutes.devMenu,
     );
+    nav.pushNamed(AuthRoutes.login);
   }
 
   @override

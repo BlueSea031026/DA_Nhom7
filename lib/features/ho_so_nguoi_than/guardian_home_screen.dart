@@ -245,7 +245,8 @@ class _GuardianHomeScreenState extends State<GuardianHomeScreen> {
           return FamilyAppointmentCard(
             datLich: datLich,
             onXemChiTiet: () =>
-                _moTrang(LichSuRoutes.appointmentDetail, arguments: datLich),
+                _moTrang(LichSuRoutes.appointmentDetail,
+                arguments: datLich.maDatLich),
           );
         },
       ),

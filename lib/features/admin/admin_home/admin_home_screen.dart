@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/dieu_huong.dart';
 import '../../../core/mock/mock_data.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
@@ -20,8 +21,8 @@ class AdminHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final admin = MockData.taiKhoan
-        .firstWhere((t) => t.vaiTro == VaiTro.quanTriVien);
+    final admin = MockData.phienDangNhap ??
+        MockData.taiKhoan.firstWhere((t) => t.vaiTro == VaiTro.quanTriVien);
 
     final soLieu = <(String, String, IconData, Color)>[
       ('Tài khoản', '${MockData.taiKhoan.length}', Icons.people_alt_outlined,
@@ -46,7 +47,17 @@ class AdminHomeScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: const AppHeader(title: 'Quản trị hệ thống'),
+      appBar: AppHeader(
+        title: 'Quản trị hệ thống',
+        showBack: false,
+        actions: [
+          IconButton(
+            tooltip: 'Đăng xuất',
+            icon: const Icon(Icons.logout),
+            onPressed: () => DieuHuong.dangXuat(context),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

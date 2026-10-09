@@ -22,11 +22,21 @@ class MockData {
     TaiKhoan(maTaiKhoan: 7, soDienThoai: '0901000007', hoTen: 'Đỗ Thanh Tâm', vaiTro: VaiTro.benhNhan, trangThai: 0, ngayTao: _ngay(-20)),
   ];
 
-  /// Tài khoản đang "đăng nhập" khi thử giao diện bệnh nhân.
-  static TaiKhoan get taiKhoanDangNhap => taiKhoan[0];
+  /// Tài khoản vừa đăng nhập (màn Đăng nhập gán, Đăng xuất gán null).
+  /// null = chưa đăng nhập (đang mở thử màn từ menu Dev).
+  static TaiKhoan? phienDangNhap;
 
-  /// Tài khoản người giám hộ để thử luồng đặt lịch hộ.
-  static TaiKhoan get taiKhoanGiamHo => taiKhoan[1];
+  /// Tài khoản đang đăng nhập. Chưa đăng nhập → mặc định bệnh nhân (mã 1)
+  /// để mở thử màn từ menu Dev vẫn có dữ liệu.
+  static TaiKhoan get taiKhoanDangNhap => phienDangNhap ?? taiKhoan[0];
+
+  /// Tài khoản người giám hộ: nếu người đăng nhập là giám hộ thì lấy đúng
+  /// người đó, ngược lại mặc định mã 2.
+  static TaiKhoan get taiKhoanGiamHo {
+    final TaiKhoan? phien = phienDangNhap;
+    if (phien != null && phien.vaiTro == VaiTro.nguoiGiamHo) return phien;
+    return taiKhoan[1];
+  }
 
   // ---------------- CƠ SỞ Y TẾ ----------------
   static final List<CoSoYTe> coSoYTe = [

@@ -123,10 +123,12 @@ class _FamilyProfilesScreenState extends State<FamilyProfilesScreen> {
         onChon: (viTri) {
           switch (viTri) {
             case 0:
-              Navigator.pushNamedAndRemoveUntil(
+              // Trang chủ giám hộ nằm sẵn ở dưới → quay về, không mở thêm
+              Navigator.popUntil(
                 context,
-                HoSoNguoiThanRoutes.guardianHome,
-                (route) => route.isFirst,
+                (route) =>
+                    route.settings.name == HoSoNguoiThanRoutes.guardianHome ||
+                    route.isFirst,
               );
             case 1:
               _moTrang(LichSuRoutes.history);
