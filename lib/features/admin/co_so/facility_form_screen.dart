@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/mock/mock_data.dart';
 import '../../../models/co_so_y_te.dart';
 /// Thêm / sửa cơ sở · FR-35
 /// Figma: Quản trị viên › tHÊM CƠ SỞ; Sửa cở sở
@@ -36,6 +37,43 @@ class _FacilityFormScreenState
 
   bool _isEdit = false;
 
+  /// Cơ sở đang sửa (null = thêm mới).
+  CoSoYTe? _goc;
+
+  @override
+  void dispose() {
+    _tenController.dispose();
+    _diaChiController.dispose();
+    _sdtController.dispose();
+    _loaiController.dispose();
+    super.dispose();
+  }
+
+  /// Lưu vào MockData: sửa thì thay đúng cơ sở, thêm thì nối cuối.
+  void _luuVaoMock() {
+    final CoSoYTe? goc = _goc;
+    final String sdt = _sdtController.text.trim();
+    final String loai = _loaiController.text.trim();
+    final CoSoYTe moi = CoSoYTe(
+      maCoSo: goc?.maCoSo ??
+          MockData.coSoYTe.fold<int>(0, (m, c) => c.maCoSo > m ? c.maCoSo : m) +
+              1,
+      tenCoSo: _tenController.text.trim(),
+      diaChi: _diaChiController.text.trim(),
+      soDienThoai: sdt.isEmpty ? null : sdt,
+      loaiCoSo: loai.isEmpty ? null : loai,
+      hoTroBhyt: goc?.hoTroBhyt ?? true,
+      trangThai: goc?.trangThai ?? true,
+    );
+    final int viTri =
+        goc == null ? -1 : MockData.coSoYTe.indexWhere((c) => c.maCoSo == goc.maCoSo);
+    if (viTri >= 0) {
+      MockData.coSoYTe[viTri] = moi;
+    } else {
+      MockData.coSoYTe.add(moi);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -45,6 +83,7 @@ class _FacilityFormScreenState
     if (args is CoSoYTe && !_isEdit) {
 
       _isEdit = true;
+      _goc = args;
 
       _tenController.text =
           args.tenCoSo;
@@ -69,7 +108,8 @@ class _FacilityFormScreenState
         ),
       ),
 
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(16),
 
         child: Form(
@@ -159,7 +199,7 @@ class _FacilityFormScreenState
                 ),
               ),
 
-              const Spacer(),
+              const SizedBox(height: 32),
 
               SizedBox(
                 width:
@@ -176,6 +216,8 @@ class _FacilityFormScreenState
 
                       return;
                     }
+
+                    _luuVaoMock();
 
                     ScaffoldMessenger.of(
                             context)
@@ -207,6 +249,7 @@ class _FacilityFormScreenState
             ],
           ),
         ),
+      ),
       ),
     );
   }

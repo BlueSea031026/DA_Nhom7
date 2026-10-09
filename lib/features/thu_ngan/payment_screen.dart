@@ -1,9 +1,11 @@
 import 'package:da_nhom7/core/mock/mock_data.dart';
 import 'package:da_nhom7/models/dat_lich.dart';
-import 'package:da_nhom7/models/enums.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
+import 'thu_ngan_mock.dart';
+import 'thu_ngan_routes.dart';
 
 /// Thanh toán tại quầy · FR-31
 /// Figma: Thu Ngân › Thanh toán
@@ -26,37 +28,30 @@ class _PaymentScreenState
   final TextEditingController _searchController =
       TextEditingController();
 
-  late List<DatLich> dsChoThanhToan;
+  String _tuKhoa = '';
 
   @override
-  void initState() {
-    super.initState();
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
-    dsChoThanhToan = MockData.datLich
-        .where(
-          (e) =>
-              e.trangThai ==
-              TrangThaiDatLich.choThanhToan,
-        )
-        .toList();
+  /// Lấy lại danh sách mỗi lần vẽ → lượt vừa thu sẽ biến mất.
+  /// Tìm theo mã đặt lịch, mã xác nhận (DL...) hoặc tên bệnh nhân.
+  List<DatLich> get dsChoThanhToan {
+    final String k = _tuKhoa.trim().toLowerCase();
+    return ThuNganMock.choThanhToan.where((e) {
+      if (k.isEmpty) return true;
+      final String ten =
+          MockData.benhNhanById(e.maBenhNhan).hoTen.toLowerCase();
+      return e.maDatLich.toString().contains(k) ||
+          e.maXacNhan.toLowerCase().contains(k) ||
+          ten.contains(k);
+    }).toList();
   }
 
   void search(String keyword) {
-
-    setState(() {
-
-      dsChoThanhToan = MockData.datLich
-          .where(
-            (e) =>
-                e.trangThai ==
-                    TrangThaiDatLich
-                        .choThanhToan &&
-                e.maDatLich
-                    .toString()
-                    .contains(keyword),
-          )
-          .toList();
-    });
+    setState(() => _tuKhoa = keyword);
   }
 
   @override
@@ -83,7 +78,7 @@ class _PaymentScreenState
               decoration:
                   InputDecoration(
                 hintText:
-                    "Tìm mã đặt lịch",
+                    "Tìm mã lịch hẹn hoặc tên bệnh nhân",
                 prefixIcon:
                     const Icon(
                   Icons.search,
@@ -172,7 +167,7 @@ class PendingPaymentCard
           children: [
 
             Text(
-              "Mã đặt lịch: ${datLich.maDatLich}",
+              "Mã lịch hẹn: ${datLich.maXacNhan}",
               style: AppTextStyles
                   .title,
             ),
@@ -182,7 +177,7 @@ class PendingPaymentCard
             ),
 
             Text(
-              "Mã bệnh nhân: ${datLich.maBenhNhan}",
+              "Bệnh nhân: ${MockData.benhNhanById(datLich.maBenhNhan).hoTen}",
             ),
 
             const SizedBox(
@@ -198,7 +193,16 @@ class PendingPaymentCard
             ),
 
             Text(
-              "Hình thức khám: ${datLich.hinhThucKham.name}",
+              "Hình thức khám: ${datLich.hinhThucKham.label}",
+            ),
+
+            const SizedBox(
+              height: 8,
+            ),
+
+            Text(
+              "Số tiền: ${Fmt.tien(ThuNganMock.soTienCua(datLich))}",
+              style: AppTextStyles.title,
             ),
 
             const SizedBox(
@@ -216,7 +220,7 @@ class PendingPaymentCard
                   Navigator
                       .pushNamed(
                     context,
-                    '/thu-ngan/thanh-toan-thanh-cong',
+                    ThuNganRoutes.paymentSuccess,
 
                     arguments:
                         datLich,

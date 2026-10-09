@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../app/phien_dat_lich.dart';
 import '../../core/widgets/widgets.dart';
+import 'hinh_thuc_kham_routes.dart';
 
 /// Nhập thông tin thẻ BHYT · FR-04
 /// Figma: Bệnh Nhân › BHYTScreen
@@ -32,6 +34,24 @@ class _BhytScreen extends State<BhytScreen> {
   String? noiDangKy;
 
   bool daXacNhan = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Điền sẵn họ tên người được khám + số thẻ nếu đã có
+    _hoTenController.text = PhienDatLich.benhNhan.hoTen;
+    final the = PhienDatLich.theBhyt;
+    if (the != null) _soTheController.text = the.soTheBhyt;
+  }
+
+  @override
+  void dispose() {
+    _soTheController.dispose();
+    _hoTenController.dispose();
+    _ngaySinhController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -179,7 +199,7 @@ class _BhytScreen extends State<BhytScreen> {
                       padding: EdgeInsets.all(18),
 
                       child: DropdownButtonFormField<String>(
-                        value: noiDangKy,
+                        initialValue: noiDangKy,
                         decoration: InputDecoration(
                           labelText: "Chọn nơi đăng ký ban đầu",
                         ),
@@ -238,7 +258,8 @@ class _BhytScreen extends State<BhytScreen> {
                           );
                           return;
                         }
-                        Navigator.pushNamed(context, '/choose-hospital');
+                        Navigator.pushNamed(
+                            context, HinhThucKhamRoutes.chooseFacility);
                       },
                       child: const Text("TIẾP TỤC"),
                     ),

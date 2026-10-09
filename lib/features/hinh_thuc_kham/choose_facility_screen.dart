@@ -2,7 +2,10 @@ import 'package:da_nhom7/core/mock/mock_data.dart';
 import 'package:da_nhom7/models/co_so_y_te.dart';
 import 'package:flutter/material.dart';
 
+import '../../app/phien_dat_lich.dart';
 import '../../core/widgets/widgets.dart';
+import '../../models/enums.dart';
+import '../chon_bac_si/chon_bac_si_routes.dart';
 
 /// Chọn cơ sở y tế · FR-05
 /// Figma: Bệnh Nhân › Chọn cở sở y tế
@@ -29,20 +32,44 @@ class _chooseFacilityScreen extends State<ChooseFacilityScreen> {
   @override
   void initState() {
     super.initState();
-    facilities = MockData.coSoYTe;
+    facilities = _loc('');
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  /// Lọc cơ sở: đang hoạt động, có chuyên khoa, đúng từ khóa;
+  /// khám BHYT thì chỉ hiện cơ sở hỗ trợ BHYT.
+  List<CoSoYTe> _loc(String keyword) {
+    final bool khamBhyt = PhienDatLich.hinhThucKham == HinhThucKham.bhyt;
+    final String k = keyword.toLowerCase();
+    return MockData.coSoYTe.where((coSo) {
+      if (!coSo.trangThai) return false;
+      if (khamBhyt && !coSo.hoTroBhyt) return false;
+      if (MockData.chuyenKhoaCuaCoSo(coSo.maCoSo).isEmpty) return false;
+      return coSo.tenCoSo.toLowerCase().contains(k) ||
+          coSo.diaChi.toLowerCase().contains(k);
+    }).toList();
   }
 
   //Hàm tìm kiếm
   void _searchFacility(String keyword) {
     setState(() {
-      MockData.coSoYTe.where((CoSo) {
-        return CoSo.tenCoSo.toLowerCase().contains(keyword.toLowerCase());
-      }).toList();
+      facilities = _loc(keyword);
     });
   }
 
+  /// Lưu cơ sở đã chọn rồi sang Chọn chuyên khoa (Thương).
+  void _chonCoSo(CoSoYTe coSo) {
+    PhienDatLich.maCoSo = coSo.maCoSo;
+    Navigator.pushNamed(context, ChonBacSiRoutes.chooseSpecialty);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Scaffold(
       appBar: AppBar(title: Text("Chọn Cở Sở Y Tế")),
       body: Padding(
@@ -119,7 +146,7 @@ class _chooseFacilityScreen extends State<ChooseFacilityScreen> {
                                 SizedBox(width: 4),
                                 Text(
                                   coSo.hoTroBhyt
-                                      ? "Hỗ Trợ Y Tế"
+                                      ? "Hỗ trợ thẻ BHYT"
                                       : "Không hỗ Thẻ BHYT",
                                 ),
                               ],
@@ -129,11 +156,10 @@ class _chooseFacilityScreen extends State<ChooseFacilityScreen> {
                             Container(
                               width: double.infinity,
                               
-                              child: ElevatedButton(onPressed: (){
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("Bạn đã chọn  ${coSo.tenCoSo}"))
-                                );
-                              }, child: Text("CHỌN")),
+                              child: ElevatedButton(
+                                onPressed: () => _chonCoSo(coSo),
+                                child: Text("CHỌN"),
+                              ),
                             )
                           ],
                         ),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../app/phien_dat_lich.dart';
 import '../../core/widgets/widgets.dart';
+import '../../models/models.dart';
+import 'hinh_thuc_kham_routes.dart';
 
 /// Chọn hình thức khám · FR-03
 /// Figma: Bệnh Nhân › ChooseExamTypeScreen
@@ -11,6 +14,20 @@ import '../../core/widgets/widgets.dart';
 /// dữ liệu từ MockData (../../core/mock/mock_data.dart).
 class ChooseExamTypeScreen extends StatelessWidget {
   const ChooseExamTypeScreen({super.key});
+
+  /// Bắt đầu lượt đặt lịch: hồ sơ do giám hộ chọn (arguments
+  /// BenhNhan) hoặc hồ sơ bản thân, ghi hình thức khám vào PhienDatLich.
+  void _chon(BuildContext context, HinhThucKham hinhThuc) {
+    final Object? thamSo = ModalRoute.of(context)?.settings.arguments;
+    PhienDatLich.batDau(benhNhan: thamSo is BenhNhan ? thamSo : null);
+    PhienDatLich.hinhThucKham = hinhThuc;
+    Navigator.pushNamed(
+      context,
+      hinhThuc == HinhThucKham.bhyt
+          ? HinhThucKhamRoutes.bhyt
+          : HinhThucKhamRoutes.chooseFacility,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +47,7 @@ class ChooseExamTypeScreen extends StatelessWidget {
                   color: Colors.white,
                   elevation: 3,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadiusGeometry.circular(20),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Padding(
                     padding: EdgeInsets.all(20),
@@ -49,19 +66,15 @@ class ChooseExamTypeScreen extends StatelessWidget {
                 Box_TypeCard(
                   icon: Icons.business_outlined,
                   title: "KHÁM CÓ THẺ BẢO HIỂM Y TẾ",
-                  moTa: "Sử dụng thể để hưởng được nhiều quyền lợi",
-                  onTap: () {
-                    Navigator.pushNamed(context, "/bhyt");
-                  },
+                  moTa: "Sử dụng thẻ BHYT để được hưởng nhiều quyền lợi",
+                  onTap: () => _chon(context, HinhThucKham.bhyt),
                 ),
                 SizedBox(height: 30),
                 Box_TypeCard(
                   icon: Icons.local_hospital,
                   title: "KHÁM KHÔNG CÓ THẺ BẢO HIỂM Y TẾ",
-                  moTa: "Sử dụng thẻ BHYT để được hưởng quyền lợi",
-                  onTap: () {
-                    Navigator.pushNamed(context, "/choose-hospital");
-                  },
+                  moTa: "Thanh toán toàn bộ phí khám theo bảng giá dịch vụ",
+                  onTap: () => _chon(context, HinhThucKham.khongBhyt),
                 ),
               ],
             ),

@@ -1,7 +1,11 @@
 import 'package:da_nhom7/models/dat_lich.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/widgets/widgets.dart';
+import '../../core/mock/mock_data.dart';
+import '../../core/utils/formatters.dart';
+import '../../models/enums.dart';
+import 'thu_ngan_mock.dart';
+import 'thu_ngan_routes.dart';
 
 /// Thanh toán thành công · FR-31
 /// Figma: Thu Ngân › Tiếp nhận thành công
@@ -24,13 +28,20 @@ class _PaymentSuccessScreenState
   String selectedMethod =
       'Tiền mặt';
 
+  /// Chặn bấm 2 lần → thu tiền 2 lần.
+  bool _daThu = false;
+
   @override
   Widget build(BuildContext context) {
 
-    final DatLich datLich =
-        ModalRoute.of(context)!
-                .settings
-                .arguments as DatLich;
+    // Mở thử từ menu Dev không có arguments → lấy lượt mẫu
+    final Object? thamSo = ModalRoute.of(context)?.settings.arguments;
+    final DatLich datLich = thamSo is DatLich
+        ? thamSo
+        : (ThuNganMock.choThanhToan.isNotEmpty
+            ? ThuNganMock.choThanhToan.first
+            : MockData.datLich.first);
+    final int soTien = ThuNganMock.soTienCua(datLich);
 
     return Scaffold(
 
@@ -40,7 +51,8 @@ class _PaymentSuccessScreenState
         ),
       ),
 
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(16),
 
         child: Column(
@@ -69,7 +81,7 @@ class _PaymentSuccessScreenState
                   children: [
 
                     Text(
-                      'Mã đặt lịch: ${datLich.maDatLich}',
+                      'Mã lịch hẹn: ${datLich.maXacNhan}',
                       style:
                           const TextStyle(
                         fontSize: 18,
@@ -83,7 +95,8 @@ class _PaymentSuccessScreenState
                     ),
 
                     Text(
-                      'Mã bệnh nhân: ${datLich.maBenhNhan}',
+                      'Bệnh nhân: '
+                      '${MockData.benhNhanById(datLich.maBenhNhan).hoTen}',
                     ),
 
                     const SizedBox(
@@ -103,7 +116,7 @@ class _PaymentSuccessScreenState
 
                     Text(
                       'Hình thức khám: '
-                      '${datLich.hinhThucKham.name}',
+                      '${datLich.hinhThucKham.label}',
                     ),
                   ],
                 ),
@@ -113,10 +126,10 @@ class _PaymentSuccessScreenState
             const SizedBox(height: 24),
 
             /// SỐ TIỀN
-            const Center(
+            Center(
               child: Text(
-                '300.000 VNĐ',
-                style: TextStyle(
+                Fmt.tien(soTien),
+                style: const TextStyle(
                   fontSize: 28,
                   fontWeight:
                       FontWeight.bold,
@@ -138,77 +151,40 @@ class _PaymentSuccessScreenState
 
             const SizedBox(height: 12),
 
-            /// TIỀN MẶT
-            RadioListTile<String>(
-
-              title:
-                  const Text('Tiền mặt'),
-
-              value: 'Tiền mặt',
-
-              groupValue:
-                  selectedMethod,
-
+            // RadioGroup quản lý lựa chọn chung (groupValue/onChanged trên
+            // từng RadioListTile đã bị đánh dấu deprecated từ Flutter 3.32).
+            RadioGroup<String>(
+              groupValue: selectedMethod,
               onChanged: (value) {
-
+                if (value == null) return;
                 setState(() {
-
-                  selectedMethod =
-                      value!;
-
+                  selectedMethod = value;
                 });
               },
-            ),
+              child: const Column(
+                children: [
+                  /// TIỀN MẶT
+                  RadioListTile<String>(
+                    title: Text('Tiền mặt'),
+                    value: 'Tiền mặt',
+                  ),
 
-            /// CHUYỂN KHOẢN
-            RadioListTile<String>(
+                  /// CHUYỂN KHOẢN
+                  RadioListTile<String>(
+                    title: Text('Chuyển khoản'),
+                    value: 'Chuyển khoản',
+                  ),
 
-              title: const Text(
-                'Chuyển khoản',
+                  /// VÍ ĐIỆN TỬ
+                  RadioListTile<String>(
+                    title: Text('Ví điện tử'),
+                    value: 'Ví điện tử',
+                  ),
+                ],
               ),
-
-              value: 'Chuyển khoản',
-
-              groupValue:
-                  selectedMethod,
-
-              onChanged: (value) {
-
-                setState(() {
-
-                  selectedMethod =
-                      value!;
-
-                });
-              },
             ),
 
-            /// VÍ ĐIỆN TỬ
-            RadioListTile<String>(
-
-              title:
-                  const Text(
-                'Ví điện tử',
-              ),
-
-              value:
-                  'Ví điện tử',
-
-              groupValue:
-                  selectedMethod,
-
-              onChanged: (value) {
-
-                setState(() {
-
-                  selectedMethod =
-                      value!;
-
-                });
-              },
-            ),
-
-            const Spacer(),
+            const SizedBox(height: 32),
 
             /// NÚT XÁC NHẬN
             SizedBox(
@@ -219,6 +195,26 @@ class _PaymentSuccessScreenState
                   ElevatedButton(
 
                 onPressed: () {
+                  // Chỉ thu lượt đang "Chờ thanh toán", và chỉ thu 1 lần
+                  if (_daThu ||
+                      datLich.trangThai != TrangThaiDatLich.choThanhToan) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Lượt khám này đã được thanh toán')),
+                    );
+                    return;
+                  }
+                  _daThu = true;
+
+                  // Ghi nhận thu tiền (MockData) → lượt khám
+                  // "Đã thanh toán" → Lễ tân check-in được, có hóa đơn mới.
+                  final PhuongThucThanhToan phuongThuc =
+                      PhuongThucThanhToan.values.firstWhere(
+                    (p) => p.label == selectedMethod,
+                    orElse: () => PhuongThucThanhToan.tienMat,
+                  );
+                  final GiaoDichQuay gd =
+                      ThuNganMock.thuTien(datLich, phuongThuc);
 
                   ScaffoldMessenger
                       .of(context)
@@ -226,15 +222,16 @@ class _PaymentSuccessScreenState
 
                     SnackBar(
                       content: Text(
-                        'Thanh toán bằng '
+                        'Đã thu ${Fmt.tien(gd.soTien)} bằng '
                         '$selectedMethod',
                       ),
                     ),
                   );
 
-                  Navigator.pushNamed(
+                  Navigator.pushReplacementNamed(
                     context,
-                    '/thu-ngan/hoa-don',
+                    ThuNganRoutes.invoice,
+                    arguments: gd,
                   );
                 },
 
@@ -245,6 +242,7 @@ class _PaymentSuccessScreenState
             ),
           ],
         ),
+      ),
       ),
     );
   }

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../core/widgets/widgets.dart';
+import '../../core/mock/mock_data.dart';
+import '../../core/utils/formatters.dart';
+import '../../models/models.dart';
+import 'thu_ngan_mock.dart';
+import 'thu_ngan_routes.dart';
 
 /// Hoàn tiền · FR-33
 /// Figma: Thu Ngân › Hoàn tiền
@@ -24,8 +28,26 @@ class _RefundScreenState
       _reasonController =
           TextEditingController();
 
+  /// Khoản thanh toán đang chọn để hoàn.
+  int? _maThanhToan;
+
+  @override
+  void dispose() {
+    _reasonController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final List<ThanhToan> dsCoTheHoan = ThuNganMock.coTheHoan;
+    final ThanhToan? tt = dsCoTheHoan
+            .where((t) => t.maThanhToan == _maThanhToan)
+            .firstOrNull ??
+        dsCoTheHoan.firstOrNull;
+    final DatLich? d = tt == null ? null : MockData.datLichById(tt.maDatLich);
+    final HoaDon? hd =
+        tt == null ? null : MockData.hoaDonCuaThanhToan(tt.maThanhToan);
+
 
     return Scaffold(
 
@@ -35,7 +57,8 @@ class _RefundScreenState
         ),
       ),
 
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(16),
 
         child: Column(
@@ -59,28 +82,41 @@ class _RefundScreenState
                       CrossAxisAlignment
                           .start,
 
-                  children: const [
-
+                  children: [
+                    if (dsCoTheHoan.isNotEmpty)
+                      DropdownButton<int>(
+                        isExpanded: true,
+                        value: tt?.maThanhToan,
+                        hint: const Text('Chọn khoản cần hoàn'),
+                        items: [
+                          for (final ThanhToan t in dsCoTheHoan)
+                            DropdownMenuItem(
+                              value: t.maThanhToan,
+                              child: Text(
+                                '${MockData.datLichById(t.maDatLich).maXacNhan}'
+                                ' · ${Fmt.tien(t.soTien)}',
+                              ),
+                            ),
+                        ],
+                        onChanged: (v) => setState(() => _maThanhToan = v),
+                      ),
+                    const SizedBox(height: 8),
                     Text(
-                      'Mã hóa đơn: HD001',
+                      'Mã hóa đơn: ${hd?.soHoaDon ?? '—'}',
                     ),
-
-                    SizedBox(height: 8),
-
+                    const SizedBox(height: 8),
                     Text(
-                      'Mã đặt lịch: LH001',
+                      'Mã đặt lịch: ${d?.maXacNhan ?? '—'}',
                     ),
-
-                    SizedBox(height: 8),
-
+                    const SizedBox(height: 8),
                     Text(
-                      'Bệnh nhân: Nguyễn Văn A',
+                      'Bệnh nhân: ${d == null ? '—' : MockData.benhNhanById(d.maBenhNhan).hoTen}',
                     ),
-
-                    SizedBox(height: 8),
-
+                    const SizedBox(height: 8),
                     Text(
-                      'Trạng thái: Đã thanh toán',
+                      tt == null
+                          ? 'Không có khoản nào có thể hoàn tiền'
+                          : 'Trạng thái: Đã thanh toán (${tt.phuongThuc.label})',
                     ),
                   ],
                 ),
@@ -137,9 +173,9 @@ class _RefundScreenState
               height: 8,
             ),
 
-            const Text(
-              '300.000 VNĐ',
-              style: TextStyle(
+            Text(
+              Fmt.tien(tt?.soTien ?? 0),
+              style: const TextStyle(
                 fontSize: 24,
                 color: Colors.red,
                 fontWeight:
@@ -147,7 +183,7 @@ class _RefundScreenState
               ),
             ),
 
-            const Spacer(),
+            const SizedBox(height: 32),
 
             SizedBox(
               width: double.infinity,
@@ -175,9 +211,16 @@ class _RefundScreenState
                     return;
                   }
 
-                  Navigator.pushNamed(
+                  if (tt == null) return;
+                  // Ghi nhận hoàn tiền → khoản này hết hoàn được
+                  ThuNganMock.hoanTien(tt);
+                  Navigator.pushReplacementNamed(
                     context,
-                    '/thu-ngan/hoan-tien-thanh-cong',
+                    ThuNganRoutes.refundSuccess,
+                    arguments: KetQuaHoanTien(
+                      thanhToan: tt,
+                      lyDo: _reasonController.text.trim(),
+                    ),
                   );
                 },
 
@@ -188,6 +231,7 @@ class _RefundScreenState
             ),
           ],
         ),
+      ),
       ),
     );
   }

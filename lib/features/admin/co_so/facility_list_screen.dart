@@ -3,7 +3,6 @@ import 'package:da_nhom7/features/admin/co_so/co_so_routes.dart';
 import 'package:da_nhom7/models/co_so_y_te.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/widgets/widgets.dart';
 
 /// Danh sách cơ sở y tế · FR-35
 /// Figma: Quản trị viên › Danh sách cở sở; Ẩn cơ sở
@@ -28,15 +27,46 @@ class _FacilityListScreenState extends State<FacilityListScreen> {
   void initState() {
     super.initState();
 
-    facilities = MockData.coSoYTe;
+    facilities = _loc('');
   }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  /// Luôn lọc lại từ MockData để thay đổi không bị mất.
+  List<CoSoYTe> _loc(String keyword) => MockData.coSoYTe
+      .where((e) => e.tenCoSo.toLowerCase().contains(keyword.toLowerCase()))
+      .toList();
 
   void searchFacility(String keyword) {
     setState(() {
-      facilities = MockData.coSoYTe
-          .where((e) => e.tenCoSo.toLowerCase().contains(keyword.toLowerCase()))
-          .toList();
+      facilities = _loc(keyword);
     });
+  }
+
+  /// Ẩn / mở cơ sở: sửa thẳng trong MockData (bệnh nhân đặt lịch cũng thấy).
+  void _doiTrangThai(CoSoYTe coSo) {
+    final int viTri =
+        MockData.coSoYTe.indexWhere((e) => e.maCoSo == coSo.maCoSo);
+    if (viTri >= 0) {
+      MockData.coSoYTe[viTri] = coSo.copyWith(trangThai: !coSo.trangThai);
+    }
+    facilities = _loc(_searchController.text);
+  }
+
+  /// Mở form thêm/sửa, quay lại thì tải lại danh sách.
+  Future<void> _moForm([CoSoYTe? coSo]) async {
+    await Navigator.pushNamed(
+      context,
+      AdminCoSoRoutes.facilityForm,
+      arguments: coSo,
+    );
+    if (mounted) {
+      setState(() => facilities = _loc(_searchController.text));
+    }
   }
 
   @override
@@ -45,9 +75,7 @@ class _FacilityListScreenState extends State<FacilityListScreen> {
       appBar: AppBar(title: const Text('QUẢN LÝ CƠ SỞ Y TẾ')),
 
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, AdminCoSoRoutes.facilityForm);
-        },
+        onPressed: () => _moForm(),
         child: const Icon(Icons.add),
       ),
 
@@ -161,13 +189,7 @@ class _FacilityListScreenState extends State<FacilityListScreen> {
                             children: [
                               Expanded(
                                 child: OutlinedButton(
-                                  onPressed: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      AdminCoSoRoutes.facilityForm,
-                                      arguments: coSo,
-                                    );
-                                  },
+                                  onPressed: () => _moForm(coSo),
 
                                   child: const Text('SỬA'),
                                 ),
@@ -203,11 +225,7 @@ class _FacilityListScreenState extends State<FacilityListScreen> {
                                             ElevatedButton(
                                               onPressed: () {
                                                 setState(() {
-                                                  facilities[index] = coSo
-                                                      .copyWith(
-                                                        trangThai:
-                                                            !coSo.trangThai,
-                                                      );
+                                                  _doiTrangThai(coSo);
                                                 });
 
                                                 Navigator.pop(context);

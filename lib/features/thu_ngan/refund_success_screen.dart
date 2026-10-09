@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../core/widgets/widgets.dart';
+import '../../core/utils/formatters.dart';
+import 'thu_ngan_mock.dart';
+import 'thu_ngan_routes.dart';
 
 /// Hoàn tiền thành công · FR-33
 /// Figma: Thu Ngân › hoàn tiền thành công
@@ -14,6 +16,9 @@ class RefundSuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Kết quả từ màn Hoàn tiền (có thể null khi mở từ menu Dev)
+    final Object? thamSo = ModalRoute.of(context)?.settings.arguments;
+    final KetQuaHoanTien? kq = thamSo is KetQuaHoanTien ? thamSo : null;
     return Scaffold(
 
       appBar: AppBar(
@@ -59,10 +64,13 @@ class RefundSuccessScreen extends StatelessWidget {
               ),
 
               /// MÔ TẢ
-              const Text(
-                'Giao dịch đã được hoàn tiền thành công.',
+              Text(
+                kq == null
+                    ? 'Giao dịch đã được hoàn tiền thành công.'
+                    : 'Đã hoàn ${Fmt.tien(kq.thanhToan.soTien)} qua '
+                        '${kq.thanhToan.phuongThuc.label}.\nLý do: ${kq.lyDo}',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
                 ),
               ),
@@ -80,7 +88,9 @@ class RefundSuccessScreen extends StatelessWidget {
 
                     Navigator.popUntil(
                       context,
-                      (route) => route.isFirst,
+                      (route) =>
+                          route.settings.name == ThuNganRoutes.thuNganHome ||
+                          route.isFirst,
                     );
 
                   },

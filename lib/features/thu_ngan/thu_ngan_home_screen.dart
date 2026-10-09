@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../app/dieu_huong.dart';
 import '../../core/widgets/widgets.dart';
+import '../auth/auth_routes.dart';
+import 'thu_ngan_mock.dart';
+import 'thu_ngan_routes.dart';
 
 /// Trang chủ Thu ngân · FR-31
 /// Figma: Thu Ngân › Trang chủ thu ngân
@@ -9,14 +13,48 @@ import '../../core/widgets/widgets.dart';
 /// TODO(Lân): thay PlaceholderScreen bằng giao diện thật theo Figma.
 /// Dùng widget chung (AppHeader, AppButton, AppTextField, AppCard…) và
 /// dữ liệu từ MockData (../../core/mock/mock_data.dart).
-class ThuNganHomeScreen extends StatelessWidget {
+class ThuNganHomeScreen extends StatefulWidget {
   const ThuNganHomeScreen({super.key});
 
   @override
+  State<ThuNganHomeScreen> createState() => _ThuNganHomeScreenState();
+}
+
+class _ThuNganHomeScreenState extends State<ThuNganHomeScreen> {
+  /// Mở màn con, quay lại thì cập nhật số liệu.
+  Future<void> _mo(String route) async {
+    await Navigator.pushNamed(context, route);
+    if (mounted) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final int soChoThu = ThuNganMock.choThanhToan.length;
+    final int soCoTheHoan = ThuNganMock.coTheHoan.length;
     return Scaffold(
-      appBar: AppBar(title: Text("THU NGÂN")),
-      body: Padding(
+      appBar: AppBar(
+        title: Text("THU NGÂN · ${ThuNganMock.thuNgan.hoTen}"),
+        automaticallyImplyLeading: false,
+        actions: [
+          PopupMenuButton<String>(
+            tooltip: 'Tài khoản',
+            icon: const Icon(Icons.account_circle_outlined),
+            onSelected: (v) {
+              if (v == 'doi_mat_khau') {
+                Navigator.pushNamed(context, AuthRoutes.changePassword);
+              } else {
+                DieuHuong.dangXuat(context);
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'doi_mat_khau', child: Text('Đổi mật khẩu')),
+              PopupMenuItem(value: 'dang_xuat', child: Text('Đăng xuất')),
+            ],
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
         child: Container(
           width: double.infinity,
@@ -27,31 +65,33 @@ class ThuNganHomeScreen extends StatelessWidget {
               Box_Function(
                 icon: Icons.money,
                 title: "CHỜ THANH TOÁN",
-                moTa: "12 người",
-                onTap: () {
-                  Navigator.pushNamed(context, '/thu-ngan/thanh-toan');
-                },
+                moTa: "$soChoThu lượt",
+                onTap: () => _mo(ThuNganRoutes.payment),
               ),
               Box_Function(
                 icon: Icons.reply,
                 title: 'HOÀN TIỀN',
-                moTa: '3 yêu cầu',
-                onTap: () {
-                  Navigator.pushNamed(context, '/thu-ngan/hoan-tien');
-                },
+                moTa: '$soCoTheHoan khoản có thể hoàn',
+                onTap: () => _mo(ThuNganRoutes.refund),
+              ),
+
+              Box_Function(
+                icon: Icons.receipt_long,
+                title: 'HÓA ĐƠN',
+                moTa: 'Xem hóa đơn đã xuất',
+                onTap: () => _mo(ThuNganRoutes.invoice),
               ),
 
               Box_Function(
                 icon: Icons.bar_chart,
                 title: 'DOANH THU',
                 moTa: 'Xem báo cáo',
-                onTap: () {
-                  Navigator.pushNamed(context, '/thu-ngan/doanh-thu');
-                },
+                onTap: () => _mo(ThuNganRoutes.revenueReport),
               ),
             ],
           ),
         ),
+      ),
       ),
     );
   }

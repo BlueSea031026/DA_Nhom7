@@ -2,7 +2,8 @@ import 'package:da_nhom7/core/mock/mock_data.dart';
 import 'package:da_nhom7/models/models.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/widgets/widgets.dart';
+import '../../core/utils/formatters.dart';
+import 'thu_ngan_mock.dart';
 
 /// Báo cáo doanh thu · FR-34
 /// Figma: Chưa rõ – kiểm tra frame Hoàn tiền thứ 2
@@ -16,7 +17,11 @@ class RevenueReportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<ThanhToan> dsThanhToan = MockData.thanhToan;
+    // Chỉ tính khoản đã thanh toán (bỏ khoản đã hoàn tiền),
+    // gồm cả khoản vừa thu tại quầy.
+    final List<ThanhToan> dsThanhToan = MockData.thanhToan
+        .where((t) => ThuNganMock.trangThai(t) == TrangThaiThanhToan.daThanhToan)
+        .toList();
 
     double tongDoanhThu = 0;
     double tienMat = 0;
@@ -44,7 +49,8 @@ class RevenueReportScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('BÁO CÁO DOANH THU')),
 
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(16),
 
         child: Column(
@@ -53,7 +59,7 @@ class RevenueReportScreen extends StatelessWidget {
           children: [
             ReportCard(
               title: 'Tổng doanh thu',
-              value: '${tongDoanhThu.toStringAsFixed(0)} VNĐ',
+              value: Fmt.tien(tongDoanhThu),
               color: Colors.blue,
             ),
 
@@ -80,7 +86,7 @@ class RevenueReportScreen extends StatelessWidget {
                   ListTile(
                     leading: const Icon(Icons.money),
                     title: const Text('Tiền mặt'),
-                    trailing: Text('${tienMat.toStringAsFixed(0)} VNĐ'),
+                    trailing: Text(Fmt.tien(tienMat)),
                   ),
 
                   const Divider(height: 1),
@@ -88,7 +94,7 @@ class RevenueReportScreen extends StatelessWidget {
                   ListTile(
                     leading: const Icon(Icons.account_balance),
                     title: const Text('Chuyển khoản'),
-                    trailing: Text('${chuyenKhoan.toStringAsFixed(0)} VNĐ'),
+                    trailing: Text(Fmt.tien(chuyenKhoan)),
                   ),
 
                   const Divider(height: 1),
@@ -96,25 +102,28 @@ class RevenueReportScreen extends StatelessWidget {
                   ListTile(
                     leading: const Icon(Icons.wallet),
                     title: const Text('Ví điện tử'),
-                    trailing: Text('${viDienTu.toStringAsFixed(0)} VNĐ'),
+                    trailing: Text(Fmt.tien(viDienTu)),
                   ),
                 ],
               ),
             ),
 
-            const Spacer(),
+            const SizedBox(height: 32),
 
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/export-success');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Đã xuất báo cáo doanh thu')),
+                  );
                 },
                 child: const Text('XUẤT BÁO CÁO'),
               ),
             ),
           ],
         ),
+      ),
       ),
     );
   }
