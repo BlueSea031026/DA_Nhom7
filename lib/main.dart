@@ -16,9 +16,8 @@ class App extends StatelessWidget {
       title: 'Đăng ký khám bệnh',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      // Giai đoạn giao diện: mở menu tạm để thử mọi màn hình.
-      // Khi đăng nhập xong: đổi thành AuthRoutes.welcome
-      initialRoute: AppRoutes.devMenu,
+      // Đổi AppRoutes.cheDoDev = true để mở menu Dev thử từng màn.
+      initialRoute: AppRoutes.manDauTien,
       routes: AppRoutes.routes,
       onUnknownRoute: (settings) => MaterialPageRoute(
         builder: (_) => PlaceholderScreen(

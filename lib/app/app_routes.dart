@@ -28,7 +28,14 @@ import 'dev_menu_screen.dart';
 class AppRoutes {
   AppRoutes._();
 
-  static const String devMenu = '/';
+  /// true  = mở app vào MENU DEV (thử từng màn).
+  /// false = chạy như app thật: Màn chào → Đăng nhập → trang chủ theo vai trò.
+  static const bool cheDoDev = false;
+
+  static const String devMenu = '/dev';
+
+  /// Màn mở đầu khi chạy app.
+  static String get manDauTien => cheDoDev ? devMenu : AuthRoutes.welcome;
 
   static final List<ModuleGroup> modules = [
     ModuleGroup(name: 'Tài khoản & đăng nhập', owner: 'Duy', pages: AuthRoutes.pages),
