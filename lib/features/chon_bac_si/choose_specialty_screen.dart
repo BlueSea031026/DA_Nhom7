@@ -21,8 +21,8 @@ class ChooseSpecialtyScreen extends StatelessWidget {
     final specialties = MockData.chuyenKhoaCuaCoSo(coSo.maCoSo);
 
     return Scaffold(
-      backgroundColor: AppColors.background, // ✅ Dùng AppColors
-      appBar: const AppHeader(title: 'CHỌN CHUYÊN KHOA'), // ✅ Widget chung
+      backgroundColor: AppColors.background,
+      appBar: const AppHeader(title: 'CHỌN CHUYÊN KHOA'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -70,7 +70,7 @@ class ChooseSpecialtyScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primary, // ✅ Dùng AppColors
+                color: AppColors.primary,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: GridView.builder(
@@ -91,7 +91,7 @@ class ChooseSpecialtyScreen extends StatelessWidget {
                     onTap: () {
                       Navigator.pushNamed(
                         context,
-                        '/dat-kham/bac-si', // ✅ Route đúng từ DevMenu
+                        '/dat-kham/bac-si',
                         arguments: ck,
                       );
                     },

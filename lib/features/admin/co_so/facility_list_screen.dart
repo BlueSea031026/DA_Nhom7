@@ -7,10 +7,6 @@ import 'package:flutter/material.dart';
 /// Danh sách cơ sở y tế · FR-35
 /// Figma: Quản trị viên › Danh sách cở sở; Ẩn cơ sở
 /// Phụ trách: Lân
-///
-/// TODO(Lân): thay PlaceholderScreen bằng giao diện thật theo Figma.
-/// Dùng widget chung (AppHeader, AppButton, AppTextField, AppCard…) và
-/// dữ liệu từ MockData (../../../core/mock/mock_data.dart).
 class FacilityListScreen extends StatefulWidget {
   const FacilityListScreen({super.key});
 

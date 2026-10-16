@@ -73,7 +73,7 @@ class ChooseDoctorScreen extends StatelessWidget {
                     onTap: () {
                       Navigator.pushNamed(
                         context,
-                        '/dat-kham/bac-si/chi-tiet', // ✅ Route đúng
+                        '/dat-kham/bac-si/chi-tiet',
                         arguments: bs,
                       );
                     },
@@ -104,7 +104,7 @@ class _DoctorCard extends StatelessWidget {
     final soDanhGia = MockData.danhGiaCuaBacSi(bacSi.maBacSi).length;
 
     return AppCard(
-      onTap: onTap, // ✅ Dùng AppCard widget chung
+      onTap: onTap,
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [

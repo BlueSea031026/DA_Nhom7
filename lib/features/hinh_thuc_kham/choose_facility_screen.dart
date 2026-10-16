@@ -10,10 +10,6 @@ import '../chon_bac_si/chon_bac_si_routes.dart';
 /// Chọn cơ sở y tế · FR-05
 /// Figma: Bệnh Nhân › Chọn cở sở y tế
 /// Phụ trách: Lân
-///
-/// TODO(Lân): thay PlaceholderScreen bằng giao diện thật theo Figma.
-/// Dùng widget chung (AppHeader, AppButton, AppTextField, AppCard…) và
-/// dữ liệu từ MockData (../../core/mock/mock_data.dart).
 class ChooseFacilityScreen extends StatefulWidget {
   const ChooseFacilityScreen({super.key});
 
