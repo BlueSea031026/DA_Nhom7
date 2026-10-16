@@ -10,10 +10,6 @@ import 'thu_ngan_routes.dart';
 /// Thanh toán thành công · FR-31
 /// Figma: Thu Ngân › Tiếp nhận thành công
 /// Phụ trách: Lân
-///
-/// TODO(Lân): thay PlaceholderScreen bằng giao diện thật theo Figma.
-/// Dùng widget chung (AppHeader, AppButton, AppTextField, AppCard…) và
-/// dữ liệu từ MockData (../../core/mock/mock_data.dart).
 class PaymentSuccessScreen extends StatefulWidget {
   const PaymentSuccessScreen({super.key});
 

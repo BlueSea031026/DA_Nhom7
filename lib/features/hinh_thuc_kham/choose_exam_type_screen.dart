@@ -8,10 +8,6 @@ import 'hinh_thuc_kham_routes.dart';
 /// Chọn hình thức khám · FR-03
 /// Figma: Bệnh Nhân › ChooseExamTypeScreen
 /// Phụ trách: Lân
-///
-/// TODO(Lân): thay PlaceholderScreen bằng giao diện thật theo Figma.
-/// Dùng widget chung (AppHeader, AppButton, AppTextField, AppCard…) và
-/// dữ liệu từ MockData (../../core/mock/mock_data.dart).
 class ChooseExamTypeScreen extends StatelessWidget {
   const ChooseExamTypeScreen({super.key});
 
