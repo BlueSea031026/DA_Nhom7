@@ -2,8 +2,6 @@ import '../../app/app_page.dart';
 import 'notification_screen.dart';
 
 /// Route của module "Thông báo" – phụ trách: Hải.
-/// Chỉ Hải sửa file này. Thêm màn mới: thêm 1 hằng route + 1 dòng AppPage.
-/// Mở màn: Navigator.pushNamed(context, ThongBaoRoutes.tenRoute, arguments: ...);
 class ThongBaoRoutes {
   ThongBaoRoutes._();
 

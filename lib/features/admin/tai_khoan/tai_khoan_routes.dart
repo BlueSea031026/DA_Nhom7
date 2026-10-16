@@ -4,8 +4,6 @@ import 'account_form_screen.dart';
 import 'account_log_screen.dart';
 
 /// Route của module "Quản trị · Tài khoản" – phụ trách: Hải.
-/// Chỉ Hải sửa file này. Thêm màn mới: thêm 1 hằng route + 1 dòng AppPage.
-/// Mở màn: Navigator.pushNamed(context, AdminTaiKhoanRoutes.tenRoute, arguments: ...);
 class AdminTaiKhoanRoutes {
   AdminTaiKhoanRoutes._();
 

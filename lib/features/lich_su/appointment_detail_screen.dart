@@ -10,10 +10,6 @@ import 'lich_su_routes.dart';
 /// Chi tiết lịch khám · FR-16
 /// Figma: Bệnh Nhân › CHi tiết lịch khám
 /// Phụ trách: Hải
-///
-/// MÀN MẪU: cách NHẬN tham số từ màn trước
-///   final args = ModalRoute.of(context)?.settings.arguments;
-/// Mở thẳng từ menu tạm (không có tham số) thì lấy lượt đặt lịch đầu tiên.
 class AppointmentDetailScreen extends StatelessWidget {
   const AppointmentDetailScreen({super.key});
 

@@ -7,9 +7,6 @@ import '../../core/widgets/widgets.dart';
 /// Đánh giá bác sĩ sau khi khám · FR-18
 /// Figma: chưa có – tự thiết kế
 /// Phụ trách: Hải
-///
-/// Nhận tham số: maDatLich (int) – lượt khám có trạng thái "Đã khám".
-/// Mở thẳng từ menu tạm thì lấy lượt khám mã 3.
 class RateDoctorScreen extends StatefulWidget {
   const RateDoctorScreen({super.key});
 

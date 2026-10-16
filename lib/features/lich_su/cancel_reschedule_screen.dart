@@ -9,9 +9,6 @@ import 'widgets/note_box.dart';
 /// Hủy / đổi lịch hẹn · FR-15
 /// Figma: chưa có – tự thiết kế theo đặc tả mục 3.1.8
 /// Phụ trách: Hải
-///
-/// Nhận tham số: maDatLich (int) từ màn Chi tiết lịch khám.
-/// Giai đoạn giao diện: chỉ hiện thông báo, chưa sửa dữ liệu.
 class CancelRescheduleScreen extends StatefulWidget {
   const CancelRescheduleScreen({super.key});
 

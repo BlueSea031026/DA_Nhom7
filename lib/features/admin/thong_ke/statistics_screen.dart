@@ -8,8 +8,6 @@ import '../../../models/models.dart';
 /// Thống kê báo cáo tổng hợp · FR-40
 /// Figma: Quản trị viên › Thống kê
 /// Phụ trách: Hải
-///
-/// Giai đoạn giao diện: số liệu tính từ MockData, nút chọn kỳ chỉ đổi nhãn.
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
 
