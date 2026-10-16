@@ -8,7 +8,6 @@ import 'auth_routes.dart';
 import 'widgets/auth_widgets.dart';
 
 /// Đăng nhập (dùng chung 6 vai trò)
-/// Đăng nhập xong sẽ mở trang chủ đúng vai trò của tài khoản.
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

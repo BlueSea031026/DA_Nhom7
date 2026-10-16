@@ -7,11 +7,6 @@ import 'auth_routes.dart';
 import 'widgets/auth_widgets.dart';
 
 /// Đặt mật khẩu mới / Đổi mật khẩu
-/// 2 chế độ:
-///  - arguments là String số điện thoại (đến từ Quên mật khẩu → OTP):
-///    "Đặt mật khẩu mới", chỉ nhập mật khẩu mới.
-///  - Không có arguments (mở từ trang cá nhân khi đã đăng nhập):
-///    "Đổi mật khẩu", phải nhập thêm mật khẩu hiện tại.
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});

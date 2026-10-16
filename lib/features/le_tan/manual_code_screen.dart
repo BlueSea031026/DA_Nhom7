@@ -6,7 +6,7 @@ import 'le_tan_mock.dart';
 import 'le_tan_routes.dart';
 import 'widgets/dat_lich_info_card.dart';
 
-/// Tra cứu bằng mã xác nhận (nhập tay) · FR-28
+/// Tra cứu bằng mã xác nhận
 
 class ManualCodeScreen extends StatefulWidget {
   const ManualCodeScreen({super.key});

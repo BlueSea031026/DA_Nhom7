@@ -7,8 +7,6 @@ import '../../models/models.dart';
 import 'le_tan_mock.dart';
 import 'le_tan_routes.dart';
 
-/// Danh sách bệnh nhân chờ khám trong ngày
-
 class WaitingListScreen extends StatefulWidget {
   const WaitingListScreen({super.key});
 

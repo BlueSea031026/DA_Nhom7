@@ -25,13 +25,18 @@ class BacSiHomeScreen extends StatelessWidget {
     final chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
 
     // Lịch hôm nay
-    final lichHomNay = MockData.lichCuaBacSi(bacSi.maBacSi).where((l) =>
-        l.ngay.year == MockData.homNay.year &&
-        l.ngay.month == MockData.homNay.month &&
-        l.ngay.day == MockData.homNay.day).toList();
+    final lichHomNay = MockData.lichCuaBacSi(bacSi.maBacSi)
+        .where(
+          (l) =>
+              l.ngay.year == MockData.homNay.year &&
+              l.ngay.month == MockData.homNay.month &&
+              l.ngay.day == MockData.homNay.day,
+        )
+        .toList();
     final lichIds = lichHomNay.map((l) => l.maLich).toSet();
-    final datLichHomNay =
-        MockData.datLich.where((d) => lichIds.contains(d.maLich)).toList();
+    final datLichHomNay = MockData.datLich
+        .where((d) => lichIds.contains(d.maLich))
+        .toList();
 
     final daKham = datLichHomNay
         .where((d) => d.trangThai == TrangThaiDatLich.daKham)
@@ -39,10 +44,11 @@ class BacSiHomeScreen extends StatelessWidget {
     final dangCho = datLichHomNay.length - daKham;
 
     // 2 lịch sắp tới để hiển thị
-    final lichSapToi = MockData.lichCuaBacSi(bacSi.maBacSi)
-        .where((l) => !l.ngay.isBefore(MockData.homNay))
-        .toList()
-      ..sort((a, b) => a.gioBatDau.compareTo(b.gioBatDau));
+    final lichSapToi =
+        MockData.lichCuaBacSi(bacSi.maBacSi)
+            .where((l) => !l.ngay.isBefore(MockData.homNay))
+            .toList()
+          ..sort((a, b) => a.gioBatDau.compareTo(b.gioBatDau));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -69,8 +75,11 @@ class BacSiHomeScreen extends StatelessWidget {
                                     style: AppTextStyles.title,
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.waving_hand,
-                                      color: Color(0xFFE69A1C), size: 18),
+                                  const Icon(
+                                    Icons.waving_hand,
+                                    color: Color(0xFFE69A1C),
+                                    size: 18,
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 4),
@@ -83,10 +92,14 @@ class BacSiHomeScreen extends StatelessWidget {
                         ),
                         IconButton(
                           tooltip: 'Thông báo',
-                          icon: const Icon(Icons.notifications_outlined,
-                              size: 26),
+                          icon: const Icon(
+                            Icons.notifications_outlined,
+                            size: 26,
+                          ),
                           onPressed: () => Navigator.pushNamed(
-                              context, ThongBaoRoutes.notification),
+                            context,
+                            ThongBaoRoutes.notification,
+                          ),
                         ),
                       ],
                     ),
@@ -120,47 +133,73 @@ class BacSiHomeScreen extends StatelessWidget {
                           const SizedBox(height: 10),
                           Row(
                             children: [
-                              const Icon(Icons.calendar_today,
-                                  color: Colors.white, size: 16),
+                              const Icon(
+                                Icons.calendar_today,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 '${MockData.homNay.day.toString().padLeft(2, '0')}/${MockData.homNay.month.toString().padLeft(2, '0')}/${MockData.homNay.year}',
                                 style: const TextStyle(
-                                    color: Colors.white, fontSize: 13),
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Icon(Icons.people,
-                                  color: Colors.white, size: 16),
+                              const Icon(
+                                Icons.people,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                               const SizedBox(width: 6),
-                              Text('${datLichHomNay.length} Bệnh Nhân',
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 13)),
+                              Text(
+                                '${datLichHomNay.length} Bệnh Nhân',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Icon(Icons.check_circle_outline,
-                                  color: Colors.white, size: 16),
+                              const Icon(
+                                Icons.check_circle_outline,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                               const SizedBox(width: 6),
-                              Text('$daKham đã khám',
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 13)),
+                              Text(
+                                '$daKham đã khám',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Icon(Icons.access_time,
-                                  color: Colors.white, size: 16),
+                              const Icon(
+                                Icons.access_time,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                               const SizedBox(width: 6),
-                              Text('$dangCho đang chờ',
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 13)),
+                              Text(
+                                '$dangCho đang chờ',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -177,7 +216,9 @@ class BacSiHomeScreen extends StatelessWidget {
                             icon: Icons.calendar_month_outlined,
                             label: 'Lịch làm việc',
                             onTap: () => Navigator.pushNamed(
-                                context, BacSiRoutes.workSchedule),
+                              context,
+                              BacSiRoutes.workSchedule,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -186,7 +227,9 @@ class BacSiHomeScreen extends StatelessWidget {
                             icon: Icons.people_outline,
                             label: 'Bệnh nhân',
                             onTap: () => Navigator.pushNamed(
-                                context, BacSiRoutes.patientList),
+                              context,
+                              BacSiRoutes.patientList,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -209,17 +252,18 @@ class BacSiHomeScreen extends StatelessWidget {
                     const SectionTitle('LỊCH SẮP TỚI'),
                     if (lichSapToi.isEmpty)
                       AppCard(
-                        child: Text('Không có lịch nào',
-                            style: AppTextStyles.bodySecondary),
+                        child: Text(
+                          'Không có lịch nào',
+                          style: AppTextStyles.bodySecondary,
+                        ),
                       )
                     else
                       SizedBox(
-                        height: 130,
+                        height: 150,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: lichSapToi.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(width: 10),
+                          separatorBuilder: (_, _) => const SizedBox(width: 10),
                           itemBuilder: (_, i) {
                             final l = lichSapToi[i];
                             return _LichSapToiCard(
@@ -227,7 +271,9 @@ class BacSiHomeScreen extends StatelessWidget {
                               tenBn: 'Nguyễn Văn B',
                               chuyenKhoa: chuyenKhoa.tenChuyenKhoa,
                               onXem: () => Navigator.pushNamed(
-                                  context, BacSiRoutes.patientList),
+                                context,
+                                BacSiRoutes.patientList,
+                              ),
                             );
                           },
                         ),
@@ -241,8 +287,7 @@ class BacSiHomeScreen extends StatelessWidget {
             _BottomNav(
               onProfile: () => Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (_) => const DoctorProfileScreen()),
+                MaterialPageRoute(builder: (_) => const DoctorProfileScreen()),
               ),
             ),
           ],
@@ -279,9 +324,11 @@ class _ChucNangCard extends StatelessWidget {
             child: Icon(icon, color: AppColors.primary, size: 22),
           ),
           const SizedBox(height: 6),
-          Text(label,
-              style: AppTextStyles.caption,
-              textAlign: TextAlign.center),
+          Text(
+            label,
+            style: AppTextStyles.caption,
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -312,9 +359,12 @@ class _LichSapToiCard extends StatelessWidget {
           children: [
             Text(gio, style: AppTextStyles.title),
             const SizedBox(height: 4),
-            Text(tenBn,
-                style: AppTextStyles.caption
-                    .copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              tenBn,
+              style: AppTextStyles.caption.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 4),
             Text('Khám $chuyenKhoa', style: AppTextStyles.caption),
             const Spacer(),
@@ -322,13 +372,14 @@ class _LichSapToiCard extends StatelessWidget {
               onPressed: onXem,
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(0, 28),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              child: const Text('Xem →',
-                  style: TextStyle(fontSize: 11)),
+              child: const Text('Xem →', style: TextStyle(fontSize: 11)),
             ),
           ],
         ),
@@ -346,22 +397,26 @@ class _BottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-      ),
+      decoration: const BoxDecoration(color: AppColors.primary),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           const Icon(Icons.home, color: Colors.white, size: 26),
           GestureDetector(
             onTap: () => Navigator.pushNamed(context, BacSiRoutes.workSchedule),
-            child: const Icon(Icons.calendar_today,
-                color: Colors.white54, size: 22),
+            child: const Icon(
+              Icons.calendar_today,
+              color: Colors.white54,
+              size: 22,
+            ),
           ),
           GestureDetector(
             onTap: () => Navigator.pushNamed(context, BacSiRoutes.patientList),
-            child: const Icon(Icons.people_outline,
-                color: Colors.white54, size: 24),
+            child: const Icon(
+              Icons.people_outline,
+              color: Colors.white54,
+              size: 24,
+            ),
           ),
           GestureDetector(
             onTap: onProfile,

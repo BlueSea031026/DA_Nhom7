@@ -17,7 +17,6 @@ class AppointmentInfoScreen extends StatefulWidget {
 }
 
 class _AppointmentInfoScreenState extends State<AppointmentInfoScreen> {
-  ///lấy lượt khám đầu tiên hôm nay.
   DatLich? _layDatLich() {
     final a = ModalRoute.of(context)?.settings.arguments;
     if (a is int) return MockData.datLichById(a);
@@ -46,7 +45,7 @@ class _AppointmentInfoScreenState extends State<AppointmentInfoScreen> {
     Navigator.pop(context);
   }
 
-  /// Thông báo + nút phù hợp với trạng thái của lượt đặt lịch.
+  /// Thông báo + nút
   (Widget, List<Widget>) _hanhDong(DatLich d) {
     final trangThai = LeTanMock.trangThai(d);
     final lich = MockData.lichById(d.maLich);

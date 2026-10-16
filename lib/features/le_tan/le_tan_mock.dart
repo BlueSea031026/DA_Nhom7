@@ -1,8 +1,6 @@
 import '../../core/mock/mock_data.dart';
 import '../../models/models.dart';
 
-/// Nghiệp vụ check-in của Lễ tân trên DỮ LIỆU GIẢ (chưa nối Firebase).
-
 class LeTanMock {
   LeTanMock._();
 
@@ -37,7 +35,7 @@ class LeTanMock {
 
   static DateTime? gioTiepNhan(DatLich d) => _gioTiepNhan[d.maDatLich];
 
-  /// Số thứ tự trong khung giờ của bác sĩ (theo thứ tự đặt lịch).
+  /// Số thứ tự trong khung giờ của bác sĩ.
   static int soThuTu(DatLich d) {
     final cungKhung =
         MockData.datLich

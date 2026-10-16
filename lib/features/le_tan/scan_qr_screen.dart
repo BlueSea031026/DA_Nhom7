@@ -5,7 +5,7 @@ import '../../core/widgets/widgets.dart';
 import 'le_tan_mock.dart';
 import 'le_tan_routes.dart';
 
-/// Quét mã QR check-in · FR-26
+/// Quét mã QR check-in
 
 class ScanQrScreen extends StatefulWidget {
   const ScanQrScreen({super.key});
@@ -20,7 +20,7 @@ class _ScanQrScreenState extends State<ScanQrScreen> {
     detectionSpeed: DetectionSpeed.noDuplicates,
   );
 
-  /// Đang xử lý 1 mã → bỏ qua các lần quét tiếp theo.
+  /// Đang xử lý 1 mã
   bool _dangXuLy = false;
 
   @override
@@ -57,8 +57,7 @@ class _ScanQrScreenState extends State<ScanQrScreen> {
       LeTanRoutes.appointmentInfo,
       arguments: datLich.maDatLich,
     );
-    // Quay lại đúng màn quét → bật camera để quét bệnh nhân tiếp theo.
-    // (Nếu đã tiếp nhận xong thì màn này nằm dưới màn Tiếp nhận thành công.)
+    // Quay lại đúng màn quét
     if (!mounted) return;
     _dangXuLy = false;
     if (ModalRoute.of(context)?.isCurrent ?? false) await _controller.start();

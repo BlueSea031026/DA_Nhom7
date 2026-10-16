@@ -6,8 +6,7 @@ import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
 import '../le_tan_mock.dart';
 
-/// Thẻ thông tin 1 lượt đặt lịch, dùng ở Thông tin lịch hẹn, Tìm lịch hẹn,
-/// Tiếp nhận thành công (Figma: khung trắng liệt kê Bệnh nhân, Mã xác nhận...).
+/// Thẻ thông tin 1 lượt đặt lịch
 class DatLichInfoCard extends StatelessWidget {
   const DatLichInfoCard({
     super.key,
@@ -18,7 +17,6 @@ class DatLichInfoCard extends StatelessWidget {
 
   final DatLich datLich;
 
-  /// false: chỉ hiện Bệnh nhân, Mã, Bác sĩ, Giờ (màn tiếp nhận thành công).
   final bool chiTiet;
   final bool hienTrangThai;
 
@@ -75,7 +73,7 @@ class DatLichInfoCard extends StatelessWidget {
   }
 }
 
-/// Hộp thông báo màu (cảnh báo / lỗi / thông tin) trong các màn Lễ tân.
+/// Hộp thông báo màu
 class LeTanNotice extends StatelessWidget {
   const LeTanNotice({
     super.key,
@@ -86,19 +84,19 @@ class LeTanNotice extends StatelessWidget {
   });
 
   const LeTanNotice.warning({super.key, required this.message})
-      : icon = Icons.warning_amber_rounded,
-        color = AppColors.warning,
-        background = AppColors.warningLight;
+    : icon = Icons.warning_amber_rounded,
+      color = AppColors.warning,
+      background = AppColors.warningLight;
 
   const LeTanNotice.error({super.key, required this.message})
-      : icon = Icons.error_outline,
-        color = AppColors.danger,
-        background = AppColors.dangerLight;
+    : icon = Icons.error_outline,
+      color = AppColors.danger,
+      background = AppColors.dangerLight;
 
   const LeTanNotice.success({super.key, required this.message})
-      : icon = Icons.check_circle_outline,
-        color = AppColors.success,
-        background = AppColors.successLight;
+    : icon = Icons.check_circle_outline,
+      color = AppColors.success,
+      background = AppColors.successLight;
 
   final String message;
   final IconData icon;

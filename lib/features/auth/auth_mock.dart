@@ -1,8 +1,6 @@
 import '../../core/mock/mock_data.dart';
 import '../../models/models.dart';
 
-/// Đăng nhập thử: số điện thoại 0901000001 → 0901000006 (6 vai trò,
-
 class AuthMock {
   AuthMock._();
 
@@ -11,12 +9,11 @@ class AuthMock {
   static const int soLanNhapOtpToiDa = 5;
   static const int thoiGianOtpGiay = 60;
 
-  /// Tài khoản đang đăng nhập (lưu chung ở MockData.phienDangNhap để
-  /// màn của các module khác cũng biết ai đang đăng nhập).
+  /// Tài khoản đang đăng nhập
   static TaiKhoan? get dangNhap => MockData.phienDangNhap;
   static set dangNhap(TaiKhoan? taiKhoan) => MockData.phienDangNhap = taiKhoan;
 
-  /// Tìm tài khoản theo số điện thoại hoặc email.
+  /// Tìm tài khoản
   static TaiKhoan? timTaiKhoan(String soDienThoaiHoacEmail) {
     final v = soDienThoaiHoacEmail.trim().toLowerCase();
     for (final t in MockData.taiKhoan) {
@@ -40,7 +37,7 @@ class AuthMock {
   static void dangXuat() => MockData.phienDangNhap = null;
 }
 
-/// Kiểm tra dữ liệu nhập của các form trong module auth.
+/// Kiểm tra dữ liệu nhập.
 class AuthValidators {
   AuthValidators._();
 
@@ -104,7 +101,5 @@ class OtpArgs {
 
   final String soDienThoai;
   final MucDichOtp mucDich;
-
-  /// Chỉ dùng khi đăng ký: true = tài khoản Người giám hộ.
   final bool laGiamHo;
 }

@@ -6,7 +6,6 @@ import 'auth_routes.dart';
 import 'widgets/auth_widgets.dart';
 
 /// Quên mật khẩu
-/// Luồng: Quên mật khẩu → Xác thực OTP → Đặt mật khẩu mới → Thành công.
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
