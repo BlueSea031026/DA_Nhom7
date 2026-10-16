@@ -12,24 +12,15 @@ import 'widgets/guardian_bottom_nav.dart';
 import 'widgets/guardian_header.dart';
 import 'widgets/quick_access_item.dart';
 
-/// Trang chủ Người giám hộ
-/// Figma: Người thân › trang chủ
-/// Phụ trách: Hiếu
-///
-/// Gồm: phần đầu tím xanh (lời chào + chuông), thẻ "ĐẶT LỊCH KHÁM",
-/// nút "HỒ SƠ GIA ĐÌNH", dải "Lịch hẹn sắp tới" của cả gia đình,
-/// khối "TRUY CẬP NHANH" và thanh điều hướng dưới.
+// Trang chủ Người giám hộ
 class GuardianHomeScreen extends StatefulWidget {
-  // Hàm khởi tạo
   const GuardianHomeScreen({super.key});
-
   @override
   State<GuardianHomeScreen> createState() => _GuardianHomeScreenState();
 }
 
 class _GuardianHomeScreenState extends State<GuardianHomeScreen> {
-  // Tất cả lịch còn hiệu lực (chưa khám, chưa hủy, chưa qua ngày) do tài
-  // khoản này đặt cho bản thân và người thân, sắp theo ngày rồi giờ.
+  // Lấy danh sách lịch sắp tới
   List<DatLich> _layDanhSachLichSapToi(int maTaiKhoan) {
     final List<DatLich> danhSach = MockData.datLichCuaTaiKhoan(maTaiKhoan)
         .where(
@@ -50,7 +41,7 @@ class _GuardianHomeScreenState extends State<GuardianHomeScreen> {
     return danhSach;
   }
 
-  // Mở giao diện theo router; quay về thì vẽ lại để cập nhật dữ liệu
+  // Mở giao diện theo router
   Future<void> _moTrang(String tenRoute, {Object? arguments}) async {
     await Navigator.pushNamed(context, tenRoute, arguments: arguments);
     if (mounted) setState(() {});
@@ -122,7 +113,7 @@ class _GuardianHomeScreenState extends State<GuardianHomeScreen> {
     );
   }
 
-  // Giao diện lời chào và thông báo (nằm trong phần đầu tím xanh)
+  // Giao diện lời chào và thông báo
   Widget _buildLoiChao(TaiKhoan taiKhoan, bool coThongBaoChuaDoc) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,7 +165,7 @@ class _GuardianHomeScreenState extends State<GuardianHomeScreen> {
     );
   }
 
-  // Thẻ trắng "ĐẶT LỊCH KHÁM" + nút "ĐẶT LỊCH"
+  // Thiết kế phần đặt lịch
   Widget _buildTheDatLich() {
     return Container(
       width: double.infinity,
@@ -193,15 +184,12 @@ class _GuardianHomeScreenState extends State<GuardianHomeScreen> {
           const SizedBox(height: 8),
           Text(
             'Đặt lịch khám cho người thân hoặc bản thân mình',
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.textPrimary,
-            ),
+            style: AppTextStyles.caption.copyWith(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerRight,
             child: ElevatedButton(
-              // Người giám hộ: chọn đặt cho ai trước (FR-43)
               onPressed: () => _moTrang(HoSoNguoiThanRoutes.chooseProfile),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(0, 32),
@@ -226,7 +214,7 @@ class _GuardianHomeScreenState extends State<GuardianHomeScreen> {
     );
   }
 
-  // Dải lịch hẹn sắp tới (cuộn ngang)
+  // Dải lịch hẹn sắp tới
   Widget _buildDanhSachLichHen(List<DatLich> danhSachLichSapToi) {
     if (danhSachLichSapToi.isEmpty) {
       return Text(
@@ -244,16 +232,17 @@ class _GuardianHomeScreenState extends State<GuardianHomeScreen> {
           final DatLich datLich = danhSachLichSapToi[viTri];
           return FamilyAppointmentCard(
             datLich: datLich,
-            onXemChiTiet: () =>
-                _moTrang(LichSuRoutes.appointmentDetail,
-                arguments: datLich.maDatLich),
+            onXemChiTiet: () => _moTrang(
+              LichSuRoutes.appointmentDetail,
+              arguments: datLich.maDatLich,
+            ),
           );
         },
       ),
     );
   }
 
-  // Khối truy cập nhanh (cuộn ngang)
+  // Khối truy cập nhanh
   Widget _buildTruyCapNhanh() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,

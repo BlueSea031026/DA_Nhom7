@@ -13,30 +13,14 @@ import 'dat_lich_routes.dart';
 import 'thong_tin_dat_lich.dart';
 import 'widgets/booking_step_indicator.dart';
 
-/// Thanh toán phí khám (online) · FR-11
-/// Figma: Chưa có – tự thiết kế
-/// Phụ trách: Hiếu
-///
-/// - Số tiền + mã đặt lịch + đồng hồ giữ chỗ 15 phút.
-/// - Chọn phương thức: Chuyển khoản (hiện QR ngân hàng DEMO) / Ví điện tử.
-/// - "Tôi đã thanh toán" → giả lập thanh toán thành công: DatLich chuyển
-///   "Đã thanh toán", thêm ThanhToan + ThongBao → sang màn Mã QR.
-/// - "Thanh toán tại quầy" → giữ "Chờ thanh toán", vẫn sang màn Mã QR.
-///
-/// arguments: DatLich (vừa tạo ở màn Xác nhận). Không có → lấy 1 lượt
-/// "Chờ thanh toán" trong MockData để thử giao diện.
 class OnlinePaymentScreen extends StatefulWidget {
-  // Hàm khởi tạo
   const OnlinePaymentScreen({super.key});
-
   @override
   State<OnlinePaymentScreen> createState() => _OnlinePaymentScreenState();
 }
 
 class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
   static const Duration _thoiGianGiuCho = Duration(minutes: 15);
-
-  // Chỉ các phương thức online (tiền mặt là thanh toán tại quầy)
   static const List<PhuongThucThanhToan> _phuongThucOnline = [
     PhuongThucThanhToan.chuyenKhoan,
     PhuongThucThanhToan.viDienTu,
@@ -48,6 +32,7 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
   Timer? _dongHo;
   bool _dangXuLy = false;
 
+  // Lây thông tin nhận lượt đặt lịch cần thanh toán
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -62,6 +47,7 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
     _batDauDemNguoc();
   }
 
+  // Hàm countdown thời gian
   void _batDauDemNguoc() {
     _dongHo = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
@@ -88,7 +74,7 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
     return '$phut:$giay';
   }
 
-  // Mở màn Mã QR, xóa các màn đặt lịch phía sau (về được Trang chủ)
+  // Mở màn Mã QR
   void _moManMaQr(DatLich datLich) {
     Navigator.pushNamedAndRemoveUntil(
       context,
@@ -105,7 +91,6 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
   Future<void> _xacNhanDaThanhToan() async {
     final DatLich datLich = _datLich!;
     setState(() => _dangXuLy = true);
-    // Giả lập chờ cổng thanh toán phản hồi
     await Future<void>.delayed(const Duration(seconds: 1));
     if (!mounted) return;
 
@@ -113,7 +98,6 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
       datLich,
       TrangThaiDatLich.daThanhToan,
     );
-    // TODO: khi nối Firebase thay 3 lệnh MockData dưới bằng ghi Firestore.
     final int viTri = MockData.datLich.indexWhere(
       (d) => d.maDatLich == datLich.maDatLich,
     );
@@ -200,7 +184,7 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
     );
   }
 
-  // Thẻ xanh: số tiền, mã đặt lịch, đồng hồ giữ chỗ
+  // Banner giao diện số tiền cần thanh toán
   Widget _buildTheSoTien(DatLich datLich, int soTien, bool hetGio) {
     final TextStyle chuTrang = AppTextStyles.caption.copyWith(
       color: AppColors.surface,
@@ -227,9 +211,16 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
           Row(
             children: [
               Expanded(
-                child: Text('Mã đặt lịch: ${datLich.maXacNhan}', style: chuTrang),
+                child: Text(
+                  'Mã đặt lịch: ${datLich.maXacNhan}',
+                  style: chuTrang,
+                ),
               ),
-              const Icon(Icons.timer_outlined, size: 16, color: AppColors.surface),
+              const Icon(
+                Icons.timer_outlined,
+                size: 16,
+                color: AppColors.surface,
+              ),
               const SizedBox(width: 4),
               Text(
                 hetGio ? 'Hết giờ' : 'Giữ chỗ $_chuoiDemNguoc',
@@ -242,7 +233,7 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
     );
   }
 
-  // 1 lựa chọn phương thức thanh toán
+  // Lựa chọn phương thức thanh toán
   Widget _buildPhuongThuc(PhuongThucThanhToan pt) {
     final bool dangChon = pt == _phuongThuc;
     final IconData icon = pt == PhuongThucThanhToan.chuyenKhoan
@@ -265,14 +256,18 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
               children: [
                 Text(
                   pt.label,
-                  style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                  style: AppTextStyles.body.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 Text(moTa, style: AppTextStyles.caption),
               ],
             ),
           ),
           Icon(
-            dangChon ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+            dangChon
+                ? Icons.radio_button_checked
+                : Icons.radio_button_unchecked,
             color: dangChon ? AppColors.secondary : AppColors.textSecondary,
           ),
         ],
@@ -280,10 +275,9 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
     );
   }
 
-  // QR chuyển khoản (DEMO – không phải tài khoản thật)
+  // QR chuyển khoản
   Widget _buildChuyenKhoan(DatLich datLich, int soTien) {
-    final String noiDungQr =
-        'DEMO|TTYT|${datLich.maXacNhan}|$soTien'; // TODO: thay bằng chuỗi VietQR thật
+    final String noiDungQr = 'DEMO|TTYT|${datLich.maXacNhan}|$soTien';
     return AppCard(
       child: Column(
         children: [

@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
 
-/// Ảnh đại diện tròn của 1 hồ sơ (chưa có ảnh nên hiện chữ cái đầu của tên).
-///   FamilyMemberAvatar(benhNhan: bn, banKinh: 24)
+// Vẽ ảnh đại diện
 class FamilyMemberAvatar extends StatelessWidget {
   const FamilyMemberAvatar({
     super.key,
@@ -15,7 +14,6 @@ class FamilyMemberAvatar extends StatelessWidget {
   final BenhNhan benhNhan;
   final double banKinh;
 
-  /// "Lê Gia Huy" → "H" (chữ cái đầu của tên gọi).
   String get _chuCaiDau {
     final String tenGoi = benhNhan.hoTen.trim().split(' ').last;
     return tenGoi.isEmpty ? '?' : tenGoi[0].toUpperCase();

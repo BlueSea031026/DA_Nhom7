@@ -9,26 +9,24 @@ import 'thong_tin_dat_lich.dart';
 import 'widgets/booking_step_indicator.dart';
 import 'widgets/doctor_summary_card.dart';
 
-/// Chọn ngày giờ khám · FR-08 (xem lịch trống), FR-09 (chọn khung giờ)
-/// Figma: Chưa có – tự thiết kế (theo phong cách Trang chủ Bệnh nhân)
-/// Phụ trách: Hiếu
-///
-/// - Dải 14 ngày tới (cuộn ngang); ngày có lịch trống có chấm xanh.
-/// - Các khung giờ của ngày đã chọn: còn chỗ / đã đầy / đã qua giờ.
-/// - "Tiếp tục" → Xác nhận thông tin (gửi ThongTinDatLich đã có khung giờ).
-///
-/// arguments: ThongTinDatLich | BacSi | null (xem ThongTinDatLich.tuArguments)
+// Chọn ngày giờ khám
 class ChooseDatetimeScreen extends StatefulWidget {
-  // Hàm khởi tạo
   const ChooseDatetimeScreen({super.key});
-
   @override
   State<ChooseDatetimeScreen> createState() => _ChooseDatetimeScreenState();
 }
 
 class _ChooseDatetimeScreenState extends State<ChooseDatetimeScreen> {
   static const int _soNgayHienThi = 14;
-  static const List<String> _tenThu = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+  static const List<String> _tenThu = [
+    'T2',
+    'T3',
+    'T4',
+    'T5',
+    'T6',
+    'T7',
+    'CN',
+  ];
 
   ThongTinDatLich? _thongTin;
   DateTime _ngayDangChon = MockData.homNay;
@@ -63,7 +61,7 @@ class _ChooseDatetimeScreenState extends State<ChooseDatetimeScreen> {
     return danhSach;
   }
 
-  // "08:30" của ngày l.ngay → DateTime
+  // Thời điểm bắt đầu
   DateTime _thoiDiemBatDau(LichLamViec lich) {
     final List<String> phan = lich.gioBatDau.split(':');
     return lich.ngay.add(
@@ -73,11 +71,10 @@ class _ChooseDatetimeScreenState extends State<ChooseDatetimeScreen> {
 
   bool _daQuaGio(LichLamViec lich) =>
       _thoiDiemBatDau(lich).isBefore(DateTime.now());
-
   bool _daDay(LichLamViec lich) => lich.trangThai == 0 || !lich.conTrong;
-
   bool _conDatDuoc(LichLamViec lich) => !_daDay(lich) && !_daQuaGio(lich);
 
+  // Button tiếp tục
   void _tiepTuc() {
     final LichLamViec? lich = _lichDaChon;
     final ThongTinDatLich? thongTin = _thongTin;
@@ -97,7 +94,6 @@ class _ChooseDatetimeScreenState extends State<ChooseDatetimeScreen> {
       thongTin.bacSi,
       _ngayDangChon,
     );
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AppHeader(title: 'Chọn ngày giờ khám'),
@@ -113,7 +109,9 @@ class _ChooseDatetimeScreenState extends State<ChooseDatetimeScreen> {
             style: AppTextStyles.bodySecondary,
           ),
           const SizedBox(height: 20),
-          SectionTitle('CHỌN NGÀY · Tháng ${_ngayDangChon.month}/${_ngayDangChon.year}'),
+          SectionTitle(
+            'CHỌN NGÀY · Tháng ${_ngayDangChon.month}/${_ngayDangChon.year}',
+          ),
           _buildDaiNgay(thongTin.bacSi),
           const SizedBox(height: 20),
           SectionTitle('KHUNG GIỜ · ${Fmt.ngay(_ngayDangChon)}'),

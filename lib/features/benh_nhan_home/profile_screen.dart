@@ -15,24 +15,18 @@ import 'widgets/patient_bottom_nav.dart';
 import 'widgets/profile_menu_item.dart';
 
 /// Trang cá nhân
-/// Figma: Bệnh Nhân › cÁ NHÂN (2 frame: trang cá nhân + hộp thoại đăng xuất)
-/// Phụ trách: Hiếu
-///
-/// Gồm: ảnh đại diện, họ tên, số điện thoại (ẩn bớt số), danh sách chức năng
-/// (Chỉnh sửa trang cá nhân → xem thông tin cá nhân, Bảo mật, Thông tin BHYT, Điều khoản sử dụng,
-/// Đăng xuất) và thanh điều hướng dưới (đang chọn "Cá nhân").
 class ProfileScreen extends StatelessWidget {
   // Hàm khởi tạo
   const ProfileScreen({super.key});
 
-  // Ẩn số điện thoại, chỉ chừa 4 số cuối: "0901000001" → "******0001"
+  // Ẩn số điện thoại chỉ chừa 4 số cuối
   String _anSoDienThoai(String soDienThoai) {
     if (soDienThoai.length <= 4) return soDienThoai;
     final int soKyTuAn = soDienThoai.length - 4;
     return '${'*' * soKyTuAn}${soDienThoai.substring(soKyTuAn)}';
   }
 
-  // Hồ sơ "Bản thân" của tài khoản (null nếu chưa tạo)
+  // Lấy hồ sơ của bệnh nhân
   BenhNhan? _layHoSoBanThan(int maTaiKhoan) {
     for (final BenhNhan benhNhan in MockData.hoSoCuaTaiKhoan(maTaiKhoan)) {
       if (benhNhan.laBanThan) return benhNhan;
@@ -59,15 +53,14 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-  // Bấm "Đăng xuất" → hỏi lại → về màn đăng nhập
+  // Logout
   Future<void> _dangXuat(BuildContext context) async {
     final bool? dongY = await LogoutDialog.hien(context);
     if (dongY != true || !context.mounted) return;
-    // Đã hỏi bằng LogoutDialog nên không hỏi lại
     await DieuHuong.dangXuat(context, hoiLai: false);
   }
 
-  // Hiện thông tin cá nhân (tài khoản + hồ sơ bản thân) ở bảng trượt từ dưới lên
+  // Hiện thông tin cá nhân
   void _hienThongTinCaNhan(
     BuildContext context,
     TaiKhoan taiKhoan,
@@ -306,7 +299,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // Ảnh đại diện + họ tên + số điện thoại
+  // Ảnh đại diện / họ tên / số điện thoại
   Widget _buildThongTinTaiKhoan(TaiKhoan taiKhoan) {
     return Column(
       children: [
