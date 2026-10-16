@@ -23,15 +23,12 @@ import 'widgets/guardian_header.dart';
 /// arguments (không bắt buộc): int maTaiKhoan – tài khoản cần xem hồ sơ.
 /// Không truyền → dùng tài khoản người giám hộ trong MockData.
 class FamilyProfilesScreen extends StatefulWidget {
-  // Hàm khởi tạo
   const FamilyProfilesScreen({super.key});
-
   @override
   State<FamilyProfilesScreen> createState() => _FamilyProfilesScreenState();
 }
 
 class _FamilyProfilesScreenState extends State<FamilyProfilesScreen> {
-  // Màu nền lần lượt của các thẻ hồ sơ (trắng, xanh, lục, hồng như Figma)
   static const List<Color> _danhSachMauThe = [
     AppColors.surface,
     AppColors.infoLight,
@@ -39,13 +36,13 @@ class _FamilyProfilesScreenState extends State<FamilyProfilesScreen> {
     AppColors.dangerLight,
   ];
 
-  // Lấy mã tài khoản được truyền qua arguments (nếu có)
+  // Lấy mã tài khoản
   int _layMaTaiKhoan() {
     final Object? thamSo = ModalRoute.of(context)?.settings.arguments;
     return thamSo is int ? thamSo : MockData.taiKhoanGiamHo.maTaiKhoan;
   }
 
-  // Hồ sơ "Bản thân" đứng đầu, sau đó là người thân theo tên
+  // Danh sách các hồ sơ
   List<BenhNhan> _layDanhSachHoSo(int maTaiKhoan) {
     final List<BenhNhan> danhSach = MockData.hoSoCuaTaiKhoan(maTaiKhoan);
     danhSach.sort((a, b) {
@@ -55,7 +52,7 @@ class _FamilyProfilesScreenState extends State<FamilyProfilesScreen> {
     return danhSach;
   }
 
-  // Mở giao diện theo router; quay về thì vẽ lại để thấy dữ liệu mới
+  // Mở giao diện theo router
   Future<void> _moTrang(String tenRoute, {Object? arguments}) async {
     await Navigator.pushNamed(context, tenRoute, arguments: arguments);
     if (mounted) setState(() {});
@@ -92,11 +89,11 @@ class _FamilyProfilesScreenState extends State<FamilyProfilesScreen> {
                     mauNen: _danhSachMauThe[i % _danhSachMauThe.length],
                     onSua: () => _moTrang(
                       HoSoNguoiThanRoutes.profileForm,
-                      arguments: danhSachHoSo[i], // có hồ sơ = sửa
+                      arguments: danhSachHoSo[i],
                     ),
                     onChon: () => _moTrang(
                       HinhThucKhamRoutes.chooseExamType,
-                      arguments: danhSachHoSo[i], // đặt lịch cho người này
+                      arguments: danhSachHoSo[i],
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -104,9 +101,7 @@ class _FamilyProfilesScreenState extends State<FamilyProfilesScreen> {
                 const SizedBox(height: 6),
                 Center(
                   child: ElevatedButton(
-                    onPressed: () => _moTrang(
-                      HoSoNguoiThanRoutes.profileForm, // không gửi gì = thêm mới
-                    ),
+                    onPressed: () => _moTrang(HoSoNguoiThanRoutes.profileForm),
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(140, 40),
                     ),
@@ -123,7 +118,6 @@ class _FamilyProfilesScreenState extends State<FamilyProfilesScreen> {
         onChon: (viTri) {
           switch (viTri) {
             case 0:
-              // Trang chủ giám hộ nằm sẵn ở dưới → quay về, không mở thêm
               Navigator.popUntil(
                 context,
                 (route) =>
@@ -142,7 +136,7 @@ class _FamilyProfilesScreenState extends State<FamilyProfilesScreen> {
     );
   }
 
-  // Phần đầu tím xanh + nút "HỒ SƠ GIA ĐÌNH" (+ nút quay lại nếu có)
+  // Header giao diện
   Widget _buildPhanDau(bool coTheQuayLai) {
     return GuardianHeader(
       chieuCao: 150,
@@ -166,7 +160,7 @@ class _FamilyProfilesScreenState extends State<FamilyProfilesScreen> {
     );
   }
 
-  // Nhãn "Hồ sơ đang quản lý"
+  // Nhãn hồ sơ quản lý
   Widget _buildNhanDangQuanLy() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

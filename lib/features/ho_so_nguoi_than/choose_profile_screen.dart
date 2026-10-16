@@ -18,23 +18,22 @@ import 'widgets/guardian_app_bar.dart';
 /// arguments (không bắt buộc): int maTaiKhoan. Không truyền → tài khoản
 /// người giám hộ trong MockData.
 class ChooseProfileScreen extends StatefulWidget {
-  // Hàm khởi tạo
   const ChooseProfileScreen({super.key});
-
   @override
   State<ChooseProfileScreen> createState() => _ChooseProfileScreenState();
 }
 
+// Danh sách chọn thành viên
 class _ChooseProfileScreenState extends State<ChooseProfileScreen> {
   int? _maBenhNhanDaChon;
 
-  // Lấy mã tài khoản được truyền qua arguments (nếu có)
+  // Xác định tài khoản
   int _layMaTaiKhoan() {
     final Object? thamSo = ModalRoute.of(context)?.settings.arguments;
     return thamSo is int ? thamSo : MockData.taiKhoanGiamHo.maTaiKhoan;
   }
 
-  // Hồ sơ "Bản thân" đứng đầu, sau đó là người thân theo tên
+  // Danh sách thành viên
   List<BenhNhan> _layDanhSachHoSo(int maTaiKhoan) {
     final List<BenhNhan> danhSach = MockData.hoSoCuaTaiKhoan(maTaiKhoan);
     danhSach.sort((a, b) {
@@ -44,7 +43,7 @@ class _ChooseProfileScreenState extends State<ChooseProfileScreen> {
     return danhSach;
   }
 
-  // Bấm "Tiếp tục" → sang bước chọn hình thức khám
+  // Button tiếp tục
   void _tiepTuc(List<BenhNhan> danhSachHoSo) {
     final BenhNhan? hoSoDaChon = danhSachHoSo
         .where((b) => b.maBenhNhan == _maBenhNhanDaChon)
@@ -62,7 +61,7 @@ class _ChooseProfileScreenState extends State<ChooseProfileScreen> {
     );
   }
 
-  // Thêm hồ sơ mới rồi quay lại thì vẽ lại danh sách
+  // Thêm hồ sơ bệnh nhân mới
   Future<void> _themHoSo() async {
     await Navigator.pushNamed(context, HoSoNguoiThanRoutes.profileForm);
     if (mounted) setState(() {});
@@ -72,11 +71,11 @@ class _ChooseProfileScreenState extends State<ChooseProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final List<BenhNhan> danhSachHoSo = _layDanhSachHoSo(_layMaTaiKhoan());
+
     // Mặc định chọn hồ sơ đầu tiên
     if (_maBenhNhanDaChon == null && danhSachHoSo.isNotEmpty) {
       _maBenhNhanDaChon = danhSachHoSo.first.maBenhNhan;
     }
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const GuardianAppBar(tieuDe: 'CHỌN HỒ SƠ KHÁM'),
@@ -120,7 +119,7 @@ class _ChooseProfileScreenState extends State<ChooseProfileScreen> {
     );
   }
 
-  // 1 thẻ hồ sơ: viền trái xanh đậm, nút tròn, icon người, tên + quan hệ
+  // Item 1 dòng hồ sơ
   Widget _buildTheHoSo(BenhNhan benhNhan) {
     final bool dangChon = benhNhan.maBenhNhan == _maBenhNhanDaChon;
     final BorderRadius boGoc = BorderRadius.circular(12);
@@ -135,7 +134,6 @@ class _ChooseProfileScreenState extends State<ChooseProfileScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Vạch xanh đậm bên trái (đậm hơn khi đang chọn)
               Container(width: dangChon ? 5 : 2, color: AppColors.primary),
               Expanded(
                 child: Padding(

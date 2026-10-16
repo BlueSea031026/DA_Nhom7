@@ -17,22 +17,20 @@ import '../../../models/models.dart';
 ///   Navigator.pushNamed(context, DanhGiaBacSiRoutes.doctorReviews, arguments: maBacSi); // chỉ định bác sĩ
 class DoctorReviewsScreen extends StatelessWidget {
   const DoctorReviewsScreen({super.key, this.maBacSi});
-
-  /// Mã bác sĩ cần xem. Null → lấy từ arguments của route, nếu không có thì
-  /// lấy bác sĩ của tài khoản đang đăng nhập (mặc định bác sĩ đầu tiên).
   final int? maBacSi;
 
+  // Xác định bác sĩ
   BacSi _resolveDoctor(BuildContext context) {
     final arg = ModalRoute.of(context)?.settings.arguments;
     final id = maBacSi ?? (arg is int ? arg : null);
     if (id != null) return MockData.bacSiById(id);
-    // Bác sĩ đang đăng nhập: bác sĩ có maTaiKhoan khác null (mặc định bác sĩ đầu tiên).
     return MockData.bacSi.firstWhere(
       (b) => b.maTaiKhoan != null,
       orElse: () => MockData.bacSi.first,
     );
   }
 
+  // Giao diện
   @override
   Widget build(BuildContext context) {
     final doctor = _resolveDoctor(context);
@@ -73,7 +71,7 @@ class DoctorReviewsScreen extends StatelessWidget {
   }
 }
 
-/// Khối đầu trang: nút quay lại, ảnh, tên, chuyên ngành, điểm trung bình.
+// Header
 class _DoctorHeader extends StatelessWidget {
   const _DoctorHeader({
     required this.doctor,
@@ -161,11 +159,10 @@ class _DoctorHeader extends StatelessWidget {
   }
 }
 
+// Ảnh đại diện của bác sĩ
 class _DoctorAvatar extends StatelessWidget {
   const _DoctorAvatar({this.imagePath});
-
   final String? imagePath;
-
   @override
   Widget build(BuildContext context) {
     const size = 150.0;
@@ -184,16 +181,15 @@ class _DoctorAvatar extends StatelessWidget {
               width: size,
               height: size,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => placeholder,
+              errorBuilder: (_, _, _) => placeholder,
             ),
     );
   }
 }
 
-/// 1 đánh giá: chữ cái đầu tên, tên người đánh giá, số sao, nhận xét.
+// Cấu hình đánh giá của bác sĩ
 class _ReviewCard extends StatelessWidget {
   const _ReviewCard({required this.review});
-
   final DanhGia review;
 
   @override
@@ -203,7 +199,6 @@ class _ReviewCard extends StatelessWidget {
         ? '?'
         : name.trim().substring(0, 1).toUpperCase();
     final comment = review.nhanXet?.trim() ?? '';
-
     return AppCard(
       padding: const EdgeInsets.all(16),
       child: Row(

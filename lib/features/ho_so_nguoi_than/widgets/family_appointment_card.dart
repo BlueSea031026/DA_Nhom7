@@ -6,9 +6,7 @@ import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
 import 'family_member_avatar.dart';
 
-/// Thẻ 1 lịch hẹn trong dải "Lịch hẹn sắp tới" của Trang chủ Người giám hộ
-/// (Figma: Người thân › trang chủ): ảnh người được khám, ngày + giờ khám,
-/// bệnh viện, khoa, bác sĩ và nút "Xem chi tiết".
+// Giao diện item lịch hẹn sắp tới
 class FamilyAppointmentCard extends StatelessWidget {
   const FamilyAppointmentCard({
     super.key,
@@ -21,7 +19,6 @@ class FamilyAppointmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Đi theo khóa ngoại: DatLich → LichLamViec → BacSi → ChuyenKhoa → CoSoYTe
     final LichLamViec lich = MockData.lichById(datLich.maLich);
     final BacSi bacSi = MockData.bacSiById(lich.maBacSi);
     final ChuyenKhoa chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
@@ -38,7 +35,7 @@ class FamilyAppointmentCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Ảnh người được khám (chưa có ảnh → chữ cái đầu)
+          // Ảnh người được khám
           Column(
             children: [
               FamilyMemberAvatar(benhNhan: benhNhan, banKinh: 24),
@@ -62,19 +59,24 @@ class FamilyAppointmentCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.calendar_month,
-                        size: 18, color: AppColors.primary),
+                    const Icon(
+                      Icons.calendar_month,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       Fmt.ngay(lich.ngay),
-                      style: AppTextStyles.label
-                          .copyWith(fontWeight: FontWeight.w700),
+                      style: AppTextStyles.label.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const Spacer(),
                     Text(
                       lich.gioBatDau,
-                      style: AppTextStyles.label
-                          .copyWith(fontWeight: FontWeight.w700),
+                      style: AppTextStyles.label.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),

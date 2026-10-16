@@ -4,12 +4,9 @@ import '../../../core/mock/mock_data.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
 
-/// Thẻ xanh tóm tắt bác sĩ (ảnh, tên, chuyên khoa, cơ sở, điểm đánh giá),
-/// cùng kiểu thẻ "Lịch khám sắp tới" ở Trang chủ Bệnh nhân.
+// Thẻ xanh tóm tắt bác sĩ dưới 4 bước
 class DoctorSummaryCard extends StatelessWidget {
-  // Hàm khởi tạo
   const DoctorSummaryCard({super.key, required this.bacSi});
-
   final BacSi bacSi;
 
   // Giao diện

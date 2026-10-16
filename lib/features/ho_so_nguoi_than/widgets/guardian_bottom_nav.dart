@@ -2,12 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/widgets/widgets.dart';
 
-/// Thanh điều hướng dưới cho vai trò Người giám hộ (Figma: Người thân):
-/// 0 = Trang chủ, 1 = Lịch hẹn, 2 = Thông báo, 3 = Cá nhân.
-/// Mục đang chọn: ô vuông bo góc xanh đậm, icon trắng.
-///
-/// Tạm đặt trong module ho_so_nguoi_than vì core/widgets chưa có BottomNav
-/// theo vai trò (mục 4.2). Khi Hải thêm bản chung thì chuyển sang dùng.
+// Cấu hình thanh điều hướng
 class GuardianBottomNav extends StatelessWidget {
   // Hàm khởi tạo
   const GuardianBottomNav({
@@ -16,7 +11,6 @@ class GuardianBottomNav extends StatelessWidget {
     required this.onChon,
   });
 
-  /// Vị trí đang chọn (0–3). Truyền -1 nếu không mục nào được chọn.
   final int viTriDangChon;
   final ValueChanged<int> onChon;
 

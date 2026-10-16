@@ -18,9 +18,7 @@ import 'widgets/guardian_app_bar.dart';
 /// Giai đoạn giao diện: lưu thẳng vào MockData.benhNhan (danh sách trong bộ nhớ).
 /// Khi nối Firebase: thay phần _luuHoSo / _xoaHoSo bằng lệnh ghi Firestore.
 class ProfileFormScreen extends StatefulWidget {
-  // Hàm khởi tạo
   const ProfileFormScreen({super.key});
-
   @override
   State<ProfileFormScreen> createState() => _ProfileFormScreenState();
 }
@@ -32,15 +30,14 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
   final TextEditingController _soDienThoaiController = TextEditingController();
   final TextEditingController _soCccdController = TextEditingController();
 
-  BenhNhan? _hoSoDangSua; // null = đang thêm mới
+  BenhNhan? _hoSoDangSua;
   DateTime? _ngaySinh;
   String _gioiTinh = kGioiTinh.first;
   String _moiQuanHe = 'Con';
   bool _daNapDuLieu = false;
-
   bool get _laSua => _hoSoDangSua != null;
 
-  // Đọc arguments 1 lần (không đọc được trong initState vì chưa có context đầy đủ)
+  // Đọc arguments 1 lần
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -69,8 +66,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
     super.dispose();
   }
 
-  // Danh sách quan hệ cho ô chọn: hồ sơ "Bản thân" giữ nguyên, hồ sơ người
-  // thân không được chọn "Bản thân" (mỗi tài khoản chỉ có 1 hồ sơ bản thân).
+  // Danh sách quan hệ cho
   List<String> get _danhSachQuanHe {
     if (_moiQuanHe == 'Bản thân') return const ['Bản thân'];
     return kMoiQuanHe.where((q) => q != 'Bản thân').toList();
@@ -105,7 +101,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
 
   String? _kiemTraSoDienThoai(String? giaTri) {
     final String so = (giaTri ?? '').trim();
-    if (so.isEmpty) return null; // không bắt buộc (trẻ em có thể không có)
+    if (so.isEmpty) return null;
     if (!RegExp(r'^0\d{9}$').hasMatch(so)) {
       return 'Số điện thoại gồm 10 số, bắt đầu bằng 0';
     }
@@ -114,12 +110,12 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
 
   String? _kiemTraCccd(String? giaTri) {
     final String so = (giaTri ?? '').trim();
-    if (so.isEmpty) return null; // không bắt buộc (trẻ em chưa có CCCD)
+    if (so.isEmpty) return null;
     if (!RegExp(r'^\d{12}$').hasMatch(so)) return 'Số CCCD gồm đúng 12 số';
     return null;
   }
 
-  // Bấm "LƯU HỒ SƠ" / "Lưu thay đổi"
+  // Button lưu thay đổi
   void _luuHoSo() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
@@ -136,8 +132,6 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
       soCccd: soCccd.isEmpty ? null : soCccd,
       diaChi: hoSoCu?.diaChi,
     );
-    // TODO: model BenhNhan chưa có trường số điện thoại – nhắn Hải thêm
-    // `soDienThoai` thì lưu _soDienThoaiController.text vào đây.
 
     if (hoSoCu == null) {
       MockData.benhNhan.add(hoSoMoi);
@@ -150,14 +144,13 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          hoSoCu == null ? 'Đã thêm hồ sơ' : 'Đã lưu thay đổi',
-        ),
+        content: Text(hoSoCu == null ? 'Đã thêm hồ sơ' : 'Đã lưu thay đổi'),
       ),
     );
     Navigator.pop(context, true);
   }
 
+  // Thêm bệnh nhân mới
   int _taoMaBenhNhanMoi() {
     int maLonNhat = 0;
     for (final BenhNhan b in MockData.benhNhan) {
@@ -166,11 +159,10 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
     return maLonNhat + 1;
   }
 
-  // Bấm "Xóa hồ sơ" → hỏi lại → xóa
+  // Xóa hồ sơ bệnh nhân
   Future<void> _xoaHoSo() async {
     final BenhNhan? hoSo = _hoSoDangSua;
     if (hoSo == null) return;
-
     final bool? dongY = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -192,11 +184,9 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
       ),
     );
     if (dongY != true || !mounted) return;
-
     MockData.benhNhan.removeWhere((b) => b.maBenhNhan == hoSo.maBenhNhan);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Đã xóa hồ sơ')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Đã xóa hồ sơ')));
     Navigator.pop(context, true);
   }
 
@@ -204,7 +194,6 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
   @override
   Widget build(BuildContext context) {
     final bool laBanThan = _moiQuanHe == 'Bản thân';
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: GuardianAppBar(tieuDe: _laSua ? 'SỬA HỒ SƠ' : 'THÊM HỒ SƠ'),
@@ -292,7 +281,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
     );
   }
 
-  // Ảnh đại diện tròn + chữ "THÊM/ĐỔI ẢNH ĐẠI DIỆN"
+  // Ảnh đại diện tròn
   Widget _buildAnhDaiDien() {
     return Column(
       children: [
@@ -327,7 +316,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
     );
   }
 
-  // Ô chọn (dropdown) có nhãn phía trên, cùng kiểu với AppTextField
+  // Dropdown
   Widget _buildOChon({
     required String nhan,
     required String giaTri,
@@ -344,7 +333,6 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
         Text(nhan, style: AppTextStyles.label),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
-          // Flutter 3.35+ đổi tên thành initialValue; `value` vẫn chạy ở mọi bản.
           // ignore: deprecated_member_use
           value: danhSach.contains(giaTri) ? giaTri : danhSach.first,
           items: [

@@ -2,13 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/widgets/widgets.dart';
 
-/// Thanh tiêu đề xanh đậm của các màn con trong module Người thân
-/// (Figma: Tạo hồ sơ, Chọn khám): nút quay lại tròn trắng + tiêu đề chữ trắng.
-///   Scaffold(appBar: const GuardianAppBar(tieuDe: 'CHỌN HỒ SƠ KHÁM'), ...)
+// Thiết kế app bar của đặt lịch
 class GuardianAppBar extends StatelessWidget implements PreferredSizeWidget {
-  // Hàm khởi tạo
   const GuardianAppBar({super.key, required this.tieuDe});
-
   final String tieuDe;
 
   // Giao diện

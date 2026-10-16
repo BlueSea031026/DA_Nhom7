@@ -4,9 +4,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
 
-/// Thẻ 1 hồ sơ trong màn "Hồ sơ gia đình" (Figma: Trang profile của gia đình):
-/// icon người, họ tên, ngày sinh, "Quan hệ: ...", bút chì sửa ở góc phải
-/// và nút "Chọn hồ sơ" ở góc dưới.
+// Vẽ 1 dòng item trong hồ sơ gia đình
 class FamilyProfileCard extends StatelessWidget {
   const FamilyProfileCard({
     super.key,
@@ -18,15 +16,15 @@ class FamilyProfileCard extends StatelessWidget {
 
   final BenhNhan benhNhan;
 
-  /// Mỗi thẻ 1 màu nền (trắng, xanh, lục, hồng…) giống Figma.
   final Color mauNen;
   final VoidCallback onSua;
   final VoidCallback onChon;
 
   @override
   Widget build(BuildContext context) {
-    final TextStyle kieuChu =
-        AppTextStyles.body.copyWith(color: AppColors.textPrimary);
+    final TextStyle kieuChu = AppTextStyles.body.copyWith(
+      color: AppColors.textPrimary,
+    );
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
@@ -60,8 +58,11 @@ class FamilyProfileCard extends StatelessWidget {
                       tooltip: 'Sửa hồ sơ',
                       onPressed: onSua,
                       visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.edit,
-                          size: 20, color: AppColors.textPrimary),
+                      icon: const Icon(
+                        Icons.edit,
+                        size: 20,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ],
                 ),

@@ -2,16 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../core/widgets/widgets.dart';
 
-/// Thanh tiến trình 4 bước cuối của luồng đặt lịch:
-/// 1 Ngày giờ → 2 Xác nhận → 3 Thanh toán → 4 Mã QR.
-///   BookingStepIndicator(buocHienTai: 2)
+// Thanh tiến trình 4 bước của đặt lịch
 class BookingStepIndicator extends StatelessWidget {
-  // Hàm khởi tạo
   const BookingStepIndicator({super.key, required this.buocHienTai});
-
-  /// Bước đang ở (1–4)
   final int buocHienTai;
-
   static const List<String> _tenBuoc = [
     'Ngày giờ',
     'Xác nhận',
@@ -40,6 +34,7 @@ class BookingStepIndicator extends StatelessWidget {
     );
   }
 
+  // Thiết kế giao diện cho các bước
   Widget _buildBuoc(int soBuoc, String ten) {
     final bool daXong = soBuoc < buocHienTai;
     final bool dangO = soBuoc == buocHienTai;

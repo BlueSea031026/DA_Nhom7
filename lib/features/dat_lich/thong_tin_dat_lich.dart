@@ -1,14 +1,7 @@
 import '../../core/mock/mock_data.dart';
 import '../../models/models.dart';
 
-/// Thông tin đặt lịch đang chọn dở, truyền qua arguments giữa các màn
-/// trong luồng đặt lịch:
-///   Chọn hồ sơ → Hình thức khám → Cơ sở → Chuyên khoa → Bác sĩ
-///   → [Chọn ngày giờ] → [Xác nhận] → [Thanh toán] → [Mã QR]
-///
-/// Các màn trước (của Lân, Thương) chưa xong nên màn Chọn ngày giờ nhận được
-/// nhiều kiểu arguments (xem ThongTinDatLich.tuArguments). Khi cả nhóm thống
-/// nhất, chỉ cần truyền 1 đối tượng ThongTinDatLich đi suốt luồng.
+// Thông tin đặt lịch của bệnh nhân
 class ThongTinDatLich {
   // Hàm khởi tạo
   ThongTinDatLich({
@@ -19,19 +12,19 @@ class ThongTinDatLich {
     this.lyDoKham,
   });
 
-  /// Người được khám (bản thân hoặc người thân)
+  // Người được khám (bản thân hoặc người thân)
   final BenhNhan benhNhan;
   final BacSi bacSi;
   final HinhThucKham hinhThucKham;
 
-  /// Khung giờ đã chọn (null khi chưa chọn)
+  // Khung giờ đã chọn
   final LichLamViec? lich;
   final String? lyDoKham;
 
   ChuyenKhoa get chuyenKhoa => MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
   CoSoYTe get coSo => MockData.coSoById(chuyenKhoa.maCoSo);
 
-  /// Thẻ BHYT còn hiệu lực của người khám (chỉ khi chọn khám BHYT)
+  // Thẻ BHYT còn hiệu lực của người khám
   TheBhyt? get theBhyt {
     if (hinhThucKham != HinhThucKham.bhyt) return null;
     final TheBhyt? the = MockData.theBhytCuaBenhNhan(benhNhan.maBenhNhan);
@@ -40,7 +33,7 @@ class ThongTinDatLich {
 
   int get giaKham => chuyenKhoa.giaKhamCoBan;
 
-  /// Số tiền phải trả sau khi trừ phần BHYT chi trả
+  // Số tiền phải trả sau khi trừ phần BHYT chi trả
   int get tienPhaiTra => theBhyt?.tienPhaiTra(giaKham) ?? giaKham;
 
   int get tienBhytChiTra => giaKham - tienPhaiTra;
@@ -56,20 +49,18 @@ class ThongTinDatLich {
   }
 
   /// Đọc arguments của màn Chọn ngày giờ:
-  ///   - ThongTinDatLich → dùng luôn
-  ///   - BacSi           → đặt cho hồ sơ bản thân của tài khoản đang đăng nhập
-  ///   - không có        → dữ liệu mẫu (bác sĩ đầu tiên) để thử giao diện
   static ThongTinDatLich tuArguments(Object? thamSo) {
     if (thamSo is ThongTinDatLich) return thamSo;
     final BacSi bacSi = thamSo is BacSi ? thamSo : MockData.bacSi.first;
     return ThongTinDatLich(benhNhan: _hoSoMacDinh(), bacSi: bacSi);
   }
 
-  /// Số tiền phải trả của 1 lượt đặt lịch đã tạo (giá khám − phần BHYT).
+  // Số tiền phải trả của 1 lượt đặt lịch đã tạo
   static int tienPhaiTraCua(DatLich datLich) {
     final LichLamViec lich = MockData.lichById(datLich.maLich);
     final BacSi bacSi = MockData.bacSiById(lich.maBacSi);
-    final int giaKham = MockData.chuyenKhoaById(bacSi.maChuyenKhoa).giaKhamCoBan;
+    final int giaKham = MockData.chuyenKhoaById(bacSi.maChuyenKhoa)
+        .giaKhamCoBan;
     final int? maBhyt = datLich.maBhyt;
     if (datLich.hinhThucKham != HinhThucKham.bhyt || maBhyt == null) {
       return giaKham;
@@ -80,7 +71,7 @@ class ThongTinDatLich {
     return giaKham;
   }
 
-  /// Bản sao của DatLich với trạng thái mới (model không có copyWith).
+  /// Bản sao của DatLich với trạng thái mới (
   static DatLich doiTrangThai(DatLich d, TrangThaiDatLich trangThaiMoi) {
     return DatLich(
       maDatLich: d.maDatLich,

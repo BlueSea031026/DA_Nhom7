@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/widgets/widgets.dart';
 
-/// 1 ô trong khối "TRUY CẬP NHANH" của Trang chủ Người giám hộ:
-/// nền trắng bo góc, icon xanh đậm + chữ đậm bên phải.
+// Thiết kế item trong khối truy cập nhanh
 class QuickAccessItem extends StatelessWidget {
   const QuickAccessItem({
     super.key,
@@ -13,11 +12,10 @@ class QuickAccessItem extends StatelessWidget {
   });
 
   final IconData icon;
-
-  /// Không truyền nhãn → chỉ hiện icon (VD ô Thông báo).
   final String? nhan;
   final VoidCallback onTap;
 
+  // Giao diện
   @override
   Widget build(BuildContext context) {
     final String? nhanHienThi = nhan;

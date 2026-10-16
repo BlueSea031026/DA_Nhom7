@@ -19,9 +19,7 @@ import 'widgets/booking_step_indicator.dart';
 ///
 /// arguments: ThongTinDatLich (đã có lich). Không có → dữ liệu mẫu để thử.
 class ConfirmBookingScreen extends StatefulWidget {
-  // Hàm khởi tạo
   const ConfirmBookingScreen({super.key});
-
   @override
   State<ConfirmBookingScreen> createState() => _ConfirmBookingScreenState();
 }
@@ -31,6 +29,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   ThongTinDatLich? _thongTin;
   bool _dongYDieuKhoan = false;
 
+  // Lấy các thông tin người khám, bác sĩ, khung giờ, hình thức khám
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -38,12 +37,10 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
     ThongTinDatLich thongTin = ThongTinDatLich.tuArguments(
       ModalRoute.of(context)?.settings.arguments,
     );
-    // Mở thẳng từ menu thử (chưa có khung giờ) → lấy khung giờ sắp tới đầu tiên
     if (thongTin.lich == null) {
-      final List<LichLamViec> lichSapToi =
-          MockData.lichCuaBacSi(thongTin.bacSi.maBacSi)
-              .where((l) => !l.ngay.isBefore(MockData.homNay) && l.conTrong)
-              .toList();
+      final List<LichLamViec> lichSapToi = MockData.lichCuaBacSi(
+        thongTin.bacSi.maBacSi,
+      ).where((l) => !l.ngay.isBefore(MockData.homNay) && l.conTrong).toList();
       if (lichSapToi.isNotEmpty) {
         thongTin = thongTin.copyWith(lich: lichSapToi.last);
       }
@@ -59,7 +56,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
     super.dispose();
   }
 
-  // Tạo lượt đặt lịch mới (Chờ thanh toán) rồi sang màn thanh toán
+  // Tạo lượt đặt lịch mới
   void _xacNhanDatLich() {
     final ThongTinDatLich thongTin = _thongTin!;
     final LichLamViec? lich = thongTin.lich;
@@ -78,17 +75,16 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
       maBenhNhan: thongTin.benhNhan.maBenhNhan,
       datBoi: thongTin.benhNhan.maTaiKhoanQuanLy,
       maLich: lich.maLich,
-      hinhThucKham: theBhyt == null ? HinhThucKham.khongBhyt : HinhThucKham.bhyt,
+      hinhThucKham: theBhyt == null
+          ? HinhThucKham.khongBhyt
+          : HinhThucKham.bhyt,
       maBhyt: theBhyt?.maBhyt,
       lyDoKham: lyDoKham.isEmpty ? null : lyDoKham,
-      // VD: DL260008 (DL + 2 số cuối của năm + mã 4 chữ số)
       maXacNhan:
           'DL${MockData.homNay.year % 100}${maDatLichMoi.toString().padLeft(4, '0')}',
       ngayDat: DateTime.now(),
     );
-    // TODO: khi nối Firebase ghi vào collection DatLich thay vì MockData.
     MockData.datLich.add(datLichMoi);
-
     Navigator.pushNamed(
       context,
       DatLichRoutes.onlinePayment,
@@ -250,6 +246,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
     );
   }
 
+  // Nhãn cảnh báo
   Widget _buildCanhBao(String noiDung) {
     return Container(
       padding: const EdgeInsets.all(10),

@@ -18,9 +18,9 @@ import 'widgets/booking_step_indicator.dart';
 ///
 /// arguments: DatLich. Không có → lượt "Đã thanh toán" đầu tiên trong MockData.
 class BookingQrScreen extends StatelessWidget {
-  // Hàm khởi tạo
   const BookingQrScreen({super.key});
 
+  // Lấy lại thông tin bệnh nhân đã đặt lịch
   DatLich _layDatLich(BuildContext context) {
     final Object? thamSo = ModalRoute.of(context)?.settings.arguments;
     if (thamSo is DatLich) return thamSo;
@@ -30,7 +30,7 @@ class BookingQrScreen extends StatelessWidget {
     );
   }
 
-  // Về màn đầu tiên trong chồng (Trang chủ / menu thử)
+  // Về màn đầu tiên trong chồng
   void _veTrangChu(BuildContext context) {
     Navigator.popUntil(context, (route) => route.isFirst);
   }
@@ -44,8 +44,7 @@ class BookingQrScreen extends StatelessWidget {
     final ChuyenKhoa chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
     final CoSoYTe coSo = MockData.coSoById(chuyenKhoa.maCoSo);
     final BenhNhan benhNhan = MockData.benhNhanById(datLich.maBenhNhan);
-    final bool daThanhToan =
-        datLich.trangThai == TrangThaiDatLich.daThanhToan;
+    final bool daThanhToan = datLich.trangThai == TrangThaiDatLich.daThanhToan;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -161,7 +160,9 @@ class BookingQrScreen extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            daThanhToan ? 'Đặt lịch thành công!' : 'Đã giữ chỗ – chờ thanh toán',
+            daThanhToan
+                ? 'Đặt lịch thành công!'
+                : 'Đã giữ chỗ – chờ thanh toán',
             style: AppTextStyles.h2,
             textAlign: TextAlign.center,
           ),
@@ -186,6 +187,7 @@ class BookingQrScreen extends StatelessWidget {
     );
   }
 
+  // Giao diện lưu ý
   Widget _buildLuuY(bool daThanhToan) {
     final List<String> danhSachLuuY = [
       'Đến trước giờ hẹn 15 phút và đưa mã QR này cho quầy Lễ tân.',
