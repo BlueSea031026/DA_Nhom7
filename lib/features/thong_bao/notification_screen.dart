@@ -9,9 +9,6 @@ import '../lich_su/lich_su_routes.dart';
 /// Trung tâm thông báo · FR-13, FR-14
 /// Figma: chưa có – tự thiết kế
 /// Phụ trách: Hải
-///
-/// Hiện thông báo xác nhận, nhắc lịch, hủy lịch, thanh toán.
-/// Bấm 1 thông báo → đánh dấu đã đọc → mở Chi tiết lịch khám.
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
 
@@ -23,7 +20,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   late final List<ThongBao> _danhSach =
       MockData.thongBaoCuaTaiKhoan(MockData.taiKhoanDangNhap.maTaiKhoan);
 
-  /// Mã các thông báo đã đọc (giai đoạn giao diện: lưu tạm trong màn hình).
+  /// Mã các thông báo đã đọc.
   late final Set<int> _daDoc = {
     for (final t in _danhSach)
       if (t.daDoc) t.maThongBao,

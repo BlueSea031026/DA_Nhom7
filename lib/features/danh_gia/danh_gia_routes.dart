@@ -2,8 +2,6 @@ import '../../app/app_page.dart';
 import 'rate_doctor_screen.dart';
 
 /// Route của module "Đánh giá bác sĩ" – phụ trách: Hải.
-/// Chỉ Hải sửa file này. Thêm màn mới: thêm 1 hằng route + 1 dòng AppPage.
-/// Mở màn: Navigator.pushNamed(context, DanhGiaRoutes.tenRoute, arguments: ...);
 class DanhGiaRoutes {
   DanhGiaRoutes._();
 

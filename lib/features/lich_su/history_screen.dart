@@ -9,11 +9,6 @@ import 'lich_su_routes.dart';
 /// Lịch sử đặt lịch · FR-16
 /// Figma: Bệnh Nhân › Lịch sử khám
 /// Phụ trách: Hải
-///
-/// ĐÂY LÀ MÀN MẪU cho cả nhóm tham khảo:
-///  - lấy dữ liệu từ MockData (không viết cứng trong widget),
-///  - dùng widget chung AppHeader / AppCard / StatusChip / InfoRow / EmptyState,
-///  - chuyển màn và truyền tham số bằng Navigator.pushNamed(..., arguments:).
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
 

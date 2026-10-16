@@ -9,9 +9,6 @@ import 'widgets/note_box.dart';
 /// Hóa đơn / lịch sử thanh toán · FR-17
 /// Figma: Bệnh Nhân › Hóa đơn
 /// Phụ trách: Hải
-///
-/// Nhận tham số: maDatLich (int) từ màn Chi tiết lịch khám.
-/// Mở thẳng từ menu tạm thì lấy lượt đặt lịch đầu tiên.
 class InvoiceDetailScreen extends StatelessWidget {
   const InvoiceDetailScreen({super.key});
 

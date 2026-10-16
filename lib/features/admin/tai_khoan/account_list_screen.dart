@@ -19,7 +19,7 @@ class _AccountListScreenState extends State<AccountListScreen> {
   String _tuKhoa = '';
   VaiTro? _locVaiTro;
 
-  /// Mã các tài khoản đang bị khóa (giai đoạn giao diện: lưu tạm).
+  /// Mã các tài khoản đang bị khóa.
   final Set<int> _biKhoa = {
     for (final t in MockData.taiKhoan)
       if (!t.dangHoatDong) t.maTaiKhoan,

@@ -7,9 +7,6 @@ import '../../../models/models.dart';
 /// Thêm tài khoản nhân viên · FR-39
 /// Figma: Quản trị viên › tHÊM TÀI KHOẢN
 /// Phụ trách: Hải
-///
-/// Admin chỉ tạo tài khoản nhân viên (Bác sĩ, Lễ tân, Thu ngân, Quản trị viên).
-/// Bệnh nhân / người giám hộ tự đăng ký trên app.
 class AccountFormScreen extends StatefulWidget {
   const AccountFormScreen({super.key});
 

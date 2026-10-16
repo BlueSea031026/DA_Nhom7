@@ -14,8 +14,6 @@ import '../thong_ke/thong_ke_routes.dart';
 /// Trang chủ Quản trị viên
 /// Figma: Quản trị viên › Trang chủ admin
 /// Phụ trách: Hải
-///
-/// Các ô menu mở màn của người khác (Lân, Thương) qua route của họ.
 class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({super.key});
 

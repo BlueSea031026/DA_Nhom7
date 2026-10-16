@@ -5,8 +5,6 @@ import 'invoice_detail_screen.dart';
 import 'cancel_reschedule_screen.dart';
 
 /// Route của module "Lịch sử, hóa đơn, hủy/đổi lịch" – phụ trách: Hải.
-/// Chỉ Hải sửa file này. Thêm màn mới: thêm 1 hằng route + 1 dòng AppPage.
-/// Mở màn: Navigator.pushNamed(context, LichSuRoutes.tenRoute, arguments: ...);
 class LichSuRoutes {
   LichSuRoutes._();
 
