@@ -7,7 +7,16 @@ import '../hinh_thuc_kham/hinh_thuc_kham_routes.dart';
 import 'ho_so_nguoi_than_routes.dart';
 import 'widgets/guardian_app_bar.dart';
 
-// Giao diện đăng ký lịch khám
+/// Đặt lịch cho ai? · FR-43
+/// Figma: Người thân › Chọn khám ("CHỌN HỒ SƠ KHÁM")
+/// Phụ trách: Hiếu
+///
+/// Hiện các hồ sơ (bản thân + người thân) của tài khoản, chọn 1 hồ sơ bằng
+/// nút tròn rồi bấm "Tiếp tục" → sang Chọn hình thức khám (màn của Lân),
+/// gửi kèm hồ sơ đã chọn qua arguments (BenhNhan).
+///
+/// arguments (không bắt buộc): int maTaiKhoan. Không truyền → tài khoản
+/// người giám hộ trong MockData.
 class ChooseProfileScreen extends StatefulWidget {
   const ChooseProfileScreen({super.key});
   @override

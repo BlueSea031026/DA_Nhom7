@@ -15,6 +15,13 @@ import 'widgets/patient_bottom_nav.dart';
 import 'widgets/profile_menu_item.dart';
 
 /// Trang cá nhân
+/// Trang cá nhân
+/// Figma: Bệnh Nhân › cÁ NHÂN (2 frame: trang cá nhân + hộp thoại đăng xuất)
+/// Phụ trách: Hiếu
+///
+/// Gồm: ảnh đại diện, họ tên, số điện thoại (ẩn bớt số), danh sách chức năng
+/// (Chỉnh sửa trang cá nhân → xem thông tin cá nhân, Bảo mật, Thông tin BHYT, Điều khoản sử dụng,
+/// Đăng xuất) và thanh điều hướng dưới (đang chọn "Cá nhân").
 class ProfileScreen extends StatelessWidget {
   // Hàm khởi tạo
   const ProfileScreen({super.key});

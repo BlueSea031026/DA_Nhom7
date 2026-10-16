@@ -12,7 +12,13 @@ import 'widgets/guardian_bottom_nav.dart';
 import 'widgets/guardian_header.dart';
 import 'widgets/quick_access_item.dart';
 
-// Trang chủ Người giám hộ
+/// Trang chủ Người giám hộ
+/// Figma: Người thân › trang chủ
+/// Phụ trách: Hiếu
+///
+/// Gồm: phần đầu tím xanh (lời chào + chuông), thẻ "ĐẶT LỊCH KHÁM",
+/// nút "HỒ SƠ GIA ĐÌNH", dải "Lịch hẹn sắp tới" của cả gia đình,
+/// khối "TRUY CẬP NHANH" và thanh điều hướng dưới.
 class GuardianHomeScreen extends StatefulWidget {
   const GuardianHomeScreen({super.key});
   @override

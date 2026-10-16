@@ -5,7 +5,16 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
 
-// Lịch sử đánh giá của các bác sĩ
+/// Đánh giá từ bệnh nhân · FR-24
+/// Figma: Bác sĩ › Đánh giá
+/// Phụ trách: Hiếu
+///
+/// Hiển thị thông tin bác sĩ (ảnh, chuyên ngành, điểm trung bình, số đánh giá)
+/// và danh sách đánh giá của bệnh nhân. Dữ liệu lấy từ MockData.
+///
+/// Mở màn:
+///   Navigator.pushNamed(context, DanhGiaBacSiRoutes.doctorReviews);            // bác sĩ đang đăng nhập
+///   Navigator.pushNamed(context, DanhGiaBacSiRoutes.doctorReviews, arguments: maBacSi); // chỉ định bác sĩ
 class DoctorReviewsScreen extends StatelessWidget {
   const DoctorReviewsScreen({super.key, this.maBacSi});
   final int? maBacSi;

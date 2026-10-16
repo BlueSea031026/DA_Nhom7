@@ -8,7 +8,16 @@ import 'dat_lich_routes.dart';
 import 'thong_tin_dat_lich.dart';
 import 'widgets/booking_step_indicator.dart';
 
-// Xác nhận thông tin đăng ký
+/// Xác nhận thông tin đăng ký · FR-10
+/// Figma: Chưa có – tự thiết kế
+/// Phụ trách: Hiếu
+///
+/// Tóm tắt: người khám, bác sĩ – chuyên khoa – cơ sở, ngày giờ, hình thức
+/// khám (BHYT/không), chi phí (giá khám, BHYT chi trả, phải trả); ô lý do khám
+/// và ô đồng ý điều khoản. Bấm "Xác nhận đặt lịch" → tạo DatLich trạng thái
+/// "Chờ thanh toán" → sang Thanh toán online.
+///
+/// arguments: ThongTinDatLich (đã có lich). Không có → dữ liệu mẫu để thử.
 class ConfirmBookingScreen extends StatefulWidget {
   const ConfirmBookingScreen({super.key});
   @override

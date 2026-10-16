@@ -9,7 +9,14 @@ import '../lich_su/lich_su_routes.dart';
 import 'thong_tin_dat_lich.dart';
 import 'widgets/booking_step_indicator.dart';
 
-// Màn hình mã QR đặt lịch
+/// Màn hình mã QR đặt lịch · FR-12
+/// Figma: Chưa có – tự thiết kế
+/// Phụ trách: Hiếu
+///
+/// Mã QR chứa maXacNhan để Lễ tân quét check-in (FR-26) hoặc nhập tay (FR-28).
+/// Kèm trạng thái, thông tin lịch khám và lưu ý khi đến khám.
+///
+/// arguments: DatLich. Không có → lượt "Đã thanh toán" đầu tiên trong MockData.
 class BookingQrScreen extends StatelessWidget {
   const BookingQrScreen({super.key});
 
