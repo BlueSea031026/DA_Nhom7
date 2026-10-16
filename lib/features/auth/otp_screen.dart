@@ -9,11 +9,7 @@ import 'auth_mock.dart';
 import 'auth_routes.dart';
 import 'widgets/auth_widgets.dart';
 
-/// Xác thực OTP · FR-01
-/// Dùng chung cho 2 luồng (truyền [OtpArgs] qua arguments):
-///  - Đăng ký → Đăng ký thành công
-///  - Quên mật khẩu → Đặt mật khẩu mới
-/// Luồng ngoại lệ FR-01: OTP sai/hết hạn → cho gửi lại, giới hạn số lần thử.
+/// Xác thực OTP
 
 class OtpScreen extends StatefulWidget {
   const OtpScreen({super.key});

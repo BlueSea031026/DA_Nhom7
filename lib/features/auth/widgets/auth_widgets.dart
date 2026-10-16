@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/widgets/widgets.dart';
 
-/// Widget riêng của module auth. Lễ tân dùng lại [AuthLogo].
-
-/// Logo chữ thập xanh
+/// Logo
 class AuthLogo extends StatelessWidget {
   const AuthLogo({super.key, this.size = 56});
 
@@ -44,7 +42,7 @@ class AuthLogo extends StatelessWidget {
   }
 }
 
-/// Logo + tiêu đề in hoa + mô tả ngắn
+///tiêu đề
 class AuthTitle extends StatelessWidget {
   const AuthTitle({super.key, required this.title, this.subtitle});
 
@@ -80,7 +78,7 @@ class AuthTitle extends StatelessWidget {
   }
 }
 
-/// Nút quay lại hình tròn nền trắng
+/// Nút quay lại
 class AuthBackButton extends StatelessWidget {
   const AuthBackButton({super.key});
 
@@ -99,7 +97,7 @@ class AuthBackButton extends StatelessWidget {
   }
 }
 
-/// Khung chung cho các màn auth
+/// Khung chung
 class AuthScaffold extends StatelessWidget {
   const AuthScaffold({super.key, required this.child, this.showBack = true});
 
@@ -134,7 +132,7 @@ class AuthScaffold extends StatelessWidget {
   }
 }
 
-/// Dòng chữ + link ("Chưa có tài khoản? Đăng ký").
+/// link
 class AuthLinkRow extends StatelessWidget {
   const AuthLinkRow({
     super.key,
@@ -173,7 +171,7 @@ class AuthLinkRow extends StatelessWidget {
   }
 }
 
-/// Thông báo lỗi chung của form (sai mật khẩu, tài khoản bị khóa...).
+/// Thông báo lỗi
 class AuthErrorBox extends StatelessWidget {
   const AuthErrorBox(this.message, {super.key});
 
@@ -203,7 +201,7 @@ class AuthErrorBox extends StatelessWidget {
   }
 }
 
-/// Màn thành công nền xanh đậm (đăng ký thành công)
+/// Màn thành công
 class AuthSuccessView extends StatelessWidget {
   const AuthSuccessView({
     super.key,
@@ -289,7 +287,7 @@ class AuthSuccessView extends StatelessWidget {
   }
 }
 
-/// Ô nhập mật khẩu có nút ẩn/hiện.
+/// Ô nhập mật khẩu
 class PasswordField extends StatefulWidget {
   const PasswordField({
     super.key,

@@ -7,7 +7,7 @@ import 'auth_mock.dart';
 import 'auth_routes.dart';
 import 'widgets/auth_widgets.dart';
 
-/// Đăng ký tài khoản + chọn loại (cá nhân / người giám hộ) · FR-01
+/// Đăng ký tài khoản + chọn loại (cá nhân / người giám hộ)
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});

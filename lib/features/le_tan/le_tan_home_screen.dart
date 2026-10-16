@@ -10,8 +10,6 @@ import '../auth/auth_routes.dart';
 import 'le_tan_mock.dart';
 import 'le_tan_routes.dart';
 
-/// Trang chủ Lễ tân
-
 class LeTanHomeScreen extends StatefulWidget {
   const LeTanHomeScreen({super.key});
 
@@ -22,7 +20,6 @@ class LeTanHomeScreen extends StatefulWidget {
 class _LeTanHomeScreenState extends State<LeTanHomeScreen> {
   int _tab = 0;
 
-  ///Dùng tài khoản Lễ tân mẫu.
   TaiKhoan get _taiKhoan =>
       AuthMock.dangNhap ??
       MockData.taiKhoan.firstWhere((t) => t.vaiTro == VaiTro.leTan);
@@ -71,7 +68,6 @@ class _TrangChuTab extends StatefulWidget {
 }
 
 class _TrangChuTabState extends State<_TrangChuTab> {
-  /// Mở màn khác, quay về thì cập nhật lại số liệu.
   Future<void> _mo(String route) async {
     await Navigator.pushNamed(context, route);
     if (mounted) setState(() {});
@@ -186,7 +182,7 @@ class _SoLieu extends StatelessWidget {
   }
 }
 
-/// Ô chức năng lớn
+/// Ô chức năng
 class _ChucNangCard extends StatelessWidget {
   const _ChucNangCard({
     required this.icon,

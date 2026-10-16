@@ -38,31 +38,95 @@ class AppRoutes {
   static String get manDauTien => cheDoDev ? devMenu : AuthRoutes.welcome;
 
   static final List<ModuleGroup> modules = [
-    ModuleGroup(name: 'Tài khoản & đăng nhập', owner: 'Duy', pages: AuthRoutes.pages),
+    ModuleGroup(
+      name: 'Tài khoản & đăng nhập',
+      owner: 'Duy',
+      pages: AuthRoutes.pages,
+    ),
     ModuleGroup(name: 'Lễ tân', owner: 'Duy', pages: LeTanRoutes.pages),
-    ModuleGroup(name: 'Hình thức khám, BHYT, cơ sở', owner: 'Lân', pages: HinhThucKhamRoutes.pages),
+    ModuleGroup(
+      name: 'Hình thức khám, BHYT, cơ sở',
+      owner: 'Lân',
+      pages: HinhThucKhamRoutes.pages,
+    ),
     ModuleGroup(name: 'Thu ngân', owner: 'Lân', pages: ThuNganRoutes.pages),
-    ModuleGroup(name: 'Quản trị · Cơ sở y tế', owner: 'Lân', pages: AdminCoSoRoutes.pages),
-    ModuleGroup(name: 'Chọn chuyên khoa & bác sĩ', owner: 'Thương', pages: ChonBacSiRoutes.pages),
+    ModuleGroup(
+      name: 'Quản trị · Cơ sở y tế',
+      owner: 'Lân',
+      pages: AdminCoSoRoutes.pages,
+    ),
+    ModuleGroup(
+      name: 'Chọn chuyên khoa & bác sĩ',
+      owner: 'Thương',
+      pages: ChonBacSiRoutes.pages,
+    ),
     ModuleGroup(name: 'Bác sĩ', owner: 'Thương', pages: BacSiRoutes.pages),
-    ModuleGroup(name: 'Quản trị · Chuyên khoa', owner: 'Thương', pages: AdminChuyenKhoaRoutes.pages),
-    ModuleGroup(name: 'Quản trị · Bác sĩ', owner: 'Thương', pages: AdminBacSiRoutes.pages),
-    ModuleGroup(name: 'Quản trị · Lịch làm việc', owner: 'Thương', pages: AdminLichLamViecRoutes.pages),
-    ModuleGroup(name: 'Bệnh nhân · Trang chủ', owner: 'Hiếu', pages: BenhNhanHomeRoutes.pages),
-    ModuleGroup(name: 'Người giám hộ & hồ sơ', owner: 'Hiếu', pages: HoSoNguoiThanRoutes.pages),
-    ModuleGroup(name: 'Đặt lịch & thanh toán online', owner: 'Hiếu', pages: DatLichRoutes.pages),
-    ModuleGroup(name: 'Bác sĩ · Đánh giá nhận được', owner: 'Hiếu', pages: DanhGiaBacSiRoutes.pages),
-    ModuleGroup(name: 'Lịch sử, hóa đơn, hủy/đổi lịch', owner: 'Hải', pages: LichSuRoutes.pages),
+    ModuleGroup(
+      name: 'Quản trị · Chuyên khoa',
+      owner: 'Thương',
+      pages: AdminChuyenKhoaRoutes.pages,
+    ),
+    ModuleGroup(
+      name: 'Quản trị · Bác sĩ',
+      owner: 'Thương',
+      pages: AdminBacSiRoutes.pages,
+    ),
+    ModuleGroup(
+      name: 'Quản trị · Lịch làm việc',
+      owner: 'Thương',
+      pages: AdminLichLamViecRoutes.pages,
+    ),
+    ModuleGroup(
+      name: 'Bệnh nhân · Trang chủ',
+      owner: 'Hiếu',
+      pages: BenhNhanHomeRoutes.pages,
+    ),
+    ModuleGroup(
+      name: 'Người giám hộ & hồ sơ',
+      owner: 'Hiếu',
+      pages: HoSoNguoiThanRoutes.pages,
+    ),
+    ModuleGroup(
+      name: 'Đặt lịch & thanh toán online',
+      owner: 'Hiếu',
+      pages: DatLichRoutes.pages,
+    ),
+    ModuleGroup(
+      name: 'Bác sĩ · Đánh giá nhận được',
+      owner: 'Hiếu',
+      pages: DanhGiaBacSiRoutes.pages,
+    ),
+    ModuleGroup(
+      name: 'Lịch sử, hóa đơn, hủy/đổi lịch',
+      owner: 'Hải',
+      pages: LichSuRoutes.pages,
+    ),
     ModuleGroup(name: 'Thông báo', owner: 'Hải', pages: ThongBaoRoutes.pages),
-    ModuleGroup(name: 'Đánh giá bác sĩ', owner: 'Hải', pages: DanhGiaRoutes.pages),
-    ModuleGroup(name: 'Quản trị · Trang chủ', owner: 'Hải', pages: AdminHomeRoutes.pages),
-    ModuleGroup(name: 'Quản trị · Tài khoản', owner: 'Hải', pages: AdminTaiKhoanRoutes.pages),
-    ModuleGroup(name: 'Quản trị · Thống kê', owner: 'Hải', pages: AdminThongKeRoutes.pages),
+    ModuleGroup(
+      name: 'Đánh giá bác sĩ',
+      owner: 'Hải',
+      pages: DanhGiaRoutes.pages,
+    ),
+    ModuleGroup(
+      name: 'Quản trị · Trang chủ',
+      owner: 'Hải',
+      pages: AdminHomeRoutes.pages,
+    ),
+    ModuleGroup(
+      name: 'Quản trị · Tài khoản',
+      owner: 'Hải',
+      pages: AdminTaiKhoanRoutes.pages,
+    ),
+    ModuleGroup(
+      name: 'Quản trị · Thống kê',
+      owner: 'Hải',
+      pages: AdminThongKeRoutes.pages,
+    ),
   ];
 
   static Map<String, WidgetBuilder> get routes => {
-        devMenu: (_) => const DevMenuScreen(),
-        for (final g in modules)
-          for (final p in g.pages) p.route: p.builder,
-      };
+    devMenu: (_) => const DevMenuScreen(),
+    for (final g in modules)
+      for (final p in g.pages) p.route: p.builder,
+  };
 }

@@ -7,12 +7,10 @@ import 'le_tan_mock.dart';
 import 'le_tan_routes.dart';
 import 'widgets/dat_lich_info_card.dart';
 
-/// Tiếp nhận thành công
-
 class CheckinSuccessScreen extends StatelessWidget {
   const CheckinSuccessScreen({super.key});
 
-  /// Về Trang chủ Lễ tân
+  /// Về Trang chủ
   static void _veTrangChu(BuildContext context) {
     Navigator.popUntil(
       context,
@@ -94,7 +92,7 @@ class CheckinSuccessScreen extends StatelessWidget {
   }
 }
 
-/// Số thứ tự khám + phòng khám (bác sĩ).
+/// Số thứ tự khám + phòng khám
 class _SoThuTu extends StatelessWidget {
   const _SoThuTu({required this.datLich});
 
