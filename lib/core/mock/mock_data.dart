@@ -110,6 +110,7 @@ class MockData {
     DatLich(maDatLich: 5, maBenhNhan: 4, datBoi: 2, maLich: 7, hinhThucKham: HinhThucKham.khongBhyt, lyDoKham: 'Sâu răng', maXacNhan: 'DL260003', trangThai: TrangThaiDatLich.daDen, ngayDat: _ngay(-3)),
     DatLich(maDatLich: 6, maBenhNhan: 5, datBoi: 2, maLich: 2, hinhThucKham: HinhThucKham.khongBhyt, lyDoKham: 'Tái khám huyết áp', maXacNhan: 'DL260004', ngayDat: _ngay(-1)),
     DatLich(maDatLich: 7, maBenhNhan: 4, datBoi: 2, maLich: 9, hinhThucKham: HinhThucKham.khongBhyt, lyDoKham: 'Sốt cao', maXacNhan: 'DL250990', trangThai: TrangThaiDatLich.daKham, ngayDat: _ngay(-9)),
+    DatLich(maDatLich: 8, maBenhNhan: 1, datBoi: 1, maLich: 9, hinhThucKham: HinhThucKham.khongBhyt, lyDoKham: 'Viêm họng', maXacNhan: 'DL250999', trangThai: TrangThaiDatLich.daKham, ngayDat: _ngay(-9)),
   ];
 
   // ---------------- THANH TOÁN ----------------
@@ -119,6 +120,7 @@ class MockData {
     ThanhToan(maThanhToan: 3, maDatLich: 4, soTien: 36000, phuongThuc: PhuongThucThanhToan.viDienTu, trangThai: TrangThaiThanhToan.daHoanTien, ngayThanhToan: _ngay(-16)),
     ThanhToan(maThanhToan: 4, maDatLich: 5, soTien: 200000, phuongThuc: PhuongThucThanhToan.tienMat, trangThai: TrangThaiThanhToan.daThanhToan, ngayThanhToan: _ngay(0), xuLyBoi: 5),
     ThanhToan(maThanhToan: 5, maDatLich: 7, soTien: 150000, phuongThuc: PhuongThucThanhToan.viDienTu, trangThai: TrangThaiThanhToan.daThanhToan, ngayThanhToan: _ngay(-7)),
+    ThanhToan(maThanhToan: 6, maDatLich: 8, soTien: 150000, phuongThuc: PhuongThucThanhToan.tienMat, trangThai: TrangThaiThanhToan.daThanhToan, ngayThanhToan: _ngay(-7), xuLyBoi: 5),
   ];
 
   // ---------------- HÓA ĐƠN ----------------
@@ -127,6 +129,7 @@ class MockData {
     HoaDon(maHoaDon: 2, maThanhToan: 2, soHoaDon: 'HD2610002', ngayXuat: _ngay(-7), xuatBoi: 5),
     HoaDon(maHoaDon: 3, maThanhToan: 4, soHoaDon: 'HD2610003', ngayXuat: _ngay(0), xuatBoi: 5),
     HoaDon(maHoaDon: 4, maThanhToan: 5, soHoaDon: 'HD2610004', ngayXuat: _ngay(-7), xuatBoi: 5),
+    HoaDon(maHoaDon: 5, maThanhToan: 6, soHoaDon: 'HD2610005', ngayXuat: _ngay(-7), xuatBoi: 5),
   ];
 
   // ---------------- ĐÁNH GIÁ ----------------
