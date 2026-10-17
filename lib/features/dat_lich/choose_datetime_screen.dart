@@ -9,15 +9,7 @@ import 'thong_tin_dat_lich.dart';
 import 'widgets/booking_step_indicator.dart';
 import 'widgets/doctor_summary_card.dart';
 
-/// Chọn ngày giờ khám · FR-08 (xem lịch trống), FR-09 (chọn khung giờ)
-/// Figma: Chưa có – tự thiết kế (theo phong cách Trang chủ Bệnh nhân)
-/// Phụ trách: Hiếu
-///
-/// - Dải 14 ngày tới (cuộn ngang); ngày có lịch trống có chấm xanh.
-/// - Các khung giờ của ngày đã chọn: còn chỗ / đã đầy / đã qua giờ.
-/// - "Tiếp tục" → Xác nhận thông tin (gửi ThongTinDatLich đã có khung giờ).
-///
-/// arguments: ThongTinDatLich | BacSi | null (xem ThongTinDatLich.tuArguments)
+// Chọn ngày giờ khám
 class ChooseDatetimeScreen extends StatefulWidget {
   const ChooseDatetimeScreen({super.key});
   @override

@@ -13,18 +13,6 @@ import 'dat_lich_routes.dart';
 import 'thong_tin_dat_lich.dart';
 import 'widgets/booking_step_indicator.dart';
 
-/// Thanh toán phí khám (online) · FR-11
-/// Figma: Chưa có – tự thiết kế
-/// Phụ trách: Hiếu
-///
-/// - Số tiền + mã đặt lịch + đồng hồ giữ chỗ 15 phút.
-/// - Chọn phương thức: Chuyển khoản (hiện QR ngân hàng DEMO) / Ví điện tử.
-/// - "Tôi đã thanh toán" → giả lập thanh toán thành công: DatLich chuyển
-///   "Đã thanh toán", thêm ThanhToan + ThongBao → sang màn Mã QR.
-/// - "Thanh toán tại quầy" → giữ "Chờ thanh toán", vẫn sang màn Mã QR.
-///
-/// arguments: DatLich (vừa tạo ở màn Xác nhận). Không có → lấy 1 lượt
-/// "Chờ thanh toán" trong MockData để thử giao diện.
 class OnlinePaymentScreen extends StatefulWidget {
   const OnlinePaymentScreen({super.key});
   @override
