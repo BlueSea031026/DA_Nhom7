@@ -6,17 +6,6 @@ import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import 'widgets/guardian_app_bar.dart';
 
-/// Thêm / sửa hồ sơ người thân · FR-41, FR-42
-/// Figma: Người thân › Tạo hồ sơ (2 frame: THÊM HỒ SƠ và sửa hồ sơ)
-/// Phụ trách: Hiếu
-///
-/// arguments:
-///   - không truyền (null)  → THÊM hồ sơ mới cho tài khoản người giám hộ.
-///   - BenhNhan             → SỬA hồ sơ đó (có thêm nút "Xóa hồ sơ").
-/// Lưu xong: Navigator.pop(context, true) để màn trước vẽ lại danh sách.
-///
-/// Giai đoạn giao diện: lưu thẳng vào MockData.benhNhan (danh sách trong bộ nhớ).
-/// Khi nối Firebase: thay phần _luuHoSo / _xoaHoSo bằng lệnh ghi Firestore.
 class ProfileFormScreen extends StatefulWidget {
   const ProfileFormScreen({super.key});
   @override

@@ -12,16 +12,7 @@ import 'widgets/family_profile_card.dart';
 import 'widgets/guardian_bottom_nav.dart';
 import 'widgets/guardian_header.dart';
 
-/// Hồ sơ gia đình · FR-42
-/// Figma: Người thân › Trang profile của gia đình
-/// Phụ trách: Hiếu
-///
-/// Danh sách hồ sơ (bản thân + người thân) do 1 tài khoản quản lý.
-/// Mỗi thẻ: bút chì → sửa hồ sơ, "Chọn hồ sơ" → đặt lịch cho người đó.
-/// Cuối danh sách: nút "+ Thêm hồ sơ".
-///
-/// arguments (không bắt buộc): int maTaiKhoan – tài khoản cần xem hồ sơ.
-/// Không truyền → dùng tài khoản người giám hộ trong MockData.
+// Giao diện hồ sơ gia đình
 class FamilyProfilesScreen extends StatefulWidget {
   const FamilyProfilesScreen({super.key});
   @override
