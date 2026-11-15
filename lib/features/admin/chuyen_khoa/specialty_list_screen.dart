@@ -4,12 +4,22 @@ import '../../../core/mock/mock_data.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
 import 'chuyen_khoa_routes.dart';
+import 'nhat_ky_helper.dart';
 
 /// Quản lý chuyên khoa & giá khám · FR-36
 /// Figma: Quản trị viên › Danh sách chuyên khoa
 /// Phụ trách: Thương
-class SpecialtyListScreen extends StatelessWidget {
+class SpecialtyListScreen extends StatefulWidget {
   const SpecialtyListScreen({super.key});
+
+  @override
+  State<SpecialtyListScreen> createState() => _SpecialtyListScreenState();
+}
+
+class _SpecialtyListScreenState extends State<SpecialtyListScreen> {
+  void _lamMoi(Object? _) {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +35,7 @@ class SpecialtyListScreen extends StatelessWidget {
             onPressed: () => Navigator.pushNamed(
               context,
               AdminChuyenKhoaRoutes.specialtyForm,
-            ),
+            ).then(_lamMoi),
           ),
         ],
       ),
@@ -41,7 +51,7 @@ class SpecialtyListScreen extends StatelessWidget {
                 onPressed: () => Navigator.pushNamed(
                   context,
                   AdminChuyenKhoaRoutes.specialtyForm,
-                ),
+                ).then(_lamMoi),
                 icon: const Icon(Icons.add),
                 label: const Text('Thêm'),
                 style: OutlinedButton.styleFrom(
@@ -62,6 +72,11 @@ class SpecialtyListScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(ck.tenChuyenKhoa, style: AppTextStyles.title),
+                  const SizedBox(height: 2),
+                  Text(
+                    MockData.coSoById(ck.maCoSo).tenCoSo,
+                    style: AppTextStyles.caption,
+                  ),
                   const SizedBox(height: 6),
                   Text('Giá khám cơ bản', style: AppTextStyles.caption),
                   Text(
@@ -73,11 +88,13 @@ class SpecialtyListScreen extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      Icon(Icons.circle,
-                          size: 10,
-                          color: ck.trangThai
-                              ? AppColors.success
-                              : AppColors.danger),
+                      Icon(
+                        Icons.circle,
+                        size: 10,
+                        color: ck.trangThai
+                            ? AppColors.success
+                            : AppColors.danger,
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         ck.trangThai ? 'Đang hoạt động' : 'Đã ẩn',
@@ -99,7 +116,7 @@ class SpecialtyListScreen extends StatelessWidget {
                             context,
                             AdminChuyenKhoaRoutes.specialtyForm,
                             arguments: ck,
-                          ),
+                          ).then(_lamMoi),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
@@ -108,8 +125,10 @@ class SpecialtyListScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: const Text('Sửa',
-                              style: TextStyle(fontSize: 13)),
+                          child: const Text(
+                            'Sửa',
+                            style: TextStyle(fontSize: 13),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -149,12 +168,10 @@ class SpecialtyListScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(ck.trangThai
-            ? 'ẨN CHUYÊN KHOA'
-            : 'MỞ ẨN CHUYÊN KHOA'),
+        title: Text(ck.trangThai ? 'ẨN CHUYÊN KHOA' : 'MỞ ẨN CHUYÊN KHOA'),
         content: Text(
           ck.trangThai
-              ? 'Chuyên khoa sẽ không xuất hiện khi đặt lịch một.\n\nẨn chuyên khoa "${ck.tenChuyenKhoa}"?'
+              ? 'Chuyên khoa sẽ không xuất hiện khi đặt lịch.\n\nẨn chuyên khoa "${ck.tenChuyenKhoa}"?'
               : 'Chuyên khoa xuất hiện trở lại trong hệ thống',
         ),
         actions: [
@@ -165,10 +182,31 @@ class SpecialtyListScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
+              final i = MockData.chuyenKhoa.indexWhere(
+                (x) => x.maChuyenKhoa == ck.maChuyenKhoa,
+              );
+              if (i >= 0) {
+                MockData.chuyenKhoa[i] = ChuyenKhoa(
+                  maChuyenKhoa: ck.maChuyenKhoa,
+                  maCoSo: ck.maCoSo,
+                  tenChuyenKhoa: ck.tenChuyenKhoa,
+                  moTa: ck.moTa,
+                  giaKhamCoBan: ck.giaKhamCoBan,
+                  trangThai: !ck.trangThai,
+                );
+                ghiNhatKyAdmin(
+                  ck.trangThai
+                      ? 'Ẩn chuyên khoa ${ck.tenChuyenKhoa}'
+                      : 'Mở ẩn chuyên khoa ${ck.tenChuyenKhoa}',
+                );
+              }
+              setState(() {});
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content:
-                      Text('Chưa nối Firebase – chỉ demo giao diện'),
+                SnackBar(
+                  content: Text(
+                    ck.trangThai ? 'Đã ẩn chuyên khoa' : 'Đã mở ẩn chuyên khoa',
+                  ),
+                  backgroundColor: AppColors.success,
                 ),
               );
             },
@@ -186,7 +224,7 @@ class SpecialtyListScreen extends StatelessWidget {
 
 String _formatTien(int so) {
   return so.toString().replaceAllMapped(
-        RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-        (m) => '${m[1]}.',
-      );
+    RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+    (m) => '${m[1]}.',
+  );
 }

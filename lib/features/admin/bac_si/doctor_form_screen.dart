@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/mock/mock_data.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
+import '../chuyen_khoa/nhat_ky_helper.dart';
 
 /// Thêm / sửa bác sĩ · FR-37
 /// Figma: (chưa có – tự thiết kế)
@@ -49,6 +50,40 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     super.dispose();
   }
 
+  void _luu(BacSi? cu) {
+    if (!_formKey.currentState!.validate()) return;
+    final hoTen = _hoTenCtrl.text.trim();
+    final hocVi = _hocViCtrl.text.trim();
+    final sdt = _sdtCtrl.text.trim();
+
+    final bacSi = BacSi(
+      maBacSi: cu?.maBacSi ?? maTiepTheo(MockData.bacSi.map((e) => e.maBacSi)),
+      maTaiKhoan: cu?.maTaiKhoan,
+      maChuyenKhoa: _maChuyenKhoa!,
+      hoTen: hoTen,
+      hocHamHocVi: hocVi.isEmpty ? null : hocVi,
+      soDienThoai: sdt.isEmpty ? null : sdt,
+      anhDaiDien: cu?.anhDaiDien,
+      diemDanhGiaTb: cu?.diemDanhGiaTb ?? 0,
+      trangThai: _trangThai,
+    );
+    if (cu == null) {
+      MockData.bacSi.add(bacSi);
+      ghiNhatKyAdmin('Thêm bác sĩ $hoTen');
+    } else {
+      final i = MockData.bacSi.indexWhere((x) => x.maBacSi == cu.maBacSi);
+      MockData.bacSi[i] = bacSi;
+      ghiNhatKyAdmin('Sửa hồ sơ bác sĩ $hoTen');
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(cu == null ? 'Đã thêm bác sĩ' : 'Đã lưu thay đổi'),
+        backgroundColor: AppColors.success,
+      ),
+    );
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
@@ -85,6 +120,13 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                 hint: 'Ví dụ: 0901234567',
                 keyboardType: TextInputType.phone,
                 controller: _sdtCtrl,
+                validator: (v) {
+                  final t = (v ?? '').trim();
+                  if (t.isEmpty) return null;
+                  return RegExp(r'^0\d{9}$').hasMatch(t)
+                      ? null
+                      : 'SĐT gồm 10 số, bắt đầu bằng 0';
+                },
               ),
               const SizedBox(height: 14),
 
@@ -96,7 +138,9 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   filled: true,
                   fillColor: AppColors.surface,
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: const BorderSide(color: AppColors.border),
@@ -107,10 +151,12 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   ),
                 ),
                 items: MockData.chuyenKhoa
-                    .map((ck) => DropdownMenuItem(
-                          value: ck.maChuyenKhoa,
-                          child: Text(ck.tenChuyenKhoa),
-                        ))
+                    .map(
+                      (ck) => DropdownMenuItem(
+                        value: ck.maChuyenKhoa,
+                        child: Text(ck.tenChuyenKhoa),
+                      ),
+                    )
                     .toList(),
                 onChanged: (v) => setState(() => _maChuyenKhoa = v),
                 validator: (v) => v == null ? 'Chọn chuyên khoa' : null,
@@ -118,13 +164,14 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
               const SizedBox(height: 14),
 
               AppCard(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
                 child: Row(
                   children: [
                     const Expanded(
-                      child:
-                          Text('Đang làm việc', style: AppTextStyles.body),
+                      child: Text('Đang làm việc', style: AppTextStyles.body),
                     ),
                     Switch(
                       value: _trangThai,
@@ -139,16 +186,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
               AppButton(
                 label: laSua ? 'LƯU THAY ĐỔI' : 'THÊM BÁC SĨ',
                 icon: Icons.save_outlined,
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Chưa nối Firebase – chỉ demo giao diện'),
-                      ),
-                    );
-                    Navigator.pop(context);
-                  }
-                },
+                onPressed: () => _luu(args is BacSi ? args : null),
               ),
             ],
           ),

@@ -12,7 +12,17 @@ class AdminChuyenKhoaRoutes {
   static const String specialtyForm = '/admin/chuyen-khoa/form';
 
   static final List<AppPage> pages = [
-    AppPage(title: 'Danh sách chuyên khoa', route: specialtyList, fr: 'FR-36', builder: (_) => const SpecialtyListScreen()),
-    AppPage(title: 'Thêm / sửa chuyên khoa', route: specialtyForm, fr: 'FR-36', builder: (_) => const SpecialtyFormScreen()),
+    AppPage(
+      title: 'Danh sách chuyên khoa',
+      route: specialtyList,
+      fr: 'FR-36',
+      builder: (_) => const SpecialtyListScreen(),
+    ),
+    AppPage(
+      title: 'Thêm / sửa chuyên khoa',
+      route: specialtyForm,
+      fr: 'FR-36',
+      builder: (_) => const SpecialtyFormScreen(),
+    ),
   ];
 }

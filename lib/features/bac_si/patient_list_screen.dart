@@ -31,29 +31,32 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
     // Lịch của bác sĩ trong hôm nay
     final lichHomNay = MockData.lichCuaBacSi(bacSi.maBacSi)
-        .where((l) =>
-            l.ngay.year == MockData.homNay.year &&
-            l.ngay.month == MockData.homNay.month &&
-            l.ngay.day == MockData.homNay.day)
+        .where(
+          (l) =>
+              l.ngay.year == MockData.homNay.year &&
+              l.ngay.month == MockData.homNay.month &&
+              l.ngay.day == MockData.homNay.day,
+        )
         .toList();
     final lichIds = lichHomNay.map((l) => l.maLich).toSet();
 
     // Đặt lịch hôm nay
-    var datLichHomNay = MockData.datLich
-        .where((d) => lichIds.contains(d.maLich))
-        .toList()
-      ..sort((a, b) {
-        final la = MockData.lichById(a.maLich);
-        final lb = MockData.lichById(b.maLich);
-        return la.gioBatDau.compareTo(lb.gioBatDau);
-      });
+    var datLichHomNay =
+        MockData.datLich.where((d) => lichIds.contains(d.maLich)).toList()
+          ..sort((a, b) {
+            final la = MockData.lichById(a.maLich);
+            final lb = MockData.lichById(b.maLich);
+            return la.gioBatDau.compareTo(lb.gioBatDau);
+          });
 
     // Lọc theo tab
     if (_tabChon == 1) {
       datLichHomNay = datLichHomNay
-          .where((d) =>
-              d.trangThai != TrangThaiDatLich.daKham &&
-              d.trangThai != TrangThaiDatLich.daHuy)
+          .where(
+            (d) =>
+                d.trangThai != TrangThaiDatLich.daKham &&
+                d.trangThai != TrangThaiDatLich.daHuy,
+          )
           .toList();
     }
 
@@ -76,10 +79,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
                     style: AppTextStyles.caption,
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'Bác sĩ ${bacSi.hoTen}',
-                    style: AppTextStyles.title,
-                  ),
+                  Text('Bác sĩ ${bacSi.hoTen}', style: AppTextStyles.title),
                 ],
               ),
             ),
@@ -138,11 +138,14 @@ class _PatientListScreenState extends State<PatientListScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: AppCard(
-                          onTap: () => Navigator.pushNamed(
-                            context,
-                            BacSiRoutes.patientDetail,
-                            arguments: dl,
-                          ),
+                          onTap: () =>
+                              Navigator.pushNamed(
+                                context,
+                                BacSiRoutes.patientDetail,
+                                arguments: dl,
+                              ).then((_) {
+                                if (mounted) setState(() {});
+                              }),
                           child: Row(
                             children: [
                               // Số thứ tự + giờ
@@ -170,8 +173,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(bn.hoTen,
-                                        style: AppTextStyles.title),
+                                    Text(bn.hoTen, style: AppTextStyles.title),
                                     const SizedBox(height: 4),
                                     Text(
                                       dl.lyDoKham ?? '—',
@@ -190,8 +192,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
                                         const SizedBox(width: 6),
                                         Text(
                                           _tenTrangThai(dl.trangThai),
-                                          style: AppTextStyles.caption
-                                              .copyWith(
+                                          style: AppTextStyles.caption.copyWith(
                                             fontWeight: FontWeight.w600,
                                             color: _mauTrangThai(dl.trangThai),
                                           ),
@@ -204,21 +205,27 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
                               // Nút Xem
                               OutlinedButton(
-                                onPressed: () => Navigator.pushNamed(
-                                  context,
-                                  BacSiRoutes.patientDetail,
-                                  arguments: dl,
-                                ),
+                                onPressed: () =>
+                                    Navigator.pushNamed(
+                                      context,
+                                      BacSiRoutes.patientDetail,
+                                      arguments: dl,
+                                    ).then((_) {
+                                      if (mounted) setState(() {});
+                                    }),
                                 style: OutlinedButton.styleFrom(
                                   minimumSize: const Size(50, 30),
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 12),
+                                    horizontal: 12,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                 ),
-                                child: const Text('Xem →',
-                                    style: AppTextStyles.caption),
+                                child: const Text(
+                                  'Xem →',
+                                  style: AppTextStyles.caption,
+                                ),
                               ),
                             ],
                           ),

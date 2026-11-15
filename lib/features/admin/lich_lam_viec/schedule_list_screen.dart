@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/mock/mock_data.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
+import '../chuyen_khoa/nhat_ky_helper.dart';
 import 'lich_lam_viec_routes.dart';
 
 /// Quản lý lịch làm việc bác sĩ · FR-38
@@ -21,15 +22,15 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
   @override
   Widget build(BuildContext context) {
     // Lọc theo bác sĩ nếu có
-    final danhSach = MockData.lichLamViec.where((l) {
-      if (_maBacSiLoc == null) return true;
-      return l.maBacSi == _maBacSiLoc;
-    }).toList()
-      ..sort((a, b) {
-        final cmp = b.ngay.compareTo(a.ngay);
-        if (cmp != 0) return cmp;
-        return a.gioBatDau.compareTo(b.gioBatDau);
-      });
+    final danhSach =
+        MockData.lichLamViec.where((l) {
+          if (_maBacSiLoc == null) return true;
+          return l.maBacSi == _maBacSiLoc;
+        }).toList()..sort((a, b) {
+          final cmp = b.ngay.compareTo(a.ngay);
+          if (cmp != 0) return cmp;
+          return a.gioBatDau.compareTo(b.gioBatDau);
+        });
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -46,7 +47,9 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
                 filled: true,
                 fillColor: AppColors.surface,
                 contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 12),
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(color: AppColors.border),
@@ -61,10 +64,12 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
                   value: null,
                   child: Text('Tất cả bác sĩ'),
                 ),
-                ...MockData.bacSi.map((bs) => DropdownMenuItem<int?>(
-                      value: bs.maBacSi,
-                      child: Text(bs.hoTen),
-                    )),
+                ...MockData.bacSi.map(
+                  (bs) => DropdownMenuItem<int?>(
+                    value: bs.maBacSi,
+                    child: Text(bs.hoTen),
+                  ),
+                ),
               ],
               onChanged: (v) => setState(() => _maBacSiLoc = v),
             ),
@@ -90,8 +95,9 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
                             children: [
                               Container(
                                 width: 54,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.infoLight,
                                   borderRadius: BorderRadius.circular(10),
@@ -101,21 +107,25 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
                                     Text(
                                       '${lich.ngay.day}',
                                       style: AppTextStyles.h2.copyWith(
-                                          color: AppColors.primary),
+                                        color: AppColors.primary,
+                                      ),
                                     ),
-                                    Text('Th ${lich.ngay.month}',
-                                        style: AppTextStyles.caption),
+                                    Text(
+                                      'Th ${lich.ngay.month}',
+                                      style: AppTextStyles.caption,
+                                    ),
                                   ],
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(bacSi.hoTen,
-                                        style: AppTextStyles.title),
+                                    Text(
+                                      bacSi.hoTen,
+                                      style: AppTextStyles.title,
+                                    ),
                                     const SizedBox(height: 2),
                                     Text(
                                       '${lich.gioBatDau} - ${lich.gioKetThuc}',
@@ -135,10 +145,11 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete_outline,
-                                    color: AppColors.danger),
-                                onPressed: () =>
-                                    _xacNhanXoa(context, lich),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: AppColors.danger,
+                                ),
+                                onPressed: () => _xacNhanXoa(context, lich),
                               ),
                             ],
                           ),
@@ -154,15 +165,29 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Thêm ca'),
-        onPressed: () => Navigator.pushNamed(
-          context,
-          AdminLichLamViecRoutes.addShift,
-        ),
+        onPressed: () =>
+            Navigator.pushNamed(context, AdminLichLamViecRoutes.addShift).then((
+              _,
+            ) {
+              if (mounted) setState(() {});
+            }),
       ),
     );
   }
 
   void _xacNhanXoa(BuildContext context, LichLamViec lich) {
+    // Ca đã có người đặt thì không được xóa (tránh mất lượt khám của bệnh nhân)
+    if (lich.soLuongDaDat > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Không thể xóa: ca này đã có ${lich.soLuongDaDat} lượt đặt lịch',
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -178,14 +203,20 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
+              MockData.lichLamViec.removeWhere((x) => x.maLich == lich.maLich);
+              ghiNhatKyAdmin(
+                'Xóa ca ${lich.gioBatDau}-${lich.gioKetThuc} '
+                '${lich.ngay.day}/${lich.ngay.month}/${lich.ngay.year}',
+              );
+              setState(() {});
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Chưa nối Firebase – chỉ demo giao diện'),
+                  content: Text('Đã xóa ca làm việc'),
+                  backgroundColor: AppColors.success,
                 ),
               );
             },
-            child: const Text('Xóa',
-                style: TextStyle(color: AppColors.danger)),
+            child: const Text('Xóa', style: TextStyle(color: AppColors.danger)),
           ),
         ],
       ),

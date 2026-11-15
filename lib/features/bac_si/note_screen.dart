@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
+import 'bac_si_store.dart';
 
 /// Ghi chú kết quả khám · FR-23
 /// Figma: Bác sĩ › Ghi chú
@@ -16,6 +17,7 @@ class NoteScreen extends StatefulWidget {
 
 class _NoteScreenState extends State<NoteScreen> {
   final _ghiChuCtrl = TextEditingController();
+  bool _daNap = false;
 
   @override
   void dispose() {
@@ -26,9 +28,16 @@ class _NoteScreenState extends State<NoteScreen> {
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
-    final DatLich? argsDatLich =
-        args is DatLich ? args : null;
-    final DatLich datLich = argsDatLich ?? MockData.datLich.first;
+    final DatLich? argsDatLich = args is DatLich ? args : null;
+    final DatLich datLich = BacSiStore.moiNhat(
+      argsDatLich ?? MockData.datLich.first,
+    );
+
+    // Mở lại lượt đã khám thì hiện ghi chú đã lưu
+    if (!_daNap) {
+      _daNap = true;
+      _ghiChuCtrl.text = BacSiStore.ketQuaKham[datLich.maDatLich] ?? '';
+    }
 
     final bn = MockData.benhNhanById(datLich.maBenhNhan);
     final lich = MockData.lichById(datLich.maLich);
@@ -96,13 +105,27 @@ class _NoteScreenState extends State<NoteScreen> {
             AppButton(
               label: 'Lưu kết quả khám',
               onPressed: () {
+                if (_ghiChuCtrl.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Vui lòng nhập kết quả khám'),
+                      backgroundColor: AppColors.danger,
+                    ),
+                  );
+                  return;
+                }
+                BacSiStore.capNhatTrangThai(
+                  datLich,
+                  TrangThaiDatLich.daKham,
+                  ketQua: _ghiChuCtrl.text,
+                );
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Đã lưu kết quả (chưa nối Firebase)'),
+                    content: Text('Đã lưu kết quả khám'),
                     backgroundColor: AppColors.success,
                   ),
                 );
-                Navigator.popUntil(context, (r) => r.isFirst);
+                Navigator.pop(context);
               },
             ),
           ],

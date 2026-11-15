@@ -37,11 +37,11 @@ class DoctorProfileScreen extends StatelessWidget {
                 color: AppColors.infoLight,
                 alignment: Alignment.center,
                 child: Text(
-                  bacSi.hoTen.isNotEmpty
-                      ? bacSi.hoTen[0].toUpperCase()
-                      : '?',
-                  style: AppTextStyles.h1
-                      .copyWith(color: AppColors.primary, fontSize: 42),
+                  bacSi.hoTen.isNotEmpty ? bacSi.hoTen[0].toUpperCase() : '?',
+                  style: AppTextStyles.h1.copyWith(
+                    color: AppColors.primary,
+                    fontSize: 42,
+                  ),
                 ),
               ),
             ),
@@ -69,14 +69,8 @@ class DoctorProfileScreen extends StatelessWidget {
                     label: 'SĐT',
                     value: bacSi.soDienThoai ?? '09xxxxxxxx',
                   ),
-                  const InfoRow(
-                    label: 'Email',
-                    value: 'xxxxxx@gmail.com',
-                  ),
-                  const InfoRow(
-                    label: 'Cơ sở',
-                    value: 'Bệnh viện A',
-                  ),
+                  const InfoRow(label: 'Email', value: 'xxxxxx@gmail.com'),
+                  const InfoRow(label: 'Cơ sở', value: 'Bệnh viện A'),
                 ],
               ),
             ),
@@ -87,7 +81,8 @@ class DoctorProfileScreen extends StatelessWidget {
               onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text(
-                      'Vui lòng liên hệ Quản trị viên để cập nhật hồ sơ bác sĩ'),
+                    'Vui lòng liên hệ Quản trị viên để cập nhật hồ sơ bác sĩ',
+                  ),
                 ),
               ),
               style: OutlinedButton.styleFrom(
@@ -96,8 +91,10 @@ class DoctorProfileScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text('Chỉnh sửa thông tin cá nhân',
-                  style: AppTextStyles.button),
+              child: const Text(
+                'Chỉnh sửa thông tin cá nhân',
+                style: AppTextStyles.button,
+              ),
             ),
             const SizedBox(height: 12),
 
@@ -105,16 +102,17 @@ class DoctorProfileScreen extends StatelessWidget {
             AppCard(
               onTap: () =>
                   Navigator.pushNamed(context, AuthRoutes.changePassword),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Row(
                 children: [
-                  const Icon(Icons.lock_outline,
-                      color: AppColors.danger, size: 22),
+                  const Icon(
+                    Icons.lock_outline,
+                    color: AppColors.danger,
+                    size: 22,
+                  ),
                   const SizedBox(width: 10),
                   const Expanded(
-                    child: Text('Đổi mật khẩu',
-                        style: AppTextStyles.body),
+                    child: Text('Đổi mật khẩu', style: AppTextStyles.body),
                   ),
                   const Icon(Icons.chevron_right),
                 ],

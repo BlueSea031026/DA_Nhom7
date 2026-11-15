@@ -36,17 +36,21 @@ class _WorkScheduleScreenState extends State<WorkScheduleScreen> {
   Widget build(BuildContext context) {
     // Lịch của bác sĩ trong ngày đang chọn
     final lichTrongNgay = MockData.lichCuaBacSi(_bacSi.maBacSi)
-        .where((l) =>
-            l.ngay.year == _ngayChon.year &&
-            l.ngay.month == _ngayChon.month &&
-            l.ngay.day == _ngayChon.day)
+        .where(
+          (l) =>
+              l.ngay.year == _ngayChon.year &&
+              l.ngay.month == _ngayChon.month &&
+              l.ngay.day == _ngayChon.day,
+        )
         .toList();
 
     // Chia buổi sáng (trước 12h) / buổi chiều
-    final lichSang =
-        lichTrongNgay.where((l) => int.parse(l.gioBatDau.split(':')[0]) < 12).toList();
-    final lichChieu =
-        lichTrongNgay.where((l) => int.parse(l.gioBatDau.split(':')[0]) >= 12).toList();
+    final lichSang = lichTrongNgay
+        .where((l) => int.parse(l.gioBatDau.split(':')[0]) < 12)
+        .toList();
+    final lichChieu = lichTrongNgay
+        .where((l) => int.parse(l.gioBatDau.split(':')[0]) >= 12)
+        .toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -68,8 +72,9 @@ class _WorkScheduleScreenState extends State<WorkScheduleScreen> {
                         _bacSi.hoTen.isNotEmpty
                             ? _bacSi.hoTen[0].toUpperCase()
                             : '?',
-                        style: AppTextStyles.title
-                            .copyWith(color: AppColors.primary),
+                        style: AppTextStyles.title.copyWith(
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -83,8 +88,10 @@ class _WorkScheduleScreenState extends State<WorkScheduleScreen> {
                             style: AppTextStyles.title,
                           ),
                           const SizedBox(height: 2),
-                          Text(_chuyenKhoa.tenChuyenKhoa,
-                              style: AppTextStyles.caption),
+                          Text(
+                            _chuyenKhoa.tenChuyenKhoa,
+                            style: AppTextStyles.caption,
+                          ),
                         ],
                       ),
                     ),
@@ -169,10 +176,12 @@ class _CalendarStrip extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: dsNgay.map((d) {
-              final laChon = d.year == ngayChon.year &&
+              final laChon =
+                  d.year == ngayChon.year &&
                   d.month == ngayChon.month &&
                   d.day == ngayChon.day;
-              final laHomNay = d.year == MockData.homNay.year &&
+              final laHomNay =
+                  d.year == MockData.homNay.year &&
                   d.month == MockData.homNay.month &&
                   d.day == MockData.homNay.day;
               return Expanded(
@@ -293,8 +302,9 @@ class _BuoiCard extends StatelessWidget {
               value: tiLe,
               minHeight: 6,
               backgroundColor: AppColors.border,
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.primary,
+              ),
             ),
           ),
           const SizedBox(height: 8),

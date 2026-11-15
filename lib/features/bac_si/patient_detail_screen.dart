@@ -5,20 +5,28 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import 'bac_si_routes.dart';
+import 'bac_si_store.dart';
 
 /// Hồ sơ bệnh nhân · FR-22
 /// Figma: Bác sĩ › Hồ sơ bệnh nhân
 /// Phụ trách: Thương
-class PatientDetailScreen extends StatelessWidget {
+class PatientDetailScreen extends StatefulWidget {
   const PatientDetailScreen({super.key});
 
+  @override
+  State<PatientDetailScreen> createState() => _PatientDetailScreenState();
+}
+
+class _PatientDetailScreenState extends State<PatientDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final DatLich? argsDatLich =
         ModalRoute.of(context)?.settings.arguments is DatLich
         ? ModalRoute.of(context)!.settings.arguments as DatLich
         : null;
-    final DatLich datLich = argsDatLich ?? MockData.datLich.first;
+    final DatLich datLich = BacSiStore.moiNhat(
+      argsDatLich ?? MockData.datLich.first,
+    );
 
     final bn = MockData.benhNhanById(datLich.maBenhNhan);
     final lich = MockData.lichById(datLich.maLich);
@@ -64,6 +72,14 @@ class PatientDetailScreen extends StatelessWidget {
                     '${lich.ngay.day.toString().padLeft(2, '0')}/${lich.ngay.month.toString().padLeft(2, '0')}/${lich.ngay.year}',
                     style: AppTextStyles.caption,
                   ),
+                  const SizedBox(height: 8),
+                  InfoRow(label: 'Trạng thái', value: datLich.trangThai.label),
+                  InfoRow(label: 'Lý do khám', value: datLich.lyDoKham ?? '—'),
+                  if (BacSiStore.ketQuaKham[datLich.maDatLich] != null)
+                    InfoRow(
+                      label: 'Kết quả khám',
+                      value: BacSiStore.ketQuaKham[datLich.maDatLich]!,
+                    ),
                 ],
               ),
             ),
@@ -156,11 +172,14 @@ class PatientDetailScreen extends StatelessWidget {
             AppButton(
               label: 'Cập nhật trạng thái khám',
               icon: Icons.edit_outlined,
-              onPressed: () => Navigator.pushNamed(
-                context,
-                BacSiRoutes.updateStatus,
-                arguments: datLich,
-              ),
+              onPressed: () =>
+                  Navigator.pushNamed(
+                    context,
+                    BacSiRoutes.updateStatus,
+                    arguments: datLich,
+                  ).then((_) {
+                    if (mounted) setState(() {});
+                  }),
             ),
           ],
         ),
