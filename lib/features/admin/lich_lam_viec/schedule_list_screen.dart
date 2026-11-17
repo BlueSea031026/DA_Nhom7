@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/mock/mock_data.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
+import '../chuyen_khoa/nhat_ky_helper.dart';
 import 'lich_lam_viec_routes.dart';
 
 /// Quản lý lịch làm việc bác sĩ · FR-38
@@ -157,12 +158,25 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
         onPressed: () => Navigator.pushNamed(
           context,
           AdminLichLamViecRoutes.addShift,
-        ),
+        ).then((_) {
+          if (mounted) setState(() {});
+        }),
       ),
     );
   }
 
   void _xacNhanXoa(BuildContext context, LichLamViec lich) {
+    // Ca đã có người đặt thì không được xóa (tránh mất lượt khám của bệnh nhân)
+    if (lich.soLuongDaDat > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'Không thể xóa: ca này đã có ${lich.soLuongDaDat} lượt đặt lịch'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -178,9 +192,15 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
+              MockData.lichLamViec.removeWhere((x) => x.maLich == lich.maLich);
+              ghiNhatKyAdmin(
+                  'Xóa ca ${lich.gioBatDau}-${lich.gioKetThuc} '
+                  '${lich.ngay.day}/${lich.ngay.month}/${lich.ngay.year}');
+              setState(() {});
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Chưa nối Firebase – chỉ demo giao diện'),
+                  content: Text('Đã xóa ca làm việc'),
+                  backgroundColor: AppColors.success,
                 ),
               );
             },

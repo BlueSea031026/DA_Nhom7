@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'bac_si_routes.dart';
+import 'bac_si_store.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
@@ -16,7 +17,8 @@ class UpdateStatusScreen extends StatelessWidget {
         ModalRoute.of(context)?.settings.arguments is DatLich
             ? ModalRoute.of(context)!.settings.arguments as DatLich
             : null;
-    final DatLich datLich = argsDatLich ?? MockData.datLich.first;
+    final DatLich datLich =
+        BacSiStore.moiNhat(argsDatLich ?? MockData.datLich.first);
 
     final benhNhan = MockData.benhNhanById(datLich.maBenhNhan);
     final lich = MockData.lichById(datLich.maLich);
@@ -83,19 +85,32 @@ class UpdateStatusScreen extends StatelessWidget {
   }
 
   void _capNhat(BuildContext context, String trangThai, DatLich datLich) {
-    // Nếu chọn "Đã khám" → sang màn Ghi chú kết quả
+    if (!BacSiStore.choPhepCapNhat(datLich)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'Chưa thể cập nhật: lượt khám đang ở trạng thái "${datLich.trangThai.label}".'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+    // Nếu chọn "Đã khám" → sang màn Ghi chú kết quả (lưu ở đó)
     if (trangThai == 'Đã khám') {
       Navigator.pushReplacementNamed(
         context,
-        BacSiRoutes.note, // ← ĐÃ SỬA: bỏ chữ "s" thừa
+        BacSiRoutes.note,
         arguments: datLich,
       );
       return;
     }
-    // Các trạng thái khác chỉ thông báo
+    final TrangThaiDatLich moi = trangThai == 'Không đến'
+        ? TrangThaiDatLich.khongDen
+        : TrangThaiDatLich.hoan;
+    BacSiStore.capNhatTrangThai(datLich, moi);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Đã cập nhật: $trangThai (chưa nối Firebase)'),
+        content: Text('Đã cập nhật: $trangThai'),
         backgroundColor: AppColors.success,
       ),
     );
@@ -120,7 +135,7 @@ class UpdateStatusScreen extends StatelessWidget {
   String _tenTrangThai(TrangThaiDatLich tt) {
     switch (tt) {
       case TrangThaiDatLich.daDen:
-        return 'Đang chờ';
+        return 'Đã đến – đang chờ khám';
       default:
         return tt.label;
     }

@@ -3,31 +3,102 @@ import 'package:flutter/material.dart';
 import '../../../core/mock/mock_data.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
+import '../../chon_bac_si/tim_kiem.dart';
+import '../chuyen_khoa/nhat_ky_helper.dart';
 import 'bac_si_routes.dart';
 
 /// Quản lý hồ sơ bác sĩ · FR-37
 /// Figma: (chưa có – tự thiết kế theo widget chung)
 /// Phụ trách: Thương
-class DoctorAdminListScreen extends StatelessWidget {
+class DoctorAdminListScreen extends StatefulWidget {
   const DoctorAdminListScreen({super.key});
 
   @override
+  State<DoctorAdminListScreen> createState() => _DoctorAdminListScreenState();
+}
+
+class _DoctorAdminListScreenState extends State<DoctorAdminListScreen> {
+  String _tuKhoa = '';
+  int? _maChuyenKhoa; // null = tất cả chuyên khoa
+
+  Widget _boLoc() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        children: [
+          AppTextField(
+            label: 'Tìm kiếm',
+            hint: 'Tìm bác sĩ theo tên',
+            prefixIcon: Icons.search,
+            onChanged: (v) => setState(() => _tuKhoa = v),
+          ),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<int?>(
+            initialValue: _maChuyenKhoa,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Chuyên khoa',
+              filled: true,
+              fillColor: AppColors.surface,
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              const DropdownMenuItem<int?>(
+                value: null,
+                child: Text('Tất cả chuyên khoa'),
+              ),
+              ...MockData.chuyenKhoa.map(
+                (c) => DropdownMenuItem<int?>(
+                  value: c.maChuyenKhoa,
+                  child: Text(
+                    '${c.tenChuyenKhoa} · ${MockData.coSoById(c.maCoSo).tenCoSo}',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ],
+            onChanged: (v) => setState(() => _maChuyenKhoa = v),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _lamMoi(Object? _) {
+    if (mounted) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final danhSach = MockData.bacSi;
+    final danhSach = MockData.bacSi
+        .where((b) =>
+            (_maChuyenKhoa == null || b.maChuyenKhoa == _maChuyenKhoa) &&
+            (_tuKhoa.trim().isEmpty || khop(b.tenHienThi, _tuKhoa)))
+        .toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AppHeader(title: 'QUẢN LÝ BÁC SĨ'),
-      body: danhSach.isEmpty
+      body: MockData.bacSi.isEmpty
           ? const EmptyState(
               icon: Icons.person_off_outlined,
               message: 'Chưa có bác sĩ nào',
             )
           : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-              itemCount: danhSach.length,
+              itemCount: (danhSach.isEmpty ? 1 : danhSach.length) + 1,
               itemBuilder: (context, index) {
-                final bs = danhSach[index];
+                if (index == 0) return _boLoc();
+                if (danhSach.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Text('Không tìm thấy bác sĩ phù hợp',
+                          style: AppTextStyles.caption),
+                    ),
+                  );
+                }
+                final bs = danhSach[index - 1];
                 final chuyenKhoa = MockData.chuyenKhoaById(bs.maChuyenKhoa);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
@@ -100,7 +171,7 @@ class DoctorAdminListScreen extends StatelessWidget {
                                 context,
                                 AdminBacSiRoutes.doctorForm,
                                 arguments: bs,
-                              ),
+                              ).then(_lamMoi),
                             ),
                             TextButton.icon(
                               icon: const Icon(Icons.delete_outline,
@@ -127,17 +198,24 @@ class DoctorAdminListScreen extends StatelessWidget {
         onPressed: () => Navigator.pushNamed(
           context,
           AdminBacSiRoutes.doctorForm,
-        ),
+        ).then(_lamMoi),
       ),
     );
   }
 
+  /// Bác sĩ đã có lịch làm việc / lượt đặt thì chỉ được cho nghỉ (ẩn),
+  /// không xóa hẳn để giữ lịch sử khám và đánh giá.
   void _xacNhanXoa(BuildContext context, BacSi bs) {
+    final coLich =
+        MockData.lichLamViec.any((l) => l.maBacSi == bs.maBacSi);
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Xóa bác sĩ?'),
-        content: Text('Bạn có chắc muốn xóa "${bs.hoTen}"?'),
+        title: Text(coLich ? 'Cho bác sĩ nghỉ việc?' : 'Xóa bác sĩ?'),
+        content: Text(coLich
+            ? '"${bs.hoTen}" đã có lịch làm việc nên sẽ được chuyển sang '
+                'trạng thái "Đã nghỉ" thay vì xóa hẳn.'
+            : 'Bạn có chắc muốn xóa "${bs.hoTen}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -146,14 +224,38 @@ class DoctorAdminListScreen extends StatelessWidget {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
+              final i =
+                  MockData.bacSi.indexWhere((x) => x.maBacSi == bs.maBacSi);
+              if (i >= 0) {
+                if (coLich) {
+                  MockData.bacSi[i] = BacSi(
+                    maBacSi: bs.maBacSi,
+                    maTaiKhoan: bs.maTaiKhoan,
+                    maChuyenKhoa: bs.maChuyenKhoa,
+                    hoTen: bs.hoTen,
+                    hocHamHocVi: bs.hocHamHocVi,
+                    soDienThoai: bs.soDienThoai,
+                    anhDaiDien: bs.anhDaiDien,
+                    diemDanhGiaTb: bs.diemDanhGiaTb,
+                    trangThai: false,
+                  );
+                  ghiNhatKyAdmin('Cho bác sĩ ${bs.hoTen} nghỉ việc');
+                } else {
+                  MockData.bacSi.removeAt(i);
+                  ghiNhatKyAdmin('Xóa bác sĩ ${bs.hoTen}');
+                }
+              }
+              setState(() {});
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Chưa nối Firebase – chỉ demo giao diện'),
+                SnackBar(
+                  content: Text(
+                      coLich ? 'Đã chuyển sang "Đã nghỉ"' : 'Đã xóa bác sĩ'),
+                  backgroundColor: AppColors.success,
                 ),
               );
             },
-            child: const Text('Xóa',
-                style: TextStyle(color: AppColors.danger)),
+            child: Text(coLich ? 'Cho nghỉ' : 'Xóa',
+                style: const TextStyle(color: AppColors.danger)),
           ),
         ],
       ),

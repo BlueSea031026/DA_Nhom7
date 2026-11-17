@@ -12,7 +12,17 @@ class AdminBacSiRoutes {
   static const String doctorForm = '/admin/bac-si/form';
 
   static final List<AppPage> pages = [
-    AppPage(title: 'Danh sách bác sĩ', route: doctorAdminList, fr: 'FR-37', builder: (_) => const DoctorAdminListScreen()),
-    AppPage(title: 'Thêm / sửa bác sĩ', route: doctorForm, fr: 'FR-37', builder: (_) => const DoctorFormScreen()),
+    AppPage(
+      title: 'Danh sách bác sĩ',
+      route: doctorAdminList,
+      fr: 'FR-37',
+      builder: (_) => const DoctorAdminListScreen(),
+    ),
+    AppPage(
+      title: 'Thêm / sửa bác sĩ',
+      route: doctorForm,
+      fr: 'FR-37',
+      builder: (_) => const DoctorFormScreen(),
+    ),
   ];
 }

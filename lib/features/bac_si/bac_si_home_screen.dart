@@ -7,21 +7,39 @@ import 'bac_si_routes.dart';
 import '../thong_bao/thong_bao_routes.dart';
 import 'danh_gia/danh_gia_routes.dart';
 import 'doctor_profile_screen.dart';
+import 'bac_si_store.dart';
 
 /// Trang chủ Bác sĩ
 /// Figma: Bác sĩ › trang home bác sĩ
 /// Phụ trách: Thương
-class BacSiHomeScreen extends StatelessWidget {
+class BacSiHomeScreen extends StatefulWidget {
   const BacSiHomeScreen({super.key});
 
-  static const int _maTaiKhoanBacSi = 3;
+  @override
+  State<BacSiHomeScreen> createState() => _BacSiHomeScreenState();
+}
+
+class _BacSiHomeScreenState extends State<BacSiHomeScreen> {
+
+  /// Tên bệnh nhân đầu tiên của ca (chưa ai đặt thì ghi rõ).
+  String _tenBenhNhanDauTien(int maLich) {
+    for (final d in MockData.datLich) {
+      if (d.maLich == maLich && d.trangThai != TrangThaiDatLich.daHuy) {
+        return MockData.benhNhanById(d.maBenhNhan).hoTen;
+      }
+    }
+    return 'Chưa có người đặt';
+  }
+
+  /// Mở danh sách bệnh nhân rồi làm mới số liệu khi quay lại.
+  Future<void> _moDanhSachBenhNhan() async {
+    await Navigator.pushNamed(context, BacSiRoutes.patientList);
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
-    final bacSi = MockData.bacSi.firstWhere(
-      (b) => b.maTaiKhoan == _maTaiKhoanBacSi,
-      orElse: () => MockData.bacSi.first,
-    );
+    final bacSi = BacSiStore.bacSiDangNhap;
     final chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
 
     // Lịch hôm nay
@@ -48,7 +66,10 @@ class BacSiHomeScreen extends StatelessWidget {
         MockData.lichCuaBacSi(bacSi.maBacSi)
             .where((l) => !l.ngay.isBefore(MockData.homNay))
             .toList()
-          ..sort((a, b) => a.gioBatDau.compareTo(b.gioBatDau));
+          ..sort((a, b) {
+            final c = a.ngay.compareTo(b.ngay);
+            return c != 0 ? c : a.gioBatDau.compareTo(b.gioBatDau);
+          });
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -226,10 +247,7 @@ class BacSiHomeScreen extends StatelessWidget {
                           child: _ChucNangCard(
                             icon: Icons.people_outline,
                             label: 'Bệnh nhân',
-                            onTap: () => Navigator.pushNamed(
-                              context,
-                              BacSiRoutes.patientList,
-                            ),
+                            onTap: _moDanhSachBenhNhan,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -268,12 +286,9 @@ class BacSiHomeScreen extends StatelessWidget {
                             final l = lichSapToi[i];
                             return _LichSapToiCard(
                               gio: l.gioBatDau,
-                              tenBn: 'Nguyễn Văn B',
+                              tenBn: _tenBenhNhanDauTien(l.maLich),
                               chuyenKhoa: chuyenKhoa.tenChuyenKhoa,
-                              onXem: () => Navigator.pushNamed(
-                                context,
-                                BacSiRoutes.patientList,
-                              ),
+                              onXem: _moDanhSachBenhNhan,
                             );
                           },
                         ),

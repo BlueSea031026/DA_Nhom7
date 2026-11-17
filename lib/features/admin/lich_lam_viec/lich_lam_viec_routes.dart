@@ -12,7 +12,17 @@ class AdminLichLamViecRoutes {
   static const String addShift = '/admin/lich-lam-viec/them-ca';
 
   static final List<AppPage> pages = [
-    AppPage(title: 'Lịch làm việc bác sĩ', route: scheduleList, fr: 'FR-38', builder: (_) => const ScheduleListScreen()),
-    AppPage(title: 'Thêm ca làm việc', route: addShift, fr: 'FR-38', builder: (_) => const AddShiftScreen()),
+    AppPage(
+      title: 'Lịch làm việc bác sĩ',
+      route: scheduleList,
+      fr: 'FR-38',
+      builder: (_) => const ScheduleListScreen(),
+    ),
+    AppPage(
+      title: 'Thêm ca làm việc',
+      route: addShift,
+      fr: 'FR-38',
+      builder: (_) => const AddShiftScreen(),
+    ),
   ];
 }

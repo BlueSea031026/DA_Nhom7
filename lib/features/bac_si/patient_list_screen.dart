@@ -5,6 +5,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import 'bac_si_routes.dart';
+import 'bac_si_store.dart';
 
 /// Danh sách bệnh nhân · FR-21
 /// Figma: Bác sĩ › Hồ sơ bệnh nhân (tab Bệnh nhân hôm nay)
@@ -17,17 +18,13 @@ class PatientListScreen extends StatefulWidget {
 }
 
 class _PatientListScreenState extends State<PatientListScreen> {
-  static const int _maTaiKhoanBacSi = 3;
 
   // 0 = Tất cả, 1 = Chưa khám
   int _tabChon = 0;
 
   @override
   Widget build(BuildContext context) {
-    final bacSi = MockData.bacSi.firstWhere(
-      (b) => b.maTaiKhoan == _maTaiKhoanBacSi,
-      orElse: () => MockData.bacSi.first,
-    );
+    final bacSi = BacSiStore.bacSiDangNhap;
 
     // Lịch của bác sĩ trong hôm nay
     final lichHomNay = MockData.lichCuaBacSi(bacSi.maBacSi)
@@ -50,11 +47,9 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
     // Lọc theo tab
     if (_tabChon == 1) {
-      datLichHomNay = datLichHomNay
-          .where((d) =>
-              d.trangThai != TrangThaiDatLich.daKham &&
-              d.trangThai != TrangThaiDatLich.daHuy)
-          .toList();
+      // Chưa khám = còn hiệu lực (chờ thanh toán / đã thanh toán / đã đến)
+      datLichHomNay =
+          datLichHomNay.where((d) => d.trangThai.sapToi).toList();
     }
 
     return Scaffold(
@@ -142,7 +137,9 @@ class _PatientListScreenState extends State<PatientListScreen> {
                             context,
                             BacSiRoutes.patientDetail,
                             arguments: dl,
-                          ),
+                          ).then((_) {
+                            if (mounted) setState(() {});
+                          }),
                           child: Row(
                             children: [
                               // Số thứ tự + giờ
@@ -208,7 +205,9 @@ class _PatientListScreenState extends State<PatientListScreen> {
                                   context,
                                   BacSiRoutes.patientDetail,
                                   arguments: dl,
-                                ),
+                                ).then((_) {
+                                  if (mounted) setState(() {});
+                                }),
                                 style: OutlinedButton.styleFrom(
                                   minimumSize: const Size(50, 30),
                                   padding: const EdgeInsets.symmetric(

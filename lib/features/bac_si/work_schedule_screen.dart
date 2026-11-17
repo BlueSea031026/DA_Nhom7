@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
+import 'bac_si_store.dart';
 
 /// Lịch làm việc · FR-20
 /// Figma: Bác sĩ › Lịch làm việc
@@ -15,7 +16,6 @@ class WorkScheduleScreen extends StatefulWidget {
 }
 
 class _WorkScheduleScreenState extends State<WorkScheduleScreen> {
-  static const int _maTaiKhoanBacSi = 3;
 
   late final BacSi _bacSi;
   late final ChuyenKhoa _chuyenKhoa;
@@ -24,10 +24,7 @@ class _WorkScheduleScreenState extends State<WorkScheduleScreen> {
   @override
   void initState() {
     super.initState();
-    _bacSi = MockData.bacSi.firstWhere(
-      (b) => b.maTaiKhoan == _maTaiKhoanBacSi,
-      orElse: () => MockData.bacSi.first,
-    );
+    _bacSi = BacSiStore.bacSiDangNhap;
     _chuyenKhoa = MockData.chuyenKhoaById(_bacSi.maChuyenKhoa);
     _ngayChon = MockData.homNay;
   }
@@ -40,7 +37,8 @@ class _WorkScheduleScreenState extends State<WorkScheduleScreen> {
             l.ngay.year == _ngayChon.year &&
             l.ngay.month == _ngayChon.month &&
             l.ngay.day == _ngayChon.day)
-        .toList();
+        .toList()
+      ..sort((a, b) => a.gioBatDau.compareTo(b.gioBatDau));
 
     // Chia buổi sáng (trước 12h) / buổi chiều
     final lichSang =
@@ -251,10 +249,13 @@ class _BuoiCard extends StatelessWidget {
     int tongCho = 0;
     int daDat = 0;
     String gioDau = danhSachLich.first.gioBatDau;
-    String gioCuoi = danhSachLich.last.gioKetThuc;
+    String gioCuoi = danhSachLich.first.gioKetThuc;
     for (final l in danhSachLich) {
       tongCho += l.soLuongCho;
       daDat += l.soLuongDaDat;
+      // Lấy giờ sớm nhất và giờ muộn nhất của cả buổi
+      if (l.gioBatDau.compareTo(gioDau) < 0) gioDau = l.gioBatDau;
+      if (l.gioKetThuc.compareTo(gioCuoi) > 0) gioCuoi = l.gioKetThuc;
     }
     final conCho = tongCho - daDat;
     final tiLe = tongCho == 0 ? 0.0 : daDat / tongCho;
