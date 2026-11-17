@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'bac_si_routes.dart';
 import 'bac_si_store.dart';
 import '../../core/mock/mock_data.dart';
@@ -16,11 +15,10 @@ class UpdateStatusScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final DatLich? argsDatLich =
         ModalRoute.of(context)?.settings.arguments is DatLich
-        ? ModalRoute.of(context)!.settings.arguments as DatLich
-        : null;
-    final DatLich datLich = BacSiStore.moiNhat(
-      argsDatLich ?? MockData.datLich.first,
-    );
+            ? ModalRoute.of(context)!.settings.arguments as DatLich
+            : null;
+    final DatLich datLich =
+        BacSiStore.moiNhat(argsDatLich ?? MockData.datLich.first);
 
     final benhNhan = MockData.benhNhanById(datLich.maBenhNhan);
     final lich = MockData.lichById(datLich.maLich);
@@ -48,11 +46,8 @@ class UpdateStatusScreen extends StatelessWidget {
             // Trạng thái hiện tại
             Row(
               children: [
-                Icon(
-                  Icons.circle,
-                  size: 14,
-                  color: _mauTrangThai(datLich.trangThai),
-                ),
+                Icon(Icons.circle,
+                    size: 14, color: _mauTrangThai(datLich.trangThai)),
                 const SizedBox(width: 8),
                 Text(
                   _tenTrangThai(datLich.trangThai),
@@ -94,8 +89,7 @@ class UpdateStatusScreen extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Chưa thể cập nhật: lượt khám đang ở trạng thái "${datLich.trangThai.label}".',
-          ),
+              'Chưa thể cập nhật: lượt khám đang ở trạng thái "${datLich.trangThai.label}".'),
           backgroundColor: AppColors.danger,
         ),
       );

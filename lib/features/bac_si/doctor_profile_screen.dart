@@ -4,6 +4,7 @@ import '../../app/dieu_huong.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../auth/auth_routes.dart';
+import 'bac_si_store.dart';
 
 /// Trang cá nhân Bác sĩ (frame 2 của trang home)
 /// Figma: Bác sĩ › trang home bác sĩ (Trang cá nhân)
@@ -11,14 +12,9 @@ import '../auth/auth_routes.dart';
 class DoctorProfileScreen extends StatelessWidget {
   const DoctorProfileScreen({super.key});
 
-  static const int _maTaiKhoanBacSi = 3;
-
   @override
   Widget build(BuildContext context) {
-    final bacSi = MockData.bacSi.firstWhere(
-      (b) => b.maTaiKhoan == _maTaiKhoanBacSi,
-      orElse: () => MockData.bacSi.first,
-    );
+    final bacSi = BacSiStore.bacSiDangNhap;
     final chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
 
     return Scaffold(
@@ -37,11 +33,11 @@ class DoctorProfileScreen extends StatelessWidget {
                 color: AppColors.infoLight,
                 alignment: Alignment.center,
                 child: Text(
-                  bacSi.hoTen.isNotEmpty ? bacSi.hoTen[0].toUpperCase() : '?',
-                  style: AppTextStyles.h1.copyWith(
-                    color: AppColors.primary,
-                    fontSize: 42,
-                  ),
+                  bacSi.hoTen.isNotEmpty
+                      ? bacSi.hoTen[0].toUpperCase()
+                      : '?',
+                  style: AppTextStyles.h1
+                      .copyWith(color: AppColors.primary, fontSize: 42),
                 ),
               ),
             ),
@@ -69,8 +65,14 @@ class DoctorProfileScreen extends StatelessWidget {
                     label: 'SĐT',
                     value: bacSi.soDienThoai ?? '09xxxxxxxx',
                   ),
-                  const InfoRow(label: 'Email', value: 'xxxxxx@gmail.com'),
-                  const InfoRow(label: 'Cơ sở', value: 'Bệnh viện A'),
+                  const InfoRow(
+                    label: 'Email',
+                    value: 'xxxxxx@gmail.com',
+                  ),
+                  const InfoRow(
+                    label: 'Cơ sở',
+                    value: 'Bệnh viện A',
+                  ),
                 ],
               ),
             ),
@@ -81,8 +83,7 @@ class DoctorProfileScreen extends StatelessWidget {
               onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text(
-                    'Vui lòng liên hệ Quản trị viên để cập nhật hồ sơ bác sĩ',
-                  ),
+                      'Vui lòng liên hệ Quản trị viên để cập nhật hồ sơ bác sĩ'),
                 ),
               ),
               style: OutlinedButton.styleFrom(
@@ -91,10 +92,8 @@ class DoctorProfileScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text(
-                'Chỉnh sửa thông tin cá nhân',
-                style: AppTextStyles.button,
-              ),
+              child: const Text('Chỉnh sửa thông tin cá nhân',
+                  style: AppTextStyles.button),
             ),
             const SizedBox(height: 12),
 
@@ -102,17 +101,16 @@ class DoctorProfileScreen extends StatelessWidget {
             AppCard(
               onTap: () =>
                   Navigator.pushNamed(context, AuthRoutes.changePassword),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 14),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.lock_outline,
-                    color: AppColors.danger,
-                    size: 22,
-                  ),
+                  const Icon(Icons.lock_outline,
+                      color: AppColors.danger, size: 22),
                   const SizedBox(width: 10),
                   const Expanded(
-                    child: Text('Đổi mật khẩu', style: AppTextStyles.body),
+                    child: Text('Đổi mật khẩu',
+                        style: AppTextStyles.body),
                   ),
                   const Icon(Icons.chevron_right),
                 ],

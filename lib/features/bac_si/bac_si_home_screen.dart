@@ -7,6 +7,7 @@ import 'bac_si_routes.dart';
 import '../thong_bao/thong_bao_routes.dart';
 import 'danh_gia/danh_gia_routes.dart';
 import 'doctor_profile_screen.dart';
+import 'bac_si_store.dart';
 
 /// Trang chủ Bác sĩ
 /// Figma: Bác sĩ › trang home bác sĩ
@@ -19,7 +20,6 @@ class BacSiHomeScreen extends StatefulWidget {
 }
 
 class _BacSiHomeScreenState extends State<BacSiHomeScreen> {
-  static const int _maTaiKhoanBacSi = 3;
 
   /// Tên bệnh nhân đầu tiên của ca (chưa ai đặt thì ghi rõ).
   String _tenBenhNhanDauTien(int maLich) {
@@ -39,10 +39,7 @@ class _BacSiHomeScreenState extends State<BacSiHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bacSi = MockData.bacSi.firstWhere(
-      (b) => b.maTaiKhoan == _maTaiKhoanBacSi,
-      orElse: () => MockData.bacSi.first,
-    );
+    final bacSi = BacSiStore.bacSiDangNhap;
     final chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
 
     // Lịch hôm nay

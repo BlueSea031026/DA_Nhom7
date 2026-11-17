@@ -38,8 +38,7 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
   Future<void> _chonGio(bool batDau) async {
     final chon = await showTimePicker(
       context: context,
-      initialTime:
-          (batDau ? _gioBatDau : _gioKetThuc) ??
+      initialTime: (batDau ? _gioBatDau : _gioKetThuc) ??
           const TimeOfDay(hour: 8, minute: 0),
     );
     if (chon != null) {
@@ -80,33 +79,28 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
     }
     // Không cho 2 ca của cùng 1 bác sĩ trong cùng ngày bị chồng giờ
     final ngay = DateTime(_ngay!.year, _ngay!.month, _ngay!.day);
-    final chong = MockData.lichLamViec.any(
-      (l) =>
-          l.maBacSi == _maBacSi &&
-          l.ngay == ngay &&
-          bd < _phutTuChuoi(l.gioKetThuc) &&
-          kt > _phutTuChuoi(l.gioBatDau),
-    );
+    final chong = MockData.lichLamViec.any((l) =>
+        l.maBacSi == _maBacSi &&
+        l.ngay == ngay &&
+        bd < _phutTuChuoi(l.gioKetThuc) &&
+        kt > _phutTuChuoi(l.gioBatDau));
     if (chong) {
       _baoLoi('Bác sĩ đã có ca trùng giờ trong ngày này');
       return;
     }
 
     final bacSi = MockData.bacSiById(_maBacSi!);
-    MockData.lichLamViec.add(
-      LichLamViec(
-        maLich: maTiepTheo(MockData.lichLamViec.map((e) => e.maLich)),
-        maBacSi: _maBacSi!,
-        ngay: ngay,
-        gioBatDau: _formatGio(_gioBatDau),
-        gioKetThuc: _formatGio(_gioKetThuc),
-        soLuongCho: int.parse(_soChoCtrl.text.trim()),
-      ),
-    );
+    MockData.lichLamViec.add(LichLamViec(
+      maLich: maTiepTheo(MockData.lichLamViec.map((e) => e.maLich)),
+      maBacSi: _maBacSi!,
+      ngay: ngay,
+      gioBatDau: _formatGio(_gioBatDau),
+      gioKetThuc: _formatGio(_gioKetThuc),
+      soLuongCho: int.parse(_soChoCtrl.text.trim()),
+    ));
     ghiNhatKyAdmin(
-      'Thêm ca ${_formatGio(_gioBatDau)}-${_formatGio(_gioKetThuc)} '
-      '${ngay.day}/${ngay.month}/${ngay.year} cho ${bacSi.hoTen}',
-    );
+        'Thêm ca ${_formatGio(_gioBatDau)}-${_formatGio(_gioKetThuc)} '
+        '${ngay.day}/${ngay.month}/${ngay.year} cho ${bacSi.hoTen}');
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Đã thêm ca làm việc'),
@@ -153,9 +147,7 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
                   filled: true,
                   fillColor: AppColors.surface,
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
+                      horizontal: 14, vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: const BorderSide(color: AppColors.border),
@@ -167,12 +159,10 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
                 ),
                 items: MockData.bacSi
                     .where((bs) => bs.trangThai)
-                    .map(
-                      (bs) => DropdownMenuItem(
-                        value: bs.maBacSi,
-                        child: Text(bs.hoTen),
-                      ),
-                    )
+                    .map((bs) => DropdownMenuItem(
+                          value: bs.maBacSi,
+                          child: Text(bs.hoTen),
+                        ))
                     .toList(),
                 onChanged: (v) => setState(() => _maBacSi = v),
                 validator: (v) => v == null ? 'Chọn bác sĩ' : null,
@@ -187,9 +177,7 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 14,
-                  ),
+                      horizontal: 14, vertical: 14),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     border: Border.all(color: AppColors.border),
@@ -197,11 +185,8 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.calendar_today_outlined,
-                        size: 18,
-                        color: AppColors.textSecondary,
-                      ),
+                      const Icon(Icons.calendar_today_outlined,
+                          size: 18, color: AppColors.textSecondary),
                       const SizedBox(width: 8),
                       Text(
                         _formatNgay(_ngay),
@@ -224,33 +209,29 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Giờ bắt đầu', style: AppTextStyles.label),
+                        const Text('Giờ bắt đầu',
+                            style: AppTextStyles.label),
                         const SizedBox(height: 6),
                         InkWell(
                           onTap: () => _chonGio(true),
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 14,
-                            ),
+                                horizontal: 14, vertical: 14),
                             decoration: BoxDecoration(
                               color: AppColors.surface,
-                              border: Border.all(color: AppColors.border),
+                              border:
+                                  Border.all(color: AppColors.border),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Row(
                               children: [
-                                const Icon(
-                                  Icons.access_time,
-                                  size: 18,
-                                  color: AppColors.textSecondary,
-                                ),
+                                const Icon(Icons.access_time,
+                                    size: 18,
+                                    color: AppColors.textSecondary),
                                 const SizedBox(width: 8),
-                                Text(
-                                  _formatGio(_gioBatDau),
-                                  style: AppTextStyles.body,
-                                ),
+                                Text(_formatGio(_gioBatDau),
+                                    style: AppTextStyles.body),
                               ],
                             ),
                           ),
@@ -263,33 +244,29 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Giờ kết thúc', style: AppTextStyles.label),
+                        const Text('Giờ kết thúc',
+                            style: AppTextStyles.label),
                         const SizedBox(height: 6),
                         InkWell(
                           onTap: () => _chonGio(false),
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 14,
-                            ),
+                                horizontal: 14, vertical: 14),
                             decoration: BoxDecoration(
                               color: AppColors.surface,
-                              border: Border.all(color: AppColors.border),
+                              border:
+                                  Border.all(color: AppColors.border),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Row(
                               children: [
-                                const Icon(
-                                  Icons.access_time,
-                                  size: 18,
-                                  color: AppColors.textSecondary,
-                                ),
+                                const Icon(Icons.access_time,
+                                    size: 18,
+                                    color: AppColors.textSecondary),
                                 const SizedBox(width: 8),
-                                Text(
-                                  _formatGio(_gioKetThuc),
-                                  style: AppTextStyles.body,
-                                ),
+                                Text(_formatGio(_gioKetThuc),
+                                    style: AppTextStyles.body),
                               ],
                             ),
                           ),

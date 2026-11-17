@@ -5,6 +5,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import 'bac_si_routes.dart';
+import 'bac_si_store.dart';
 
 /// Danh sách bệnh nhân · FR-21
 /// Figma: Bác sĩ › Hồ sơ bệnh nhân (tab Bệnh nhân hôm nay)
@@ -17,47 +18,38 @@ class PatientListScreen extends StatefulWidget {
 }
 
 class _PatientListScreenState extends State<PatientListScreen> {
-  static const int _maTaiKhoanBacSi = 3;
 
   // 0 = Tất cả, 1 = Chưa khám
   int _tabChon = 0;
 
   @override
   Widget build(BuildContext context) {
-    final bacSi = MockData.bacSi.firstWhere(
-      (b) => b.maTaiKhoan == _maTaiKhoanBacSi,
-      orElse: () => MockData.bacSi.first,
-    );
+    final bacSi = BacSiStore.bacSiDangNhap;
 
     // Lịch của bác sĩ trong hôm nay
     final lichHomNay = MockData.lichCuaBacSi(bacSi.maBacSi)
-        .where(
-          (l) =>
-              l.ngay.year == MockData.homNay.year &&
-              l.ngay.month == MockData.homNay.month &&
-              l.ngay.day == MockData.homNay.day,
-        )
+        .where((l) =>
+            l.ngay.year == MockData.homNay.year &&
+            l.ngay.month == MockData.homNay.month &&
+            l.ngay.day == MockData.homNay.day)
         .toList();
     final lichIds = lichHomNay.map((l) => l.maLich).toSet();
 
     // Đặt lịch hôm nay
-    var datLichHomNay =
-        MockData.datLich.where((d) => lichIds.contains(d.maLich)).toList()
-          ..sort((a, b) {
-            final la = MockData.lichById(a.maLich);
-            final lb = MockData.lichById(b.maLich);
-            return la.gioBatDau.compareTo(lb.gioBatDau);
-          });
+    var datLichHomNay = MockData.datLich
+        .where((d) => lichIds.contains(d.maLich))
+        .toList()
+      ..sort((a, b) {
+        final la = MockData.lichById(a.maLich);
+        final lb = MockData.lichById(b.maLich);
+        return la.gioBatDau.compareTo(lb.gioBatDau);
+      });
 
     // Lọc theo tab
     if (_tabChon == 1) {
-      datLichHomNay = datLichHomNay
-          .where(
-            (d) =>
-                d.trangThai != TrangThaiDatLich.daKham &&
-                d.trangThai != TrangThaiDatLich.daHuy,
-          )
-          .toList();
+      // Chưa khám = còn hiệu lực (chờ thanh toán / đã thanh toán / đã đến)
+      datLichHomNay =
+          datLichHomNay.where((d) => d.trangThai.sapToi).toList();
     }
 
     return Scaffold(
@@ -79,7 +71,10 @@ class _PatientListScreenState extends State<PatientListScreen> {
                     style: AppTextStyles.caption,
                   ),
                   const SizedBox(height: 4),
-                  Text('Bác sĩ ${bacSi.hoTen}', style: AppTextStyles.title),
+                  Text(
+                    'Bác sĩ ${bacSi.hoTen}',
+                    style: AppTextStyles.title,
+                  ),
                 ],
               ),
             ),
@@ -138,14 +133,13 @@ class _PatientListScreenState extends State<PatientListScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: AppCard(
-                          onTap: () =>
-                              Navigator.pushNamed(
-                                context,
-                                BacSiRoutes.patientDetail,
-                                arguments: dl,
-                              ).then((_) {
-                                if (mounted) setState(() {});
-                              }),
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            BacSiRoutes.patientDetail,
+                            arguments: dl,
+                          ).then((_) {
+                            if (mounted) setState(() {});
+                          }),
                           child: Row(
                             children: [
                               // Số thứ tự + giờ
@@ -173,7 +167,8 @@ class _PatientListScreenState extends State<PatientListScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(bn.hoTen, style: AppTextStyles.title),
+                                    Text(bn.hoTen,
+                                        style: AppTextStyles.title),
                                     const SizedBox(height: 4),
                                     Text(
                                       dl.lyDoKham ?? '—',
@@ -192,7 +187,8 @@ class _PatientListScreenState extends State<PatientListScreen> {
                                         const SizedBox(width: 6),
                                         Text(
                                           _tenTrangThai(dl.trangThai),
-                                          style: AppTextStyles.caption.copyWith(
+                                          style: AppTextStyles.caption
+                                              .copyWith(
                                             fontWeight: FontWeight.w600,
                                             color: _mauTrangThai(dl.trangThai),
                                           ),
@@ -205,27 +201,23 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
                               // Nút Xem
                               OutlinedButton(
-                                onPressed: () =>
-                                    Navigator.pushNamed(
-                                      context,
-                                      BacSiRoutes.patientDetail,
-                                      arguments: dl,
-                                    ).then((_) {
-                                      if (mounted) setState(() {});
-                                    }),
+                                onPressed: () => Navigator.pushNamed(
+                                  context,
+                                  BacSiRoutes.patientDetail,
+                                  arguments: dl,
+                                ).then((_) {
+                                  if (mounted) setState(() {});
+                                }),
                                 style: OutlinedButton.styleFrom(
                                   minimumSize: const Size(50, 30),
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                  ),
+                                      horizontal: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                 ),
-                                child: const Text(
-                                  'Xem →',
-                                  style: AppTextStyles.caption,
-                                ),
+                                child: const Text('Xem →',
+                                    style: AppTextStyles.caption),
                               ),
                             ],
                           ),

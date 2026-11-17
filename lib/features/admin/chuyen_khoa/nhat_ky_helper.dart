@@ -8,14 +8,12 @@ void ghiNhatKyAdmin(String hanhDong) {
   final ma = ds.isEmpty
       ? 1
       : ds.map((e) => e.maNhatKy).reduce((a, b) => a > b ? a : b) + 1;
-  ds.add(
-    NhatKyQuanTri(
-      maNhatKy: ma,
-      maTaiKhoan: 6,
-      hanhDong: hanhDong,
-      thoiGian: DateTime.now(),
-    ),
-  );
+  ds.add(NhatKyQuanTri(
+    maNhatKy: ma,
+    maTaiKhoan: 6,
+    hanhDong: hanhDong,
+    thoiGian: DateTime.now(),
+  ));
 }
 
 /// Mã tiếp theo cho danh sách có khóa số nguyên tự tăng.

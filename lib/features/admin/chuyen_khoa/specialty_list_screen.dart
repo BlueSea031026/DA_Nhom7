@@ -17,13 +17,71 @@ class SpecialtyListScreen extends StatefulWidget {
 }
 
 class _SpecialtyListScreenState extends State<SpecialtyListScreen> {
+  bool _xemDaAn = false; // false = Đang hoạt động, true = Đã ẩn
+  int? _maCoSo; // null = tất cả cơ sở
+
+  Widget _boLoc() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DropdownButtonFormField<int?>(
+            initialValue: _maCoSo,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Cơ sở y tế',
+              filled: true,
+              fillColor: AppColors.surface,
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              const DropdownMenuItem<int?>(
+                value: null,
+                child: Text('Tất cả cơ sở'),
+              ),
+              ...MockData.coSoYTe.map(
+                (c) => DropdownMenuItem<int?>(
+                  value: c.maCoSo,
+                  child: Text(c.tenCoSo, overflow: TextOverflow.ellipsis),
+                ),
+              ),
+            ],
+            onChanged: (v) => setState(() => _maCoSo = v),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              ChoiceChip(
+                label: const Text('Đang hoạt động'),
+                selected: !_xemDaAn,
+                onSelected: (_) => setState(() => _xemDaAn = false),
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: const Text('Đã ẩn'),
+                selected: _xemDaAn,
+                onSelected: (_) => setState(() => _xemDaAn = true),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   void _lamMoi(Object? _) {
     if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    final danhSach = MockData.chuyenKhoa;
+    final danhSach = MockData.chuyenKhoa
+        .where((c) =>
+            c.trangThai != _xemDaAn && (_maCoSo == null || c.maCoSo == _maCoSo))
+        .toList();
+    // 1 ô bộ lọc + (danh sách hoặc thông báo rỗng) + nút Thêm
+    final int soMuc = (danhSach.isEmpty ? 1 : danhSach.length) + 2;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -41,10 +99,24 @@ class _SpecialtyListScreenState extends State<SpecialtyListScreen> {
       ),
       body: ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        itemCount: danhSach.length + 1,
+        itemCount: soMuc,
         itemBuilder: (context, index) {
+          if (index == 0) return _boLoc();
+          if (danhSach.isEmpty && index == 1) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Text(
+                  _xemDaAn
+                      ? 'Không có chuyên khoa nào đang ẩn'
+                      : 'Không có chuyên khoa đang hoạt động',
+                  style: AppTextStyles.caption,
+                ),
+              ),
+            );
+          }
           // Nút "+ Thêm" ở cuối
-          if (index == danhSach.length) {
+          if (index == soMuc - 1) {
             return Padding(
               padding: const EdgeInsets.only(top: 8),
               child: OutlinedButton.icon(
@@ -64,7 +136,7 @@ class _SpecialtyListScreenState extends State<SpecialtyListScreen> {
             );
           }
 
-          final ck = danhSach[index];
+          final ck = danhSach[index - 1];
           return Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: AppCard(
@@ -73,10 +145,8 @@ class _SpecialtyListScreenState extends State<SpecialtyListScreen> {
                 children: [
                   Text(ck.tenChuyenKhoa, style: AppTextStyles.title),
                   const SizedBox(height: 2),
-                  Text(
-                    MockData.coSoById(ck.maCoSo).tenCoSo,
-                    style: AppTextStyles.caption,
-                  ),
+                  Text(MockData.coSoById(ck.maCoSo).tenCoSo,
+                      style: AppTextStyles.caption),
                   const SizedBox(height: 6),
                   Text('Giá khám cơ bản', style: AppTextStyles.caption),
                   Text(
@@ -88,13 +158,11 @@ class _SpecialtyListScreenState extends State<SpecialtyListScreen> {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      Icon(
-                        Icons.circle,
-                        size: 10,
-                        color: ck.trangThai
-                            ? AppColors.success
-                            : AppColors.danger,
-                      ),
+                      Icon(Icons.circle,
+                          size: 10,
+                          color: ck.trangThai
+                              ? AppColors.success
+                              : AppColors.danger),
                       const SizedBox(width: 6),
                       Text(
                         ck.trangThai ? 'Đang hoạt động' : 'Đã ẩn',
@@ -125,10 +193,8 @@ class _SpecialtyListScreenState extends State<SpecialtyListScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: const Text(
-                            'Sửa',
-                            style: TextStyle(fontSize: 13),
-                          ),
+                          child: const Text('Sửa',
+                              style: TextStyle(fontSize: 13)),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -168,7 +234,9 @@ class _SpecialtyListScreenState extends State<SpecialtyListScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(ck.trangThai ? 'ẨN CHUYÊN KHOA' : 'MỞ ẨN CHUYÊN KHOA'),
+        title: Text(ck.trangThai
+            ? 'ẨN CHUYÊN KHOA'
+            : 'MỞ ẨN CHUYÊN KHOA'),
         content: Text(
           ck.trangThai
               ? 'Chuyên khoa sẽ không xuất hiện khi đặt lịch.\n\nẨn chuyên khoa "${ck.tenChuyenKhoa}"?'
@@ -182,9 +250,8 @@ class _SpecialtyListScreenState extends State<SpecialtyListScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              final i = MockData.chuyenKhoa.indexWhere(
-                (x) => x.maChuyenKhoa == ck.maChuyenKhoa,
-              );
+              final i = MockData.chuyenKhoa
+                  .indexWhere((x) => x.maChuyenKhoa == ck.maChuyenKhoa);
               if (i >= 0) {
                 MockData.chuyenKhoa[i] = ChuyenKhoa(
                   maChuyenKhoa: ck.maChuyenKhoa,
@@ -194,18 +261,16 @@ class _SpecialtyListScreenState extends State<SpecialtyListScreen> {
                   giaKhamCoBan: ck.giaKhamCoBan,
                   trangThai: !ck.trangThai,
                 );
-                ghiNhatKyAdmin(
-                  ck.trangThai
-                      ? 'Ẩn chuyên khoa ${ck.tenChuyenKhoa}'
-                      : 'Mở ẩn chuyên khoa ${ck.tenChuyenKhoa}',
-                );
+                ghiNhatKyAdmin(ck.trangThai
+                    ? 'Ẩn chuyên khoa ${ck.tenChuyenKhoa}'
+                    : 'Mở ẩn chuyên khoa ${ck.tenChuyenKhoa}');
               }
               setState(() {});
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(
-                    ck.trangThai ? 'Đã ẩn chuyên khoa' : 'Đã mở ẩn chuyên khoa',
-                  ),
+                  content: Text(ck.trangThai
+                      ? 'Đã ẩn chuyên khoa'
+                      : 'Đã mở ẩn chuyên khoa'),
                   backgroundColor: AppColors.success,
                 ),
               );
@@ -224,7 +289,7 @@ class _SpecialtyListScreenState extends State<SpecialtyListScreen> {
 
 String _formatTien(int so) {
   return so.toString().replaceAllMapped(
-    RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-    (m) => '${m[1]}.',
-  );
+        RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+        (m) => '${m[1]}.',
+      );
 }

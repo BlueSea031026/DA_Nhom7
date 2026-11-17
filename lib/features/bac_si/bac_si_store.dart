@@ -7,6 +7,18 @@ import '../../models/models.dart';
 class BacSiStore {
   BacSiStore._();
 
+  /// Bác sĩ đang đăng nhập. Chưa đăng nhập (mở thử từ menu Dev) thì lấy
+  /// tài khoản bác sĩ mẫu mã 3.
+  static BacSi get bacSiDangNhap {
+    final tk = MockData.phienDangNhap;
+    final int ma =
+        (tk != null && tk.vaiTro == VaiTro.bacSi) ? tk.maTaiKhoan : 3;
+    for (final b in MockData.bacSi) {
+      if (b.maTaiKhoan == ma) return b;
+    }
+    return MockData.bacSi.first;
+  }
+
   /// Ghi chú / kết quả khám theo mã đặt lịch (bảng DatLich chưa có cột này).
   static final Map<int, String> ketQuaKham = {};
 

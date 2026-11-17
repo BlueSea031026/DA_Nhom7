@@ -28,10 +28,10 @@ class _NoteScreenState extends State<NoteScreen> {
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
-    final DatLich? argsDatLich = args is DatLich ? args : null;
-    final DatLich datLich = BacSiStore.moiNhat(
-      argsDatLich ?? MockData.datLich.first,
-    );
+    final DatLich? argsDatLich =
+        args is DatLich ? args : null;
+    final DatLich datLich =
+        BacSiStore.moiNhat(argsDatLich ?? MockData.datLich.first);
 
     // Mở lại lượt đã khám thì hiện ghi chú đã lưu
     if (!_daNap) {

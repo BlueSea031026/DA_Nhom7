@@ -138,9 +138,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   filled: true,
                   fillColor: AppColors.surface,
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
+                      horizontal: 14, vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: const BorderSide(color: AppColors.border),
@@ -151,12 +149,10 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   ),
                 ),
                 items: MockData.chuyenKhoa
-                    .map(
-                      (ck) => DropdownMenuItem(
-                        value: ck.maChuyenKhoa,
-                        child: Text(ck.tenChuyenKhoa),
-                      ),
-                    )
+                    .map((ck) => DropdownMenuItem(
+                          value: ck.maChuyenKhoa,
+                          child: Text(ck.tenChuyenKhoa),
+                        ))
                     .toList(),
                 onChanged: (v) => setState(() => _maChuyenKhoa = v),
                 validator: (v) => v == null ? 'Chọn chuyên khoa' : null,
@@ -164,14 +160,13 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
               const SizedBox(height: 14),
 
               AppCard(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 child: Row(
                   children: [
                     const Expanded(
-                      child: Text('Đang làm việc', style: AppTextStyles.body),
+                      child:
+                          Text('Đang làm việc', style: AppTextStyles.body),
                     ),
                     Switch(
                       value: _trangThai,

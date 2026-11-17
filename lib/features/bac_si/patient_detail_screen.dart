@@ -24,9 +24,8 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
         ModalRoute.of(context)?.settings.arguments is DatLich
         ? ModalRoute.of(context)!.settings.arguments as DatLich
         : null;
-    final DatLich datLich = BacSiStore.moiNhat(
-      argsDatLich ?? MockData.datLich.first,
-    );
+    final DatLich datLich =
+        BacSiStore.moiNhat(argsDatLich ?? MockData.datLich.first);
 
     final bn = MockData.benhNhanById(datLich.maBenhNhan);
     final lich = MockData.lichById(datLich.maLich);
@@ -172,14 +171,13 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             AppButton(
               label: 'Cập nhật trạng thái khám',
               icon: Icons.edit_outlined,
-              onPressed: () =>
-                  Navigator.pushNamed(
-                    context,
-                    BacSiRoutes.updateStatus,
-                    arguments: datLich,
-                  ).then((_) {
-                    if (mounted) setState(() {});
-                  }),
+              onPressed: () => Navigator.pushNamed(
+                context,
+                BacSiRoutes.updateStatus,
+                arguments: datLich,
+              ).then((_) {
+                if (mounted) setState(() {});
+              }),
             ),
           ],
         ),

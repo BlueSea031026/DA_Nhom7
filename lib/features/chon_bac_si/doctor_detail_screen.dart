@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/phien_dat_lich.dart';
 import '../../core/mock/mock_data.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import '../dat_lich/dat_lich_routes.dart';
@@ -18,7 +19,26 @@ class DoctorDetailScreen extends StatelessWidget {
     // Nếu mở từ DevMenu không có args → lấy bác sĩ đầu tiên
     final BacSi bacSi = args is BacSi ? args : MockData.bacSi.first;
     final chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
-    final danhGia = MockData.danhGiaCuaBacSi(bacSi.maBacSi);
+    final coSo = MockData.coSoById(chuyenKhoa.maCoSo);
+    final danhGia = MockData.danhGiaCuaBacSi(bacSi.maBacSi)
+      ..sort((a, b) => b.ngayDanhGia.compareTo(a.ngayDanhGia));
+
+    // Các ca sắp tới còn chỗ (tối đa 5)
+    final lichSapToi = MockData.lichCuaBacSi(bacSi.maBacSi)
+        .where((l) =>
+            !l.ngay.isBefore(MockData.homNay) && l.trangThai == 1 && l.conTrong)
+        .toList()
+      ..sort((a, b) {
+        final c = a.ngay.compareTo(b.ngay);
+        return c != 0 ? c : a.gioBatDau.compareTo(b.gioBatDau);
+      });
+    final String lichText = lichSapToi.isEmpty
+        ? 'Hiện chưa có ca còn chỗ'
+        : lichSapToi
+            .take(5)
+            .map((l) =>
+                '${Fmt.thu(l.ngay)} ${Fmt.ngay(l.ngay)} · ${l.khungGio} (còn ${l.soChoTrong} chỗ)')
+            .join('\n');
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -54,9 +74,10 @@ class DoctorDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    bacSi.hoTen,
+                    bacSi.tenHienThi,
                     style: AppTextStyles.h2
                         .copyWith(color: AppColors.secondary),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -92,30 +113,41 @@ class DoctorDetailScreen extends StatelessWidget {
               noiDung: chuyenKhoa.tenChuyenKhoa,
             ),
             const SizedBox(height: 12),
-            const _SectionBlock(
-              tieuDe: 'Kinh nghiệm',
-              noiDung: '10 năm',
+            _SectionBlock(
+              tieuDe: 'Học hàm / học vị',
+              noiDung: bacSi.hocHamHocVi ?? 'Chưa cập nhật',
             ),
             const SizedBox(height: 12),
-            const _SectionBlock(
-              tieuDe: 'Giới thiệu',
-              noiDung:
-                  'Bác sĩ chuyên khoa tim mạch, có nhiều năm kinh nghiệm...',
+            _SectionBlock(
+              tieuDe: 'Giá khám cơ bản',
+              noiDung: Fmt.tien(chuyenKhoa.giaKhamCoBan),
             ),
             const SizedBox(height: 12),
             _SectionBlock(
               tieuDe: 'Cơ sở công tác',
-              noiDung: MockData.coSoYTe.first.tenCoSo,
+              noiDung: '${coSo.tenCoSo}\n${coSo.diaChi}',
               icon: Icons.local_hospital_outlined,
               mauIcon: AppColors.secondary,
             ),
             const SizedBox(height: 12),
-            const _SectionBlock(
-              tieuDe: 'Lịch làm việc',
-              noiDung: 'Thứ 2 - Thứ 6\n8:00 - 17:00',
+            _SectionBlock(
+              tieuDe: 'Lịch làm việc sắp tới',
+              noiDung: lichText,
               icon: Icons.calendar_today_outlined,
               mauIcon: AppColors.secondary,
             ),
+            if (danhGia.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _SectionBlock(
+                tieuDe: 'Đánh giá gần đây',
+                noiDung: danhGia
+                    .take(2)
+                    .map((d) => '${d.soSao}★ ${d.nhanXet ?? ''}'.trim())
+                    .join('\n'),
+                icon: Icons.star_outline,
+                mauIcon: AppColors.warning,
+              ),
+            ],
             const SizedBox(height: 24),
             AppButton(
               label: 'Chọn bác sĩ',
