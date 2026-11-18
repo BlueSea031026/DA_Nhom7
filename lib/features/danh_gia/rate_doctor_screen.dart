@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
+import '../../models/models.dart';
+import 'danh_gia_repo.dart';
 
 /// Đánh giá bác sĩ sau khi khám · FR-18
 /// Figma: chưa có – tự thiết kế
@@ -19,6 +21,29 @@ class _RateDoctorScreenState extends State<RateDoctorScreen> {
   final Set<String> _nhanXetNhanh = {};
   final _nhanXetController = TextEditingController();
   bool _daGui = false;
+  bool _dangGui = false;
+
+  Future<void> _gui(DatLich datLich) async {
+    setState(() => _dangGui = true);
+    // Gộp các nhận xét nhanh + nhận xét thêm thành 1 chuỗi.
+    final phan = [..._nhanXetNhanh, _nhanXetController.text.trim()]
+        .where((e) => e.isNotEmpty)
+        .toList();
+    try {
+      await DanhGiaRepo.guiDanhGia(
+        datLich: datLich,
+        soSao: _soSao,
+        nhanXet: phan.isEmpty ? null : phan.join('. '),
+      );
+      if (mounted) setState(() => _daGui = true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _dangGui = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
 
   static const _tags = [
     'Tận tình',
@@ -59,7 +84,8 @@ class _RateDoctorScreenState extends State<RateDoctorScreen> {
     }
 
     final args = ModalRoute.of(context)?.settings.arguments;
-    final datLich = args is int ? MockData.datLichById(args) : MockData.datLichById(3);
+    final datLich =
+        args is int ? MockData.datLichById(args) : MockData.datLich.first;
     final lich = MockData.lichById(datLich.maLich);
     final bacSi = MockData.bacSiById(lich.maBacSi);
     final chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
@@ -164,7 +190,8 @@ class _RateDoctorScreenState extends State<RateDoctorScreen> {
           AppButton(
             label: 'Gửi đánh giá',
             icon: Icons.send_outlined,
-            onPressed: _soSao == 0 ? null : () => setState(() => _daGui = true),
+            onPressed:
+                _soSao == 0 || _dangGui ? null : () => _gui(datLich),
           ),
         ],
       ),

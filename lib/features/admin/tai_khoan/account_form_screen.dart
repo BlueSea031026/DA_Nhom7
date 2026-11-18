@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/mock/mock_data.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
+import 'tai_khoan_repo.dart';
 
 /// Thêm tài khoản nhân viên · FR-39
 /// Figma: Quản trị viên › tHÊM TÀI KHOẢN
@@ -24,6 +25,7 @@ class _AccountFormScreenState extends State<AccountFormScreen> {
   VaiTro _vaiTro = VaiTro.bacSi;
   int? _maChuyenKhoa;
   bool _anMatKhau = true;
+  bool _dangLuu = false;
 
   static const _vaiTroNhanVien = [
     VaiTro.bacSi,
@@ -41,7 +43,7 @@ class _AccountFormScreenState extends State<AccountFormScreen> {
     super.dispose();
   }
 
-  void _luu() {
+  Future<void> _luu() async {
     final form = _formKey.currentState;
     if (form == null || !form.validate()) return;
     if (_vaiTro == VaiTro.bacSi && _maChuyenKhoa == null) {
@@ -50,6 +52,26 @@ class _AccountFormScreenState extends State<AccountFormScreen> {
       );
       return;
     }
+    setState(() => _dangLuu = true);
+    try {
+      await TaiKhoanRepo.taoTaiKhoanNhanVien(
+        hoTen: _hoTen.text,
+        soDienThoai: _soDienThoai.text,
+        email: _email.text,
+        vaiTro: _vaiTro,
+        matKhau: _matKhau.text,
+        maChuyenKhoa: _maChuyenKhoa,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _dangLuu = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Không tạo được tài khoản: '
+            '${e.toString().replaceFirst('Exception: ', '')}')),
+      );
+      return;
+    }
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -178,9 +200,9 @@ class _AccountFormScreenState extends State<AccountFormScreen> {
             const SizedBox(height: 24),
 
             AppButton(
-              label: 'Tạo tài khoản',
+              label: _dangLuu ? 'Đang tạo…' : 'Tạo tài khoản',
               icon: Icons.check,
-              onPressed: _luu,
+              onPressed: _dangLuu ? null : _luu,
             ),
           ],
         ),

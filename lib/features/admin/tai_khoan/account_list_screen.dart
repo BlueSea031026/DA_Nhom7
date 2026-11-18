@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/mock/mock_data.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
+import 'tai_khoan_repo.dart';
 import 'tai_khoan_routes.dart';
 
 /// Danh sách tài khoản + khóa/mở khóa · FR-39
@@ -19,14 +20,8 @@ class _AccountListScreenState extends State<AccountListScreen> {
   String _tuKhoa = '';
   VaiTro? _locVaiTro;
 
-  /// Mã các tài khoản đang bị khóa.
-  final Set<int> _biKhoa = {
-    for (final t in MockData.taiKhoan)
-      if (!t.dangHoatDong) t.maTaiKhoan,
-  };
-
   Future<void> _doiTrangThai(TaiKhoan tk) async {
-    final dangKhoa = _biKhoa.contains(tk.maTaiKhoan);
+    final dangKhoa = !tk.dangHoatDong;
     final dongY = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -47,13 +42,16 @@ class _AccountListScreenState extends State<AccountListScreen> {
       ),
     );
     if (dongY != true || !mounted) return;
-    setState(() {
-      if (dangKhoa) {
-        _biKhoa.remove(tk.maTaiKhoan);
-      } else {
-        _biKhoa.add(tk.maTaiKhoan);
-      }
-    });
+    try {
+      await TaiKhoanRepo.doiTrangThai(tk);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+      return;
+    }
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(dangKhoa
@@ -147,7 +145,7 @@ class _AccountListScreenState extends State<AccountListScreen> {
                         const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final tk = danhSach[index];
-                      final khoa = _biKhoa.contains(tk.maTaiKhoan);
+                      final khoa = !tk.dangHoatDong;
                       final ten = tk.hoTen.trim().split(' ').last;
                       return AppCard(
                         padding: const EdgeInsets.fromLTRB(14, 10, 4, 10),

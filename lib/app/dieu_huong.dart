@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../core/firebase/phien_firebase.dart';
+import '../core/services/nhac_lich_service.dart';
+import '../core/services/thong_bao_service.dart';
+
 import '../core/mock/mock_data.dart';
 import '../features/admin/admin_home/admin_home_routes.dart';
 import '../features/auth/auth_routes.dart';
@@ -13,7 +17,9 @@ import 'app_routes.dart';
 
 /// Điều hướng theo vai trò – CHỈ HẢI SỬA FILE NÀY.
 ///
-/// - Đăng nhập xong:  DieuHuong.vaoTrangChu(context, taiKhoan);
+/// - Đăng nhập xong:  await DieuHuong.vaoTrangChu(context, taiKhoan);
+///   (Duy gọi SAU KHI signInWithEmailAndPassword thành công và đã đọc được
+///    TaiKhoan theo uid – xem PhienFirebase.taiKhoanTheoUid.)
 /// - Đăng xuất:       DieuHuong.dangXuat(context);          (có hỏi lại)
 ///                    DieuHuong.dangXuat(context, hoiLai: false);
 class DieuHuong {
@@ -34,9 +40,20 @@ class DieuHuong {
   static bool _giuMenuDev(Route<dynamic> route) =>
       route.settings.name == AppRoutes.devMenu;
 
-  /// Lưu phiên đăng nhập rồi mở trang chủ đúng vai trò.
-  static void vaoTrangChu(BuildContext context, TaiKhoan taiKhoan) {
+  /// Lưu phiên đăng nhập, tải dữ liệu từ Firestore rồi mở trang chủ đúng vai trò.
+  static Future<void> vaoTrangChu(BuildContext context, TaiKhoan taiKhoan) async {
     MockData.phienDangNhap = taiKhoan;
+    if (!MockData.dangDongBo) {
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+      await MockData.batDauDongBo();
+      if (!context.mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // đóng vòng xoay
+    }
+    ThongBaoService.xinQuyen();
     Navigator.pushNamedAndRemoveUntil(
       context,
       trangChuCua(taiKhoan.vaiTro),
@@ -67,11 +84,15 @@ class DieuHuong {
       );
       if (dongY != true || !context.mounted) return;
     }
-    MockData.phienDangNhap = null;
+    await NhacLichService.huyTatCa();
+    ThongBaoService.datLai();
+    await PhienFirebase.auth.signOut();
+    if (!context.mounted) return;
     Navigator.pushNamedAndRemoveUntil(
       context,
       AuthRoutes.welcome,
       _giuMenuDev,
     );
+    MockData.phienDangNhap = null;
   }
 }

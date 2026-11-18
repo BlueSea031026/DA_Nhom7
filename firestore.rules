@@ -1,0 +1,66 @@
+rules_version = '2';
+// Luật bảo mật Firestore – nhóm 7. Dán vào Firebase console › Firestore › Rules
+// vào ngày 26/11 (trước đó dùng chế độ test cho cả nhóm dễ làm).
+//
+// Vì app tải toàn bộ dữ liệu vào MockData để hiển thị, mọi người dùng ĐÃ ĐĂNG
+// NHẬP được đọc. Ghi cũng yêu cầu đăng nhập; riêng các bảng danh mục chỉ cho
+// Quản trị viên ghi. Đây là mức bảo mật phù hợp đồ án, ghi rõ trong báo cáo.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function daDangNhap() { return request.auth != null; }
+
+    // Tài khoản đang đăng nhập (document taiKhoan có trường uid).
+    function laAdmin() {
+      return daDangNhap() &&
+        exists(/databases/$(database)/documents/vaiTro/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/vaiTro/$(request.auth.uid)).data.vaiTro == 'Quản trị viên';
+    }
+
+    // Đăng nhập bằng email thật cần tra số điện thoại trước khi đăng nhập
+    // → cho đọc bảng taiKhoan. Chỉ chủ tài khoản hoặc admin được sửa.
+    match /taiKhoan/{id} {
+      allow read: if true;
+      allow create: if daDangNhap();
+      allow update: if daDangNhap() &&
+        (resource.data.uid == request.auth.uid || laAdmin());
+      allow delete: if laAdmin();
+    }
+
+    // Bảng danh mục: chỉ Quản trị viên ghi.
+    match /coSoYTe/{id}     { allow read: if daDangNhap(); allow write: if laAdmin(); }
+    match /chuyenKhoa/{id}  { allow read: if daDangNhap(); allow write: if laAdmin(); }
+    match /nhanVien/{id}    { allow read: if daDangNhap(); allow write: if laAdmin(); }
+    match /nhatKyQuanTri/{id} { allow read, write: if laAdmin(); }
+
+    // Bác sĩ: admin quản lý hồ sơ; người đánh giá được cập nhật điểm TB.
+    match /bacSi/{id} {
+      allow read: if daDangNhap();
+      allow write: if laAdmin() ||
+        (daDangNhap() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['diemDanhGiaTb']));
+    }
+
+    // Lịch làm việc: admin tạo/sửa; người đặt lịch được đổi số chỗ đã đặt.
+    match /lichLamViec/{id} {
+      allow read: if daDangNhap();
+      allow write: if laAdmin() ||
+        (daDangNhap() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['soLuongDaDat', 'trangThai']));
+    }
+
+    // Nghiệp vụ hằng ngày: mọi người dùng đã đăng nhập.
+    match /benhNhan/{id}  { allow read, write: if daDangNhap(); }
+    match /theBhyt/{id}   { allow read, write: if daDangNhap(); }
+    match /datLich/{id}   { allow read, write: if daDangNhap(); }
+    match /thanhToan/{id} { allow read, write: if daDangNhap(); }
+    match /hoaDon/{id}    { allow read, write: if daDangNhap(); }
+    match /danhGia/{id}   { allow read: if daDangNhap(); allow create: if daDangNhap(); }
+    match /thongBao/{id}  { allow read, write: if daDangNhap(); }
+    match /boDem/{id}     { allow read, write: if daDangNhap(); }
+
+    // Bảng phụ cho rules: vaiTro/{uid} = { vaiTro: '...' } (xem mục 9 hướng dẫn).
+    match /vaiTro/{uid} {
+      allow read: if daDangNhap();
+      allow write: if laAdmin();
+    }
+  }
+}

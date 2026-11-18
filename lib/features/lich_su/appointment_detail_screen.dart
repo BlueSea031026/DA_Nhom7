@@ -81,7 +81,10 @@ class AppointmentDetailScreen extends StatelessWidget {
                   ),
           ),
           const SizedBox(height: 24),
-          if (datLich.trangThai.sapToi) ...[
+          // Đã đến / đã khám / đã hủy thì không cho hủy-đổi; "Hoãn" thì cho đổi lịch.
+          if (datLich.trangThai == TrangThaiDatLich.choThanhToan ||
+              datLich.trangThai == TrangThaiDatLich.daThanhToan ||
+              datLich.trangThai == TrangThaiDatLich.hoan) ...[
             AppButton(
               label: 'Hủy / đổi lịch',
               outlined: true,
