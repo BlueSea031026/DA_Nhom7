@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "987751759362",
+    "project_id": "dang-ky-kham-benh-nhom7",
+    "storage_bucket": "dang-ky-kham-benh-nhom7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:987751759362:android:6b724aaddbb9c1d5cfb11b",
+        "android_client_info": {
+          "package_name": "vn.edu.huit.da_nhom7"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhnjbBVtAUQ3_zmZBXf6dDeDLUZ60EyWE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
