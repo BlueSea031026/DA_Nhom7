@@ -4,6 +4,7 @@ import '../../core/mock/mock_data.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
+import 'lich_su_repo.dart';
 import 'widgets/note_box.dart';
 
 /// Hủy / đổi lịch hẹn · FR-15
@@ -20,6 +21,7 @@ class _CancelRescheduleScreenState extends State<CancelRescheduleScreen> {
   /// false = hủy lịch, true = đổi lịch
   bool _doiLich = false;
   int? _maLichMoi;
+  bool _dangLuu = false;
   final _lyDoController = TextEditingController();
 
   @override
@@ -28,7 +30,7 @@ class _CancelRescheduleScreenState extends State<CancelRescheduleScreen> {
     super.dispose();
   }
 
-  Future<void> _xacNhan() async {
+  Future<void> _xacNhan(DatLich datLich) async {
     final dongY = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -49,12 +51,29 @@ class _CancelRescheduleScreenState extends State<CancelRescheduleScreen> {
       ),
     );
     if (dongY != true || !mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_doiLich ? 'Đã đổi lịch khám' : 'Đã hủy lịch khám'),
-      ),
-    );
-    Navigator.pop(context);
+    setState(() => _dangLuu = true);
+    try {
+      final int? maLichMoi = _maLichMoi;
+      if (_doiLich && maLichMoi != null) {
+        await LichSuRepo.doiLich(datLich, maLichMoi);
+      } else {
+        final lyDo = _lyDoController.text.trim();
+        await LichSuRepo.huyLich(datLich, lyDo: lyDo.isEmpty ? null : lyDo);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_doiLich ? 'Đã đổi lịch khám' : 'Đã hủy lịch khám'),
+        ),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _dangLuu = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
   }
 
   @override
@@ -67,12 +86,13 @@ class _CancelRescheduleScreenState extends State<CancelRescheduleScreen> {
     final chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
     final thanhToan = MockData.thanhToanCuaDatLich(datLich.maDatLich);
 
-    if (!datLich.trangThai.sapToi) {
-      return const Scaffold(
-        appBar: AppHeader(title: 'Hủy / đổi lịch hẹn'),
+    final String? khongDuoc = LichSuRepo.kiemTra(datLich);
+    if (khongDuoc != null && !_dangLuu) {
+      return Scaffold(
+        appBar: const AppHeader(title: 'Hủy / đổi lịch hẹn'),
         body: EmptyState(
           icon: Icons.event_busy_outlined,
-          message: 'Lịch khám này đã kết thúc hoặc đã hủy, không thể thay đổi.',
+          message: khongDuoc,
         ),
       );
     }
@@ -81,7 +101,7 @@ class _CancelRescheduleScreenState extends State<CancelRescheduleScreen> {
         .where((l) =>
             l.maLich != lich.maLich &&
             l.conTrong &&
-            !l.ngay.isBefore(MockData.homNay))
+            LichSuRepo.gioKham(l).isAfter(DateTime.now()))
         .toList();
 
     // Số tiền đã trả (0 nếu chưa thanh toán) – dùng để báo hoàn tiền.
@@ -208,7 +228,9 @@ class _CancelRescheduleScreenState extends State<CancelRescheduleScreen> {
           AppButton(
             label: _doiLich ? 'Xác nhận đổi lịch' : 'Xác nhận hủy lịch',
             color: _doiLich ? null : AppColors.danger,
-            onPressed: _doiLich && _maLichMoi == null ? null : _xacNhan,
+            onPressed: _dangLuu || (_doiLich && _maLichMoi == null)
+                ? null
+                : () => _xacNhan(datLich),
           ),
         ],
       ),

@@ -21,15 +21,29 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final datLich = MockData.datLich;
+    // Kỳ thống kê: _ky ngày gần nhất, tính theo NGÀY ĐẶT lịch.
+    final tuNgay = MockData.homNay.subtract(Duration(days: _ky - 1));
+    final datLich =
+        MockData.datLich.where((d) => !d.ngayDat.isBefore(tuNgay)).toList();
     final tong = datLich.length;
     final daKham =
         datLich.where((d) => d.trangThai == TrangThaiDatLich.daKham).length;
     final daHuy =
         datLich.where((d) => d.trangThai == TrangThaiDatLich.daHuy).length;
+    final khongDen =
+        datLich.where((d) => d.trangThai == TrangThaiDatLich.khongDen).length;
+    String tyLe(int n) => tong == 0 ? '0%' : '${(n * 100 / tong).round()}%';
     final doanhThu = MockData.thanhToan
-        .where((t) => t.trangThai == TrangThaiThanhToan.daThanhToan)
+        .where((t) =>
+            t.trangThai == TrangThaiThanhToan.daThanhToan &&
+            t.ngayThanhToan != null &&
+            !t.ngayThanhToan!.isBefore(tuNgay))
         .fold<int>(0, (tongTien, t) => tongTien + t.soTien);
+
+    // Top 5 bác sĩ theo điểm đánh giá trung bình
+    final topBacSi = MockData.bacSi.where((b) => b.trangThai).toList()
+      ..sort((a, b) => b.diemDanhGiaTb.compareTo(a.diemDanhGiaTb));
+    if (topBacSi.length > 5) topBacSi.removeRange(5, topBacSi.length);
 
     // Đếm lượt đặt theo chuyên khoa
     final theoKhoa = <String, int>{};
@@ -54,7 +68,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final oSoLieu = <(String, String, IconData, Color)>[
       ('Tổng lượt đặt', '$tong', Icons.event_note_outlined, AppColors.primary),
       ('Đã khám', '$daKham', Icons.task_alt, AppColors.success),
-      ('Đã hủy', '$daHuy', Icons.event_busy_outlined, AppColors.danger),
+      ('Đã hủy · ${tyLe(daHuy)}', '$daHuy', Icons.event_busy_outlined,
+          AppColors.danger),
+      ('Không đến · ${tyLe(khongDen)}', '$khongDen', Icons.person_off_outlined,
+          AppColors.warning),
+      ('Bác sĩ đang làm', '${MockData.bacSi.where((b) => b.trangThai).length}',
+          Icons.medical_services_outlined, AppColors.info),
       ('Doanh thu', Fmt.tien(doanhThu), Icons.payments_outlined,
           AppColors.warning),
     ];
@@ -78,8 +97,15 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             ),
           ),
           const SizedBox(height: 6),
-          Text('Số liệu $_ky ngày gần nhất (dữ liệu mẫu)',
+          Text('Lượt đặt từ ${Fmt.ngay(tuNgay)} đến hôm nay',
               style: AppTextStyles.caption),
+          if (tong == 0) ...[
+            const SizedBox(height: 40),
+            const EmptyState(
+              icon: Icons.query_stats,
+              message: 'Chưa có lượt đặt lịch nào trong kỳ này',
+            ),
+          ],
           const SizedBox(height: 14),
 
           // ---------- Ô số liệu ----------
@@ -141,6 +167,31 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             backgroundColor: AppColors.background,
                           ),
                         ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // ---------- Điểm đánh giá bác sĩ ----------
+          const SectionTitle('Bác sĩ được đánh giá cao'),
+          AppCard(
+            child: Column(
+              children: [
+                for (final b in topBacSi)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                            child:
+                                Text(b.tenHienThi, style: AppTextStyles.body)),
+                        const Icon(Icons.star, size: 18, color: AppColors.warning),
+                        const SizedBox(width: 4),
+                        Text(b.diemDanhGiaTb.toStringAsFixed(1),
+                            style: AppTextStyles.label),
                       ],
                     ),
                   ),

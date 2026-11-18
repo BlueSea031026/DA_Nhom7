@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/mock/mock_data.dart';
+import '../../core/services/thong_bao_service.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
@@ -17,14 +18,24 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  late final List<ThongBao> _danhSach =
+  /// Đọc lại mỗi lần build → có thông báo mới là danh sách tự cập nhật.
+  List<ThongBao> get _danhSach =>
       MockData.thongBaoCuaTaiKhoan(MockData.taiKhoanDangNhap.maTaiKhoan);
 
-  /// Mã các thông báo đã đọc.
-  late final Set<int> _daDoc = {
-    for (final t in _danhSach)
-      if (t.daDoc) t.maThongBao,
-  };
+  /// Mã các thông báo đã đọc (lấy từ Firestore + vừa bấm trong máy).
+  final Set<int> _vuaDoc = {};
+  Set<int> get _daDoc => {
+        for (final t in _danhSach)
+          if (t.daDoc) t.maThongBao,
+        ..._vuaDoc,
+      };
+
+  void _danhDau(Iterable<int> ma) {
+    final ds = ma.toList(); // chốt danh sách trước khi _daDoc thay đổi
+    if (ds.isEmpty) return;
+    setState(() => _vuaDoc.addAll(ds));
+    ThongBaoService.danhDauDaDoc(ds);
+  }
 
   static IconData _icon(LoaiThongBao loai) => switch (loai) {
         LoaiThongBao.xacNhan => Icons.check_circle_outline,
@@ -50,8 +61,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
         actions: [
           if (conChuaDoc)
             TextButton(
-              onPressed: () => setState(
-                  () => _daDoc.addAll(_danhSach.map((t) => t.maThongBao))),
+              onPressed: () => _danhDau(_danhSach
+                  .where((t) => !_daDoc.contains(t.maThongBao))
+                  .map((t) => t.maThongBao)),
               child: const Text('Đọc hết'),
             ),
         ],
@@ -72,7 +84,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 return AppCard(
                   color: chuaDoc ? AppColors.infoLight : AppColors.surface,
                   onTap: () {
-                    setState(() => _daDoc.add(tb.maThongBao));
+                    if (chuaDoc) _danhDau([tb.maThongBao]);
                     Navigator.pushNamed(
                       context,
                       LichSuRoutes.appointmentDetail,
