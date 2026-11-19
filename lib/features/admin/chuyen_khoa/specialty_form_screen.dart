@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/mock/mock_data.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
+import 'chuyen_khoa_repo.dart';
 
 /// Thêm / sửa chuyên khoa · FR-36
 /// Figma: Quản trị viên › THÊM CHUYÊN KHOA
@@ -17,7 +19,10 @@ class _SpecialtyFormScreenState extends State<SpecialtyFormScreen> {
   final _tenCtrl = TextEditingController();
   final _giaCtrl = TextEditingController();
   final _moTaCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  int? _maCoSo;
   bool _daNap = false;
+  bool _dangLuu = false;
 
   @override
   void didChangeDependencies() {
@@ -29,6 +34,7 @@ class _SpecialtyFormScreenState extends State<SpecialtyFormScreen> {
       _tenCtrl.text = args.tenChuyenKhoa;
       _giaCtrl.text = args.giaKhamCoBan.toString();
       _moTaCtrl.text = args.moTa ?? '';
+      _maCoSo = args.maCoSo;
       setState(() {});
     }
   }
@@ -39,6 +45,49 @@ class _SpecialtyFormScreenState extends State<SpecialtyFormScreen> {
     _giaCtrl.dispose();
     _moTaCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _luu(ChuyenKhoa? cu) async {
+    if (_dangLuu) return;
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _dangLuu = true);
+    try {
+      final gia = int.parse(_giaCtrl.text.trim());
+      if (cu == null) {
+        await ChuyenKhoaRepo.them(
+          maCoSo: _maCoSo!,
+          ten: _tenCtrl.text,
+          moTa: _moTaCtrl.text,
+          gia: gia,
+        );
+      } else {
+        await ChuyenKhoaRepo.sua(
+          cu,
+          maCoSo: _maCoSo!,
+          ten: _tenCtrl.text,
+          moTa: _moTaCtrl.text,
+          gia: gia,
+        );
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(cu == null ? 'Đã thêm chuyên khoa' : 'Đã lưu thay đổi'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _dangLuu = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
   }
 
   @override
@@ -53,13 +102,39 @@ class _SpecialtyFormScreenState extends State<SpecialtyFormScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: Form(
+          key: _formKey,
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text('Cơ sở y tế', style: AppTextStyles.label),
+            const SizedBox(height: 6),
+            DropdownButtonFormField<int>(
+              initialValue: _maCoSo,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                hintText: 'Chọn cơ sở y tế',
+                filled: true,
+                fillColor: AppColors.surface,
+                border: OutlineInputBorder(),
+              ),
+              items: MockData.coSoYTe
+                  .map((c) => DropdownMenuItem(
+                        value: c.maCoSo,
+                        child: Text(c.tenCoSo, overflow: TextOverflow.ellipsis),
+                      ))
+                  .toList(),
+              onChanged: (v) => setState(() => _maCoSo = v),
+              validator: (v) => v == null ? 'Chọn cơ sở y tế' : null,
+            ),
+            const SizedBox(height: 16),
+
             const Text('Tên chuyên khoa', style: AppTextStyles.label),
             const SizedBox(height: 6),
-            TextField(
+            TextFormField(
               controller: _tenCtrl,
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Nhập tên chuyên khoa' : null,
               decoration: const InputDecoration(
                 hintText: 'Nhập tên chuyên khoa',
                 filled: true,
@@ -71,8 +146,14 @@ class _SpecialtyFormScreenState extends State<SpecialtyFormScreen> {
 
             const Text('Giá khám cơ bản', style: AppTextStyles.label),
             const SizedBox(height: 6),
-            TextField(
+            TextFormField(
               controller: _giaCtrl,
+              validator: (v) {
+                final n = int.tryParse((v ?? '').trim());
+                if (n == null) return 'Giá khám phải là số';
+                if (n <= 0) return 'Giá khám phải lớn hơn 0';
+                return null;
+              },
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 hintText: 'Nhập giá khám cơ bản',
@@ -101,22 +182,18 @@ class _SpecialtyFormScreenState extends State<SpecialtyFormScreen> {
               children: [
                 Expanded(
                   child: AppButton(
-                    label: laSua ? 'Lưu thay đổi' : 'Thêm mới',
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                              'Chưa nối Firebase – chỉ demo giao diện'),
-                        ),
-                      );
-                      Navigator.pop(context);
-                    },
+                    label: _dangLuu
+                        ? 'Đang lưu...'
+                        : (laSua ? 'Lưu thay đổi' : 'Thêm mới'),
+                    onPressed: _dangLuu
+                        ? null
+                        : () => _luu(args is ChuyenKhoa ? args : null),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: _dangLuu ? null : () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(0, 48),
                       shape: RoundedRectangleBorder(
@@ -129,6 +206,7 @@ class _SpecialtyFormScreenState extends State<SpecialtyFormScreen> {
               ],
             ),
           ],
+        ),
         ),
       ),
     );
