@@ -5,6 +5,8 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import 'bac_si_routes.dart';
+import 'bac_si_repo.dart';
+import 'khong_co_ho_so.dart';
 
 /// Danh sách bệnh nhân · FR-21
 /// Figma: Bác sĩ › Hồ sơ bệnh nhân (tab Bệnh nhân hôm nay)
@@ -17,67 +19,88 @@ class PatientListScreen extends StatefulWidget {
 }
 
 class _PatientListScreenState extends State<PatientListScreen> {
-  static const int _maTaiKhoanBacSi = 3;
-
   // 0 = Tất cả, 1 = Chưa khám
   int _tabChon = 0;
+  DateTime _ngay = MockData.homNay;
+
+  Future<void> _chonNgay() async {
+    final DateTime? chon = await showDatePicker(
+      context: context,
+      initialDate: _ngay,
+      firstDate: DateTime(2024, 1, 1),
+      lastDate: DateTime(2030, 12, 31),
+    );
+    if (chon != null && mounted) {
+      setState(() => _ngay = DateTime(chon.year, chon.month, chon.day));
+    }
+  }
+
+  void _doiNgay(int soNgay) => setState(() =>
+      _ngay = DateTime(_ngay.year, _ngay.month, _ngay.day + soNgay));
 
   @override
   Widget build(BuildContext context) {
-    final bacSi = MockData.bacSi.firstWhere(
-      (b) => b.maTaiKhoan == _maTaiKhoanBacSi,
-      orElse: () => MockData.bacSi.first,
-    );
+    final bacSi = BacSiRepo.bacSiDangNhap;
+    if (bacSi == null) return const KhongCoHoSoBacSi(tieuDe: 'BỆNH NHÂN');
 
-    // Lịch của bác sĩ trong hôm nay
-    final lichHomNay = MockData.lichCuaBacSi(bacSi.maBacSi)
-        .where((l) =>
-            l.ngay.year == MockData.homNay.year &&
-            l.ngay.month == MockData.homNay.month &&
-            l.ngay.day == MockData.homNay.day)
-        .toList();
-    final lichIds = lichHomNay.map((l) => l.maLich).toSet();
-
-    // Đặt lịch hôm nay
-    var datLichHomNay = MockData.datLich
-        .where((d) => lichIds.contains(d.maLich))
-        .toList()
-      ..sort((a, b) {
-        final la = MockData.lichById(a.maLich);
-        final lb = MockData.lichById(b.maLich);
-        return la.gioBatDau.compareTo(lb.gioBatDau);
-      });
-
-    // Lọc theo tab
+    // Lượt đặt của ngày đang chọn; Đã đến xếp lên đầu trong từng khung giờ
+    var datLichNgay = BacSiRepo.luotTrongNgay(bacSi, _ngay);
     if (_tabChon == 1) {
-      datLichHomNay = datLichHomNay
-          .where((d) =>
-              d.trangThai != TrangThaiDatLich.daKham &&
-              d.trangThai != TrangThaiDatLich.daHuy)
-          .toList();
+      // Chưa khám = còn hiệu lực (chờ thanh toán / đã thanh toán / đã đến)
+      datLichNgay = datLichNgay.where((d) => d.trangThai.sapToi).toList();
     }
+    final bool laHomNay = _ngay == MockData.homNay;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const AppHeader(title: 'BỆNH NHÂN HÔM NAY'),
+      appBar: AppHeader(title: laHomNay ? 'BỆNH NHÂN HÔM NAY' : 'BỆNH NHÂN'),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Thông tin ngày + bác sĩ
+          // Chọn ngày + bác sĩ
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '${Fmt.thu(MockData.homNay)}, '
-                    '${MockData.homNay.day.toString().padLeft(2, '0')}/${MockData.homNay.month.toString().padLeft(2, '0')}/${MockData.homNay.year}',
-                    style: AppTextStyles.caption,
+                  Row(
+                    children: [
+                      IconButton(
+                        tooltip: 'Ngày trước',
+                        icon: const Icon(Icons.chevron_left),
+                        onPressed: () => _doiNgay(-1),
+                      ),
+                      Expanded(
+                        child: InkWell(
+                          onTap: _chonNgay,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Text(
+                              '${Fmt.thu(_ngay)}, ${Fmt.ngay(_ngay)}',
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.caption,
+                            ),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Ngày sau',
+                        icon: const Icon(Icons.chevron_right),
+                        onPressed: () => _doiNgay(1),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
+                  if (!laHomNay)
+                    Center(
+                      child: TextButton(
+                        onPressed: () =>
+                            setState(() => _ngay = MockData.homNay),
+                        child: const Text('Về hôm nay'),
+                      ),
+                    ),
                   Text(
-                    'Bác sĩ ${bacSi.hoTen}',
+                    bacSi.tenHienThi,
                     style: AppTextStyles.title,
                   ),
                 ],
@@ -115,119 +138,120 @@ class _PatientListScreenState extends State<PatientListScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              '${datLichHomNay.length} Bệnh nhân',
+              '${datLichNgay.length} Bệnh nhân',
               style: AppTextStyles.h2,
             ),
           ),
           const SizedBox(height: 10),
 
-          // Danh sách
+          // Danh sách, nhóm theo khung giờ
           Expanded(
-            child: datLichHomNay.isEmpty
+            child: datLichNgay.isEmpty
                 ? const EmptyState(
                     icon: Icons.people_outline,
                     message: 'Không có bệnh nhân nào',
                   )
-                : ListView.builder(
+                : ListView(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                    itemCount: datLichHomNay.length,
-                    itemBuilder: (context, index) {
-                      final dl = datLichHomNay[index];
-                      final bn = MockData.benhNhanById(dl.maBenhNhan);
-                      final lich = MockData.lichById(dl.maLich);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: AppCard(
-                          onTap: () => Navigator.pushNamed(
-                            context,
-                            BacSiRoutes.patientDetail,
-                            arguments: dl,
-                          ),
-                          child: Row(
-                            children: [
-                              // Số thứ tự + giờ
-                              SizedBox(
-                                width: 50,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      (index + 1).toString().padLeft(2, '0'),
-                                      style: AppTextStyles.title,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      lich.gioBatDau,
-                                      style: AppTextStyles.caption,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-
-                              // Thông tin
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(bn.hoTen,
-                                        style: AppTextStyles.title),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      dl.lyDoKham ?? '—',
-                                      style: AppTextStyles.caption,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.circle,
-                                          size: 10,
-                                          color: _mauTrangThai(dl.trangThai),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          _tenTrangThai(dl.trangThai),
-                                          style: AppTextStyles.caption
-                                              .copyWith(
-                                            fontWeight: FontWeight.w600,
-                                            color: _mauTrangThai(dl.trangThai),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              // Nút Xem
-                              OutlinedButton(
-                                onPressed: () => Navigator.pushNamed(
-                                  context,
-                                  BacSiRoutes.patientDetail,
-                                  arguments: dl,
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  minimumSize: const Size(50, 30),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                ),
-                                child: const Text('Xem →',
-                                    style: AppTextStyles.caption),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                    children: _danhSachNhom(datLichNgay),
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  List<Widget> _danhSachNhom(List<DatLich> ds) {
+    final List<Widget> out = [];
+    String? khungHienTai;
+    int stt = 0;
+    for (final dl in ds) {
+      final lich = MockData.lichById(dl.maLich);
+      if (lich.khungGio != khungHienTai) {
+        khungHienTai = lich.khungGio;
+        out.add(Padding(
+          padding: const EdgeInsets.only(top: 6, bottom: 8),
+          child: Text('Khung giờ ${lich.khungGio}',
+              style: AppTextStyles.caption
+                  .copyWith(fontWeight: FontWeight.w700)),
+        ));
+      }
+      stt++;
+      out.add(_theBenhNhan(dl, stt));
+    }
+    return out;
+  }
+
+  Widget _theBenhNhan(DatLich dl, int stt) {
+    final bn = MockData.benhNhanById(dl.maBenhNhan);
+    final lich = MockData.lichById(dl.maLich);
+    void xem() => Navigator.pushNamed(
+          context,
+          BacSiRoutes.patientDetail,
+          arguments: dl,
+        );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: AppCard(
+        onTap: xem,
+        child: Row(
+          children: [
+            SizedBox(
+              width: 50,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(stt.toString().padLeft(2, '0'),
+                      style: AppTextStyles.title),
+                  const SizedBox(height: 2),
+                  Text(lich.gioBatDau, style: AppTextStyles.caption),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(bn.hoTen, style: AppTextStyles.title),
+                  const SizedBox(height: 4),
+                  Text(
+                    dl.lyDoKham ?? '—',
+                    style: AppTextStyles.caption,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.circle,
+                          size: 10, color: _mauTrangThai(dl.trangThai)),
+                      const SizedBox(width: 6),
+                      Text(
+                        _tenTrangThai(dl.trangThai),
+                        style: AppTextStyles.caption.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: _mauTrangThai(dl.trangThai),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            OutlinedButton(
+              onPressed: xem,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(50, 30),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text('Xem →', style: AppTextStyles.caption),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -254,7 +278,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
   String _tenTrangThai(TrangThaiDatLich tt) {
     switch (tt) {
       case TrangThaiDatLich.daDen:
-        return 'Đang chờ';
+        return 'Đã đến – đang chờ';
       default:
         return tt.label;
     }

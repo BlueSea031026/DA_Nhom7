@@ -5,39 +5,34 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import 'bac_si_routes.dart';
+import 'bac_si_repo.dart';
 
 /// Hồ sơ bệnh nhân · FR-22
 /// Figma: Bác sĩ › Hồ sơ bệnh nhân
 /// Phụ trách: Thương
-class PatientDetailScreen extends StatelessWidget {
+class PatientDetailScreen extends StatefulWidget {
   const PatientDetailScreen({super.key});
 
+  @override
+  State<PatientDetailScreen> createState() => _PatientDetailScreenState();
+}
+
+class _PatientDetailScreenState extends State<PatientDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final DatLich? argsDatLich =
         ModalRoute.of(context)?.settings.arguments is DatLich
         ? ModalRoute.of(context)!.settings.arguments as DatLich
         : null;
-    final DatLich datLich = argsDatLich ?? MockData.datLich.first;
+    final DatLich datLich =
+        BacSiRepo.moiNhat(argsDatLich ?? MockData.datLich.first);
 
     final bn = MockData.benhNhanById(datLich.maBenhNhan);
     final lich = MockData.lichById(datLich.maLich);
     final theBhyt = MockData.theBhytCuaBenhNhan(bn.maBenhNhan);
 
-    // Lịch sử khám của bệnh nhân này
-    final lichSu =
-        MockData.datLich
-            .where(
-              (d) =>
-                  d.maBenhNhan == bn.maBenhNhan &&
-                  d.trangThai == TrangThaiDatLich.daKham,
-            )
-            .toList()
-          ..sort((a, b) {
-            final la = MockData.lichById(a.maLich);
-            final lb = MockData.lichById(b.maLich);
-            return lb.ngay.compareTo(la.ngay);
-          });
+    // Các lần khám trước của bệnh nhân này với CHÍNH bác sĩ này
+    final lichSu = BacSiRepo.lanKhamTruoc(datLich);
 
     // Định dạng ngày sinh (ngaySinh là DateTime không null)
     final ns = bn.ngaySinh;
@@ -64,6 +59,14 @@ class PatientDetailScreen extends StatelessWidget {
                     '${lich.ngay.day.toString().padLeft(2, '0')}/${lich.ngay.month.toString().padLeft(2, '0')}/${lich.ngay.year}',
                     style: AppTextStyles.caption,
                   ),
+                  const SizedBox(height: 8),
+                  InfoRow(label: 'Trạng thái', value: datLich.trangThai.label),
+                  InfoRow(label: 'Lý do khám', value: datLich.lyDoKham ?? '—'),
+                  if (BacSiRepo.ghiChuCua(datLich) != null)
+                    InfoRow(
+                      label: 'Kết quả khám',
+                      value: BacSiRepo.ghiChuCua(datLich)!,
+                    ),
                 ],
               ),
             ),
@@ -82,6 +85,8 @@ class PatientDetailScreen extends StatelessWidget {
                         .soDienThoai,
                   ),
                   InfoRow(label: 'CCCD', value: bn.soCccd ?? '—'),
+                  if (bn.diaChi != null && bn.diaChi!.isNotEmpty)
+                    InfoRow(label: 'Địa chỉ', value: bn.diaChi!),
                 ],
               ),
             ),
@@ -103,11 +108,11 @@ class PatientDetailScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Lịch sử khám
-            const SectionTitle('LỊCH SỬ KHÁM'),
+            const SectionTitle('CÁC LẦN KHÁM TRƯỚC VỚI BÁC SĨ NÀY'),
             if (lichSu.isEmpty)
               AppCard(
                 child: Text(
-                  'Chưa có lịch sử khám',
+                  'Chưa có lần khám trước với bác sĩ này',
                   style: AppTextStyles.bodySecondary,
                 ),
               )
@@ -146,6 +151,11 @@ class PatientDetailScreen extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
+                        if (BacSiRepo.ghiChuCua(d) != null) ...[
+                          const SizedBox(height: 6),
+                          Text('Ghi chú: ${BacSiRepo.ghiChuCua(d)}',
+                              style: AppTextStyles.bodySecondary),
+                        ],
                       ],
                     ),
                   ),
@@ -160,7 +170,9 @@ class PatientDetailScreen extends StatelessWidget {
                 context,
                 BacSiRoutes.updateStatus,
                 arguments: datLich,
-              ),
+              ).then((_) {
+                if (mounted) setState(() {});
+              }),
             ),
           ],
         ),

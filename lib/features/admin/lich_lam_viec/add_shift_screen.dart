@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/mock/mock_data.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../../models/models.dart';
+import 'lich_lam_viec_repo.dart';
 
 /// Thêm ca làm việc · FR-38
 /// Figma: Quản trị viên › THÊM CA LÀM VIỆC
@@ -21,6 +23,9 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
   DateTime? _ngay;
   TimeOfDay? _gioBatDau;
   TimeOfDay? _gioKetThuc;
+  bool _lapHangTuan = false;
+  int _soTuan = 4;
+  bool _dangLuu = false;
 
   Future<void> _chonNgay() async {
     final now = DateTime.now();
@@ -36,7 +41,8 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
   Future<void> _chonGio(bool batDau) async {
     final chon = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.now(),
+      initialTime: (batDau ? _gioBatDau : _gioKetThuc) ??
+          const TimeOfDay(hour: 8, minute: 0),
     );
     if (chon != null) {
       setState(() {
@@ -46,6 +52,46 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
           _gioKetThuc = chon;
         }
       });
+    }
+  }
+
+  void _baoLoi(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: AppColors.danger),
+    );
+  }
+
+  Future<void> _luu() async {
+    if (_dangLuu) return;
+    if (!_formKey.currentState!.validate()) return;
+    if (_ngay == null || _gioBatDau == null || _gioKetThuc == null) {
+      _baoLoi('Vui lòng chọn ngày và giờ bắt đầu/kết thúc');
+      return;
+    }
+    setState(() => _dangLuu = true);
+    try {
+      final int soCa = await LichLamViecRepo.themCa(
+        maBacSi: _maBacSi!,
+        ngay: _ngay!,
+        gioBatDau: _formatGio(_gioBatDau),
+        gioKetThuc: _formatGio(_gioKetThuc),
+        soCho: int.parse(_soChoCtrl.text.trim()),
+        soTuan: _lapHangTuan ? _soTuan : 1,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(soCa > 1
+              ? 'Đã thêm $soCa ca làm việc'
+              : 'Đã thêm ca làm việc'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _dangLuu = false);
+      _baoLoi(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -97,6 +143,7 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
                   ),
                 ),
                 items: MockData.bacSi
+                    .where((bs) => bs.trangThai)
                     .map((bs) => DropdownMenuItem(
                           value: bs.maBacSi,
                           child: Text(bs.hoTen),
@@ -223,36 +270,62 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
                 controller: _soChoCtrl,
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return 'Bắt buộc';
-                  if (int.tryParse(v) == null) return 'Phải là số';
+                  final n = int.tryParse(v.trim());
+                  if (n == null) return 'Phải là số';
+                  if (n < 1 || n > 50) return 'Số chỗ từ 1 đến 50';
                   return null;
                 },
               ),
               const SizedBox(height: 24),
 
-              AppButton(
-                label: 'THÊM CA LÀM VIỆC',
-                icon: Icons.add_circle_outline,
-                onPressed: () {
-                  if (!_formKey.currentState!.validate()) return;
-                  if (_ngay == null ||
-                      _gioBatDau == null ||
-                      _gioKetThuc == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                            'Vui lòng chọn ngày và giờ bắt đầu/kết thúc'),
-                      ),
-                    );
-                    return;
-                  }
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content:
-                          Text('Chưa nối Firebase – chỉ demo giao diện'),
+              AppCard(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text('Lặp lại hằng tuần',
+                              style: AppTextStyles.body),
+                        ),
+                        Switch(
+                          value: _lapHangTuan,
+                          activeThumbColor: AppColors.primary,
+                          onChanged: (v) => setState(() => _lapHangTuan = v),
+                        ),
+                      ],
                     ),
-                  );
-                  Navigator.pop(context);
-                },
+                    if (_lapHangTuan)
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text('Số tuần (gồm tuần đầu)',
+                                style: AppTextStyles.caption),
+                          ),
+                          DropdownButton<int>(
+                            value: _soTuan,
+                            items: [
+                              for (var n = 2;
+                                  n <= LichLamViecRepo.soTuanToiDa;
+                                  n++)
+                                DropdownMenuItem(
+                                    value: n, child: Text('$n tuần')),
+                            ],
+                            onChanged: (v) =>
+                                setState(() => _soTuan = v ?? _soTuan),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              AppButton(
+                label: _dangLuu ? 'ĐANG LƯU...' : 'THÊM CA LÀM VIỆC',
+                icon: Icons.add_circle_outline,
+                onPressed: _dangLuu ? null : _luu,
               ),
             ],
           ),

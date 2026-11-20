@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
+import 'bac_si_repo.dart';
+import 'khong_co_ho_so.dart';
 
 /// Lịch làm việc · FR-20
 /// Figma: Bác sĩ › Lịch làm việc
@@ -15,32 +18,30 @@ class WorkScheduleScreen extends StatefulWidget {
 }
 
 class _WorkScheduleScreenState extends State<WorkScheduleScreen> {
-  static const int _maTaiKhoanBacSi = 3;
+  DateTime _ngayChon = MockData.homNay;
+  DateTime _ngayTrang = MockData.homNay;
 
-  late final BacSi _bacSi;
-  late final ChuyenKhoa _chuyenKhoa;
-  late DateTime _ngayChon;
-
-  @override
-  void initState() {
-    super.initState();
-    _bacSi = MockData.bacSi.firstWhere(
-      (b) => b.maTaiKhoan == _maTaiKhoanBacSi,
-      orElse: () => MockData.bacSi.first,
-    );
-    _chuyenKhoa = MockData.chuyenKhoaById(_bacSi.maChuyenKhoa);
-    _ngayChon = MockData.homNay;
+  /// Ca còn hiệu lực của bác sĩ trong 1 ngày (bỏ ca đã bị Quản trị viên hủy:
+  /// soLuongCho = 0), sắp theo giờ.
+  List<LichLamViec> _caTrongNgay(BacSi bacSi, DateTime ngay) {
+    return MockData.lichCuaBacSi(bacSi.maBacSi)
+        .where((l) =>
+            l.soLuongCho > 0 &&
+            l.ngay.year == ngay.year &&
+            l.ngay.month == ngay.month &&
+            l.ngay.day == ngay.day)
+        .toList()
+      ..sort((a, b) => a.gioBatDau.compareTo(b.gioBatDau));
   }
 
   @override
   Widget build(BuildContext context) {
+    final BacSi? bacSi = BacSiRepo.bacSiDangNhap;
+    if (bacSi == null) return const KhongCoHoSoBacSi(tieuDe: 'LỊCH LÀM VIỆC');
+    final ChuyenKhoa chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
+
     // Lịch của bác sĩ trong ngày đang chọn
-    final lichTrongNgay = MockData.lichCuaBacSi(_bacSi.maBacSi)
-        .where((l) =>
-            l.ngay.year == _ngayChon.year &&
-            l.ngay.month == _ngayChon.month &&
-            l.ngay.day == _ngayChon.day)
-        .toList();
+    final lichTrongNgay = _caTrongNgay(bacSi, _ngayChon);
 
     // Chia buổi sáng (trước 12h) / buổi chiều
     final lichSang =
@@ -65,8 +66,8 @@ class _WorkScheduleScreenState extends State<WorkScheduleScreen> {
                       radius: 22,
                       backgroundColor: AppColors.infoLight,
                       child: Text(
-                        _bacSi.hoTen.isNotEmpty
-                            ? _bacSi.hoTen[0].toUpperCase()
+                        bacSi.hoTen.isNotEmpty
+                            ? bacSi.hoTen[0].toUpperCase()
                             : '?',
                         style: AppTextStyles.title
                             .copyWith(color: AppColors.primary),
@@ -78,12 +79,12 @@ class _WorkScheduleScreenState extends State<WorkScheduleScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${_bacSi.hocHamHocVi ?? ''} ${_bacSi.hoTen}'
+                            '${bacSi.hocHamHocVi ?? ''} ${bacSi.hoTen}'
                                 .trim(),
                             style: AppTextStyles.title,
                           ),
                           const SizedBox(height: 2),
-                          Text(_chuyenKhoa.tenChuyenKhoa,
+                          Text(chuyenKhoa.tenChuyenKhoa,
                               style: AppTextStyles.caption),
                         ],
                       ),
@@ -93,11 +94,63 @@ class _WorkScheduleScreenState extends State<WorkScheduleScreen> {
               ),
             ),
 
-            // Calendar strip ngang
+            // Lịch tuần: ngày có ca hiện chấm
             const SizedBox(height: 16),
-            _CalendarStrip(
-              ngayChon: _ngayChon,
-              onChon: (d) => setState(() => _ngayChon = d),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: AppCard(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: TableCalendar<LichLamViec>(
+                  firstDay: DateTime.utc(2024, 1, 1),
+                  lastDay: DateTime.utc(2030, 12, 31),
+                  focusedDay: _ngayTrang,
+                  calendarFormat: CalendarFormat.week,
+                  availableCalendarFormats: const {
+                    CalendarFormat.week: 'Tuần',
+                  },
+                  startingDayOfWeek: StartingDayOfWeek.monday,
+                  selectedDayPredicate: (d) =>
+                      d.year == _ngayChon.year &&
+                      d.month == _ngayChon.month &&
+                      d.day == _ngayChon.day,
+                  eventLoader: (d) => _caTrongNgay(bacSi, d),
+                  onDaySelected: (chon, trang) => setState(() {
+                    _ngayChon = DateTime(chon.year, chon.month, chon.day);
+                    _ngayTrang = trang;
+                  }),
+                  onPageChanged: (trang) => _ngayTrang = trang,
+                  headerStyle: HeaderStyle(
+                    formatButtonVisible: false,
+                    titleCentered: true,
+                    titleTextFormatter: (date, _) =>
+                        'Tháng ${date.month}, ${date.year}',
+                  ),
+                  calendarStyle: const CalendarStyle(
+                    selectedDecoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    todayDecoration: BoxDecoration(
+                      color: AppColors.infoLight,
+                      shape: BoxShape.circle,
+                    ),
+                    todayTextStyle: TextStyle(color: AppColors.primary),
+                    markerDecoration: BoxDecoration(
+                      color: AppColors.success,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  calendarBuilders: CalendarBuilders(
+                    dowBuilder: (context, day) {
+                      const nhan = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+                      return Center(
+                        child: Text(nhan[day.weekday - 1],
+                            style: AppTextStyles.caption),
+                      );
+                    },
+                  ),
+                ),
+              ),
             ),
 
             // Danh sách buổi
@@ -112,7 +165,7 @@ class _WorkScheduleScreenState extends State<WorkScheduleScreen> {
                       icon: Icons.wb_sunny_outlined,
                       iconColor: AppColors.warning,
                       danhSachLich: lichSang,
-                      chuyenKhoa: _chuyenKhoa.tenChuyenKhoa,
+                      chuyenKhoa: chuyenKhoa.tenChuyenKhoa,
                     ),
                   if (lichSang.isNotEmpty && lichChieu.isNotEmpty)
                     const SizedBox(height: 12),
@@ -122,7 +175,7 @@ class _WorkScheduleScreenState extends State<WorkScheduleScreen> {
                       icon: Icons.nights_stay_outlined,
                       iconColor: AppColors.primary,
                       danhSachLich: lichChieu,
-                      chuyenKhoa: _chuyenKhoa.tenChuyenKhoa,
+                      chuyenKhoa: chuyenKhoa.tenChuyenKhoa,
                     ),
                   if (lichTrongNgay.isEmpty)
                     const Padding(
@@ -137,93 +190,6 @@ class _WorkScheduleScreenState extends State<WorkScheduleScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Calendar strip 7 ngày quanh hôm nay
-class _CalendarStrip extends StatelessWidget {
-  const _CalendarStrip({required this.ngayChon, required this.onChon});
-
-  final DateTime ngayChon;
-  final ValueChanged<DateTime> onChon;
-
-  static const List<String> _thu = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-
-  @override
-  Widget build(BuildContext context) {
-    // Hiển thị 7 ngày bắt đầu từ thứ 2 của tuần hiện tại
-    final dauTuan = ngayChon.subtract(Duration(days: ngayChon.weekday - 1));
-    final dsNgay = List.generate(7, (i) => dauTuan.add(Duration(days: i)));
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Tháng ${ngayChon.month}, ${ngayChon.year}',
-            style: AppTextStyles.h2,
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: dsNgay.map((d) {
-              final laChon = d.year == ngayChon.year &&
-                  d.month == ngayChon.month &&
-                  d.day == ngayChon.day;
-              final laHomNay = d.year == MockData.homNay.year &&
-                  d.month == MockData.homNay.month &&
-                  d.day == MockData.homNay.day;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => onChon(d),
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: laChon ? AppColors.infoLight : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          _thu[d.weekday - 1],
-                          style: AppTextStyles.caption.copyWith(
-                            color: laChon
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${d.day}',
-                          style: AppTextStyles.title.copyWith(
-                            color: laChon
-                                ? AppColors.primary
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        if (laHomNay)
-                          Container(
-                            width: 4,
-                            height: 4,
-                            decoration: const BoxDecoration(
-                              color: AppColors.warning,
-                              shape: BoxShape.circle,
-                            ),
-                          )
-                        else
-                          const SizedBox(height: 4),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
       ),
     );
   }
@@ -251,10 +217,13 @@ class _BuoiCard extends StatelessWidget {
     int tongCho = 0;
     int daDat = 0;
     String gioDau = danhSachLich.first.gioBatDau;
-    String gioCuoi = danhSachLich.last.gioKetThuc;
+    String gioCuoi = danhSachLich.first.gioKetThuc;
     for (final l in danhSachLich) {
       tongCho += l.soLuongCho;
       daDat += l.soLuongDaDat;
+      // Lấy giờ sớm nhất và giờ muộn nhất của cả buổi
+      if (l.gioBatDau.compareTo(gioDau) < 0) gioDau = l.gioBatDau;
+      if (l.gioKetThuc.compareTo(gioCuoi) > 0) gioCuoi = l.gioKetThuc;
     }
     final conCho = tongCho - daDat;
     final tiLe = tongCho == 0 ? 0.0 : daDat / tongCho;

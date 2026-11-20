@@ -4,6 +4,8 @@ import '../../app/dieu_huong.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../auth/auth_routes.dart';
+import 'bac_si_repo.dart';
+import 'khong_co_ho_so.dart';
 
 /// Trang cá nhân Bác sĩ (frame 2 của trang home)
 /// Figma: Bác sĩ › trang home bác sĩ (Trang cá nhân)
@@ -11,14 +13,10 @@ import '../auth/auth_routes.dart';
 class DoctorProfileScreen extends StatelessWidget {
   const DoctorProfileScreen({super.key});
 
-  static const int _maTaiKhoanBacSi = 3;
-
   @override
   Widget build(BuildContext context) {
-    final bacSi = MockData.bacSi.firstWhere(
-      (b) => b.maTaiKhoan == _maTaiKhoanBacSi,
-      orElse: () => MockData.bacSi.first,
-    );
+    final bacSi = BacSiRepo.bacSiDangNhap;
+    if (bacSi == null) return const KhongCoHoSoBacSi(tieuDe: 'TRANG CÁ NHÂN');
     final chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
 
     return Scaffold(
