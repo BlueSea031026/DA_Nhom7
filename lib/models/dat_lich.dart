@@ -14,6 +14,7 @@ class DatLich {
     required this.maXacNhan,
     this.trangThai = TrangThaiDatLich.choThanhToan,
     required this.ngayDat,
+    this.ghiChu,
   });
 
   final int maDatLich;
@@ -31,6 +32,9 @@ class DatLich {
   final TrangThaiDatLich trangThai;
   final DateTime ngayDat;
 
+  /// Kết quả khám / chẩn đoán bác sĩ ghi khi chuyển Đã khám (FR-23)
+  final String? ghiChu;
+
   factory DatLich.fromMap(Map<String, dynamic> m) => DatLich(
         maDatLich: m['maDatLich'] as int,
         maBenhNhan: m['maBenhNhan'] as int,
@@ -42,6 +46,7 @@ class DatLich {
         maXacNhan: m['maXacNhan'] as String,
         trangThai: TrangThaiDatLich.fromLabel(m['trangThai'] as String),
         ngayDat: parseDate(m['ngayDat']),
+        ghiChu: m['ghiChu'] as String?,
       );
 
   Map<String, dynamic> toMap() => {
@@ -55,5 +60,6 @@ class DatLich {
         'maXacNhan': maXacNhan,
         'trangThai': trangThai.label,
         'ngayDat': ngayDat.toIso8601String(),
+        'ghiChu': ghiChu,
       };
 }
