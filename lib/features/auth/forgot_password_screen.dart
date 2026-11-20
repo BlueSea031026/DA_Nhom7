@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/widgets/widgets.dart';
 import 'auth_mock.dart';
+import 'auth_repo.dart';
 import 'auth_routes.dart';
 import 'widgets/auth_widgets.dart';
 
@@ -46,6 +48,61 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
+  /// Chỉ chế độ debug: liên kết số điện thoại cho tài khoản mẫu (tạo trước khi
+  /// có FR-01 nên chưa gắn số) để thử được quên mật khẩu bằng OTP.
+  Future<void> _lienKetThu() async {
+    FocusScope.of(context).unfocus();
+    setState(() => _loi = null);
+    if (!_formKey.currentState!.validate()) return;
+    final sdt = _sdtCtrl.text.trim();
+    final mkCtrl = TextEditingController();
+    final String? matKhau = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Liên kết số điện thoại (thử)'),
+        content: TextField(
+          controller: mkCtrl,
+          obscureText: true,
+          decoration: const InputDecoration(labelText: 'Mật khẩu hiện tại'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, mkCtrl.text),
+            child: const Text('Tiếp tục'),
+          ),
+        ],
+      ),
+    );
+    mkCtrl.dispose();
+    if (matKhau == null || matKhau.isEmpty || !mounted) return;
+    try {
+      final daLienKet = await AuthRepo.kiemTraMatKhau(sdt, matKhau);
+      if (!mounted) return;
+      if (daLienKet) {
+        setState(() => _loi = 'Tài khoản này đã liên kết số điện thoại.');
+        return;
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loi = AuthRepo.thongBaoLoi(e));
+      return;
+    }
+    if (!mounted) return;
+    Navigator.pushNamed(
+      context,
+      AuthRoutes.otp,
+      arguments: OtpArgs(
+        soDienThoai: sdt,
+        mucDich: MucDichOtp.lienKet,
+        matKhau: matKhau,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final String? loi = _loi;
@@ -86,6 +143,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     onPressed: _tiepTuc,
                   ),
                 ),
+                if (kDebugMode) ...[
+                  const SizedBox(height: 24),
+                  TextButton.icon(
+                    onPressed: _lienKetThu,
+                    icon: const Icon(Icons.link),
+                    label: const Text('Liên kết SĐT cho tài khoản mẫu (thử)'),
+                  ),
+                ],
               ],
             ),
           ),

@@ -90,16 +90,21 @@ class AuthValidators {
 }
 
 /// Mục đích của màn OTP.
-enum MucDichOtp { dangKy, quenMatKhau }
+/// lienKet: gắn số điện thoại vào tài khoản cũ để dùng được quên mật khẩu.
+enum MucDichOtp { dangKy, quenMatKhau, lienKet }
 
 class OtpArgs {
   const OtpArgs({
     required this.soDienThoai,
     required this.mucDich,
     this.laGiamHo = false,
+    this.matKhau,
   });
 
   final String soDienThoai;
   final MucDichOtp mucDich;
   final bool laGiamHo;
+
+  /// Mật khẩu hiện tại – chỉ dùng cho [MucDichOtp.lienKet].
+  final String? matKhau;
 }

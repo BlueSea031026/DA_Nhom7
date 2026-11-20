@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/app_routes.dart';
 import '../../core/widgets/widgets.dart';
 import 'auth_mock.dart';
+import 'auth_repo.dart';
 import 'auth_routes.dart';
 import 'widgets/auth_widgets.dart';
 
@@ -21,10 +22,20 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _moiCtrl = TextEditingController();
   final _nhapLaiCtrl = TextEditingController();
   bool _thanhCong = false;
+  bool _dangLuu = false;
+  bool _laDatLai = false;
   String? _loi;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _laDatLai = _datLai;
+  }
+
+  @override
   void dispose() {
+    // Thoát giữa chừng sau khi xác thực OTP → bỏ phiên Firebase tạm.
+    if (_laDatLai && !_thanhCong) AuthRepo.dangXuatFirebase();
     _hienTaiCtrl.dispose();
     _moiCtrl.dispose();
     _nhapLaiCtrl.dispose();
@@ -34,20 +45,46 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   /// true = đặt lại mật khẩu sau khi quên
   bool get _datLai => ModalRoute.of(context)?.settings.arguments is String;
 
-  void _luu() {
+  Future<void> _luu() async {
     FocusScope.of(context).unfocus();
     setState(() => _loi = null);
     if (!_formKey.currentState!.validate()) return;
 
-    if (!_datLai && _hienTaiCtrl.text != AuthMock.matKhauMau) {
-      setState(() => _loi = 'Mật khẩu hiện tại không đúng.');
-      return;
-    }
     if (!_datLai && _moiCtrl.text == _hienTaiCtrl.text) {
       setState(() => _loi = 'Mật khẩu mới phải khác mật khẩu hiện tại.');
       return;
     }
-    setState(() => _thanhCong = true);
+    final String? sdt = AuthMock.dangNhap?.soDienThoai;
+    if (!_datLai && sdt == null) {
+      setState(() => _loi = 'Bạn chưa đăng nhập.');
+      return;
+    }
+    setState(() => _dangLuu = true);
+    try {
+      if (_datLai) {
+        await AuthRepo.datMatKhauMoi(_moiCtrl.text);
+      } else {
+        await AuthRepo.doiMatKhau(
+          sdt: sdt!,
+          matKhauCu: _hienTaiCtrl.text,
+          matKhauMoi: _moiCtrl.text,
+        );
+      }
+      if (!mounted) return;
+      setState(() => _thanhCong = true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(
+        () => _loi = _datLai
+            ? AuthRepo.thongBaoLoi(e)
+            : AuthRepo.thongBaoLoi(e).replaceFirst(
+                'Mật khẩu không đúng.',
+                'Mật khẩu hiện tại không đúng.',
+              ),
+      );
+    } finally {
+      if (mounted) setState(() => _dangLuu = false);
+    }
   }
 
   void _veDangNhap() {
@@ -119,9 +156,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 const SizedBox(height: 28),
                 Center(
                   child: AppButton(
-                    label: 'Đổi mật khẩu',
+                    label: _dangLuu ? 'Đang lưu...' : 'Đổi mật khẩu',
                     expanded: false,
-                    onPressed: _luu,
+                    onPressed: _dangLuu ? null : _luu,
                   ),
                 ),
               ],
