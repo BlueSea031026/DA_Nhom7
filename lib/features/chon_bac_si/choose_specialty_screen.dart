@@ -4,21 +4,33 @@ import '../../app/phien_dat_lich.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
+import 'chon_bac_si_routes.dart';
+import 'tim_kiem.dart';
 
 /// Chọn chuyên khoa · FR-06
 /// Figma: Bệnh Nhân › Chọn chuyên khoa
 /// Phụ trách: Thương
-class ChooseSpecialtyScreen extends StatelessWidget {
+class ChooseSpecialtyScreen extends StatefulWidget {
   const ChooseSpecialtyScreen({super.key});
 
   static const String routeName = '/choose-specialty';
+
+  @override
+  State<ChooseSpecialtyScreen> createState() => _ChooseSpecialtyScreenState();
+}
+
+class _ChooseSpecialtyScreenState extends State<ChooseSpecialtyScreen> {
+  String _tuKhoa = '';
 
   @override
   Widget build(BuildContext context) {
     // Dữ liệu từ MockData (KHÔNG viết cứng)
     // Cơ sở đã chọn ở bước trước (lib/app/phien_dat_lich.dart)
     final coSo = PhienDatLich.coSo;
-    final specialties = MockData.chuyenKhoaCuaCoSo(coSo.maCoSo);
+    final tatCa = MockData.chuyenKhoaCuaCoSo(coSo.maCoSo);
+    final specialties = _tuKhoa.trim().isEmpty
+        ? tatCa
+        : tatCa.where((c) => khop(c.tenChuyenKhoa, _tuKhoa)).toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -53,7 +65,7 @@ class ChooseSpecialtyScreen extends StatelessWidget {
               label: 'Tìm kiếm',
               hint: 'Tìm kiếm chuyên khoa',
               prefixIcon: Icons.search,
-              onChanged: (_) {},
+              onChanged: (v) => setState(() => _tuKhoa = v),
             ),
             const SizedBox(height: 20),
 
@@ -62,9 +74,11 @@ class ChooseSpecialtyScreen extends StatelessWidget {
 
             // Khung xanh đậm chứa lưới
             if (specialties.isEmpty)
-              const EmptyState(
+              EmptyState(
                 icon: Icons.medical_services_outlined,
-                message: 'Cơ sở này chưa có chuyên khoa nhận lịch',
+                message: tatCa.isEmpty
+                    ? 'Cơ sở này chưa có chuyên khoa nhận lịch'
+                    : 'Không tìm thấy chuyên khoa phù hợp',
               )
             else
             Container(
@@ -91,7 +105,7 @@ class ChooseSpecialtyScreen extends StatelessWidget {
                     onTap: () {
                       Navigator.pushNamed(
                         context,
-                        '/dat-kham/bac-si',
+                        ChonBacSiRoutes.chooseDoctor,
                         arguments: ck,
                       );
                     },
