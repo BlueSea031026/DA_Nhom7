@@ -55,29 +55,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _loi = null);
     if (!_formKey.currentState!.validate()) return;
     final sdt = _sdtCtrl.text.trim();
-    final mkCtrl = TextEditingController();
     final String? matKhau = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Liên kết số điện thoại (thử)'),
-        content: TextField(
-          controller: mkCtrl,
-          obscureText: true,
-          decoration: const InputDecoration(labelText: 'Mật khẩu hiện tại'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, mkCtrl.text),
-            child: const Text('Tiếp tục'),
-          ),
-        ],
-      ),
+      builder: (_) => const _NhapMatKhauDialog(),
     );
-    mkCtrl.dispose();
     if (matKhau == null || matKhau.isEmpty || !mounted) return;
     try {
       final daLienKet = await AuthRepo.kiemTraMatKhau(sdt, matKhau);
@@ -156,6 +137,48 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Hộp thoại nhập mật khẩu – tự quản lý controller để không bị dispose
+/// trong lúc hộp thoại đang chạy hiệu ứng đóng.
+class _NhapMatKhauDialog extends StatefulWidget {
+  const _NhapMatKhauDialog();
+
+  @override
+  State<_NhapMatKhauDialog> createState() => _NhapMatKhauDialogState();
+}
+
+class _NhapMatKhauDialogState extends State<_NhapMatKhauDialog> {
+  final _ctrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Liên kết số điện thoại (thử)'),
+      content: TextField(
+        controller: _ctrl,
+        obscureText: true,
+        autofocus: true,
+        decoration: const InputDecoration(labelText: 'Mật khẩu hiện tại'),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Hủy'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, _ctrl.text),
+          child: const Text('Tiếp tục'),
+        ),
+      ],
     );
   }
 }

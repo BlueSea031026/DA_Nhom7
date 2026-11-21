@@ -55,7 +55,12 @@ class AuthRepo {
         case 'missing-client-identifier':
           return 'Máy này chưa được đăng ký SHA-1 trên Firebase, nhắn Hải thêm.';
       }
-      return e.message ?? 'Lỗi xác thực (${e.code}).';
+      final msg = e.message ?? '';
+      if (msg.contains('BILLING_NOT_ENABLED')) {
+        return 'Số này chưa được thêm làm số thử trên Firebase '
+            '(gói Spark không gửi SMS thật).';
+      }
+      return msg.isNotEmpty ? msg : 'Lỗi xác thực (${e.code}).';
     }
     return e.toString().replaceFirst('Exception: ', '');
   }
