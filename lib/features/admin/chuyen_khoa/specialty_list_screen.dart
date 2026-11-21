@@ -1,19 +1,88 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/mock/mock_data.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
 import 'chuyen_khoa_routes.dart';
+import 'chuyen_khoa_repo.dart';
 
 /// Quản lý chuyên khoa & giá khám · FR-36
 /// Figma: Quản trị viên › Danh sách chuyên khoa
 /// Phụ trách: Thương
-class SpecialtyListScreen extends StatelessWidget {
+class SpecialtyListScreen extends StatefulWidget {
   const SpecialtyListScreen({super.key});
 
   @override
+  State<SpecialtyListScreen> createState() => _SpecialtyListScreenState();
+}
+
+class _SpecialtyListScreenState extends State<SpecialtyListScreen> {
+  bool _xemDaAn = false; // false = Đang hoạt động, true = Đã ẩn
+  int? _maCoSo; // null = tất cả cơ sở
+
+  Widget _boLoc() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DropdownButtonFormField<int?>(
+            initialValue: _maCoSo,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Cơ sở y tế',
+              filled: true,
+              fillColor: AppColors.surface,
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              const DropdownMenuItem<int?>(
+                value: null,
+                child: Text('Tất cả cơ sở'),
+              ),
+              ...MockData.coSoYTe.map(
+                (c) => DropdownMenuItem<int?>(
+                  value: c.maCoSo,
+                  child: Text(c.tenCoSo, overflow: TextOverflow.ellipsis),
+                ),
+              ),
+            ],
+            onChanged: (v) => setState(() => _maCoSo = v),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              ChoiceChip(
+                label: const Text('Đang hoạt động'),
+                selected: !_xemDaAn,
+                onSelected: (_) => setState(() => _xemDaAn = false),
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: const Text('Đã ẩn'),
+                selected: _xemDaAn,
+                onSelected: (_) => setState(() => _xemDaAn = true),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _lamMoi(Object? _) {
+    if (mounted) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final danhSach = MockData.chuyenKhoa;
+    final danhSach = MockData.chuyenKhoa
+        .where((c) =>
+            c.trangThai != _xemDaAn && (_maCoSo == null || c.maCoSo == _maCoSo))
+        .toList();
+    // 1 ô bộ lọc + (danh sách hoặc thông báo rỗng) + nút Thêm
+    final int soMuc = (danhSach.isEmpty ? 1 : danhSach.length) + 2;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -25,23 +94,37 @@ class SpecialtyListScreen extends StatelessWidget {
             onPressed: () => Navigator.pushNamed(
               context,
               AdminChuyenKhoaRoutes.specialtyForm,
-            ),
+            ).then(_lamMoi),
           ),
         ],
       ),
       body: ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        itemCount: danhSach.length + 1,
+        itemCount: soMuc,
         itemBuilder: (context, index) {
+          if (index == 0) return _boLoc();
+          if (danhSach.isEmpty && index == 1) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Text(
+                  _xemDaAn
+                      ? 'Không có chuyên khoa nào đang ẩn'
+                      : 'Không có chuyên khoa đang hoạt động',
+                  style: AppTextStyles.caption,
+                ),
+              ),
+            );
+          }
           // Nút "+ Thêm" ở cuối
-          if (index == danhSach.length) {
+          if (index == soMuc - 1) {
             return Padding(
               padding: const EdgeInsets.only(top: 8),
               child: OutlinedButton.icon(
                 onPressed: () => Navigator.pushNamed(
                   context,
                   AdminChuyenKhoaRoutes.specialtyForm,
-                ),
+                ).then(_lamMoi),
                 icon: const Icon(Icons.add),
                 label: const Text('Thêm'),
                 style: OutlinedButton.styleFrom(
@@ -54,7 +137,7 @@ class SpecialtyListScreen extends StatelessWidget {
             );
           }
 
-          final ck = danhSach[index];
+          final ck = danhSach[index - 1];
           return Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: AppCard(
@@ -62,10 +145,13 @@ class SpecialtyListScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(ck.tenChuyenKhoa, style: AppTextStyles.title),
+                  const SizedBox(height: 2),
+                  Text(MockData.coSoById(ck.maCoSo).tenCoSo,
+                      style: AppTextStyles.caption),
                   const SizedBox(height: 6),
                   Text('Giá khám cơ bản', style: AppTextStyles.caption),
                   Text(
-                    '${_formatTien(ck.giaKhamCoBan)}đ',
+                    Fmt.tien(ck.giaKhamCoBan),
                     style: AppTextStyles.body.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -99,7 +185,7 @@ class SpecialtyListScreen extends StatelessWidget {
                             context,
                             AdminChuyenKhoaRoutes.specialtyForm,
                             arguments: ck,
-                          ),
+                          ).then(_lamMoi),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
@@ -154,7 +240,7 @@ class SpecialtyListScreen extends StatelessWidget {
             : 'MỞ ẨN CHUYÊN KHOA'),
         content: Text(
           ck.trangThai
-              ? 'Chuyên khoa sẽ không xuất hiện khi đặt lịch một.\n\nẨn chuyên khoa "${ck.tenChuyenKhoa}"?'
+              ? 'Chuyên khoa sẽ không xuất hiện khi đặt lịch.\n\nẨn chuyên khoa "${ck.tenChuyenKhoa}"?'
               : 'Chuyên khoa xuất hiện trở lại trong hệ thống',
         ),
         actions: [
@@ -163,14 +249,29 @@ class SpecialtyListScreen extends StatelessWidget {
             child: const Text('Hủy'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content:
-                      Text('Chưa nối Firebase – chỉ demo giao diện'),
-                ),
-              );
+              try {
+                await ChuyenKhoaRepo.doiTrangThai(ck);
+                if (!mounted) return;
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  SnackBar(
+                    content: Text(ck.trangThai
+                        ? 'Đã ẩn chuyên khoa'
+                        : 'Đã mở ẩn chuyên khoa'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  SnackBar(
+                    content:
+                        Text(e.toString().replaceFirst('Exception: ', '')),
+                    backgroundColor: AppColors.danger,
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.success,
@@ -184,9 +285,3 @@ class SpecialtyListScreen extends StatelessWidget {
   }
 }
 
-String _formatTien(int so) {
-  return so.toString().replaceAllMapped(
-        RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-        (m) => '${m[1]}.',
-      );
-}
