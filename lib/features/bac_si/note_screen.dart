@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
+import 'bac_si_repo.dart';
 
 /// Ghi chú kết quả khám · FR-23
 /// Figma: Bác sĩ › Ghi chú
@@ -16,6 +17,8 @@ class NoteScreen extends StatefulWidget {
 
 class _NoteScreenState extends State<NoteScreen> {
   final _ghiChuCtrl = TextEditingController();
+  bool _daNap = false;
+  bool _dangLuu = false;
 
   @override
   void dispose() {
@@ -23,12 +26,52 @@ class _NoteScreenState extends State<NoteScreen> {
     super.dispose();
   }
 
+  Future<void> _luu(DatLich datLich) async {
+    if (_ghiChuCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng nhập kết quả khám'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+    setState(() => _dangLuu = true);
+    try {
+      await BacSiRepo.khamXong(datLich, _ghiChuCtrl.text);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Đã lưu kết quả khám'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _dangLuu = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
     final DatLich? argsDatLich =
         args is DatLich ? args : null;
-    final DatLich datLich = argsDatLich ?? MockData.datLich.first;
+    final DatLich datLich =
+        BacSiRepo.moiNhat(argsDatLich ?? MockData.datLich.first);
+
+    // Mở lại lượt đã khám thì hiện ghi chú đã lưu
+    if (!_daNap) {
+      _daNap = true;
+      _ghiChuCtrl.text = BacSiRepo.ghiChuCua(datLich) ?? '';
+    }
 
     final bn = MockData.benhNhanById(datLich.maBenhNhan);
     final lich = MockData.lichById(datLich.maLich);
@@ -94,16 +137,8 @@ class _NoteScreenState extends State<NoteScreen> {
 
             // Nút Lưu
             AppButton(
-              label: 'Lưu kết quả khám',
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Đã lưu kết quả (chưa nối Firebase)'),
-                    backgroundColor: AppColors.success,
-                  ),
-                );
-                Navigator.popUntil(context, (r) => r.isFirst);
-              },
+              label: _dangLuu ? 'Đang lưu...' : 'Lưu kết quả khám',
+              onPressed: _dangLuu ? null : () => _luu(datLich),
             ),
           ],
         ),

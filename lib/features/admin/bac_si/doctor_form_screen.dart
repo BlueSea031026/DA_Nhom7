@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../core/mock/mock_data.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
+import 'bac_si_repo.dart';
 
-/// Thêm / sửa bác sĩ · FR-37
+/// Sửa hồ sơ bác sĩ · FR-37 (thêm bác sĩ mới: Quản lý tài khoản – Hải)
 /// Figma: (chưa có – tự thiết kế)
 /// Phụ trách: Thương
 class DoctorFormScreen extends StatefulWidget {
@@ -23,6 +24,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
   int? _maChuyenKhoa;
   bool _trangThai = true;
   bool _daNapDuLieu = false;
+  bool _dangLuu = false;
 
   @override
   void didChangeDependencies() {
@@ -49,14 +51,57 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     super.dispose();
   }
 
+  Future<void> _luu(BacSi cu) async {
+    if (_dangLuu) return;
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _dangLuu = true);
+    try {
+      await BacSiRepo.sua(
+        cu,
+        hoTen: _hoTenCtrl.text,
+        hocHamHocVi: _hocViCtrl.text,
+        maChuyenKhoa: _maChuyenKhoa!,
+        soDienThoai: _sdtCtrl.text,
+        trangThai: _trangThai,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Đã lưu thay đổi'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _dangLuu = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
-    final bool laSua = args is BacSi;
+    if (args is! BacSi) {
+      // Màn này chỉ để SỬA; thêm bác sĩ đi qua Quản lý tài khoản.
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppHeader(title: 'SỬA BÁC SĨ'),
+        body: EmptyState(
+          icon: Icons.person_search_outlined,
+          message: 'Hãy chọn một bác sĩ trong danh sách để sửa hồ sơ',
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppHeader(title: laSua ? 'SỬA BÁC SĨ' : 'THÊM BÁC SĨ'),
+      appBar: const AppHeader(title: 'SỬA BÁC SĨ'),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -85,6 +130,13 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                 hint: 'Ví dụ: 0901234567',
                 keyboardType: TextInputType.phone,
                 controller: _sdtCtrl,
+                validator: (v) {
+                  final t = (v ?? '').trim();
+                  if (t.isEmpty) return null;
+                  return RegExp(r'^0\d{9}$').hasMatch(t)
+                      ? null
+                      : 'SĐT gồm 10 số, bắt đầu bằng 0';
+                },
               ),
               const SizedBox(height: 14),
 
@@ -137,18 +189,9 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
               const SizedBox(height: 24),
 
               AppButton(
-                label: laSua ? 'LƯU THAY ĐỔI' : 'THÊM BÁC SĨ',
+                label: _dangLuu ? 'ĐANG LƯU...' : 'LƯU THAY ĐỔI',
                 icon: Icons.save_outlined,
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Chưa nối Firebase – chỉ demo giao diện'),
-                      ),
-                    );
-                    Navigator.pop(context);
-                  }
-                },
+                onPressed: _dangLuu ? null : () => _luu(args),
               ),
             ],
           ),
