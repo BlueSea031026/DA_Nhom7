@@ -1,37 +1,28 @@
+import 'package:da_nhom7/features/admin/co_so/co_so_repo.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/mock/mock_data.dart';
 import '../../../models/co_so_y_te.dart';
+
 /// Thêm / sửa cơ sở · FR-35
-/// Figma: Quản trị viên › tHÊM CƠ SỞ; Sửa cở sở
+/// Figma: Quản trị viên › Thêm cơ sở; Sửa cơ sở
 /// Phụ trách: Lân
 class FacilityFormScreen extends StatefulWidget {
   const FacilityFormScreen({super.key});
 
   @override
-  State<FacilityFormScreen> createState() =>
-      _FacilityFormScreenState();
+  State<FacilityFormScreen> createState() => _FacilityFormScreenState();
 }
 
-class _FacilityFormScreenState
-    extends State<FacilityFormScreen> {
+class _FacilityFormScreenState extends State<FacilityFormScreen> {
+  final _formKey = GlobalKey<FormState>();
 
-  final _formKey =
-      GlobalKey<FormState>();
-
-  final _tenController =
-      TextEditingController();
-
-  final _diaChiController =
-      TextEditingController();
-
-  final _sdtController =
-      TextEditingController();
-
-  final _loaiController =
-      TextEditingController();
+  final _tenController = TextEditingController();
+  final _diaChiController = TextEditingController();
+  final _sdtController = TextEditingController();
+  final _loaiController = TextEditingController();
 
   bool _isEdit = false;
+  bool _dangLuu = false;
 
   /// Cơ sở đang sửa (null = thêm mới).
   CoSoYTe? _goc;
@@ -45,207 +36,110 @@ class _FacilityFormScreenState
     super.dispose();
   }
 
-  /// Lưu vào MockData: sửa thì thay đúng cơ sở, thêm thì nối cuối.
-  void _luuVaoMock() {
-    final CoSoYTe? goc = _goc;
-    final String sdt = _sdtController.text.trim();
-    final String loai = _loaiController.text.trim();
-    final CoSoYTe moi = CoSoYTe(
-      maCoSo: goc?.maCoSo ??
-          MockData.coSoYTe.fold<int>(0, (m, c) => c.maCoSo > m ? c.maCoSo : m) +
-              1,
-      tenCoSo: _tenController.text.trim(),
-      diaChi: _diaChiController.text.trim(),
-      soDienThoai: sdt.isEmpty ? null : sdt,
-      loaiCoSo: loai.isEmpty ? null : loai,
-      hoTroBhyt: goc?.hoTroBhyt ?? true,
-      trangThai: goc?.trangThai ?? true,
-    );
-    final int viTri =
-        goc == null ? -1 : MockData.coSoYTe.indexWhere((c) => c.maCoSo == goc.maCoSo);
-    if (viTri >= 0) {
-      MockData.coSoYTe[viTri] = moi;
-    } else {
-      MockData.coSoYTe.add(moi);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-
-    final args =
-        ModalRoute.of(context)?.settings.arguments;
+    final args = ModalRoute.of(context)?.settings.arguments;
 
     if (args is CoSoYTe && !_isEdit) {
-
       _isEdit = true;
       _goc = args;
 
-      _tenController.text =
-          args.tenCoSo;
-
-      _diaChiController.text =
-          args.diaChi;
-
-      _sdtController.text =
-          args.soDienThoai ?? '';
-
-      _loaiController.text =
-          args.loaiCoSo ?? '';
+      _tenController.text = args.tenCoSo;
+      _diaChiController.text = args.diaChi;
+      _sdtController.text = args.soDienThoai ?? '';
+      _loaiController.text = args.loaiCoSo ?? '';
     }
 
     return Scaffold(
-
-      appBar: AppBar(
-        title: Text(
-          _isEdit
-              ? 'SỬA CƠ SỞ'
-              : 'THÊM CƠ SỞ',
-        ),
-      ),
-
+      appBar: AppBar(title: Text(_isEdit ? 'SỬA CƠ SỞ' : 'THÊM CƠ SỞ')),
       body: SingleChildScrollView(
-        child: Padding(
         padding: const EdgeInsets.all(16),
-
         child: Form(
           key: _formKey,
-
           child: Column(
             children: [
-
               TextFormField(
-                controller:
-                    _tenController,
-
-                decoration:
-                    const InputDecoration(
-                  labelText:
-                      'Tên cơ sở',
-                ),
-
+                controller: _tenController,
+                decoration: const InputDecoration(labelText: 'Tên cơ sở'),
                 validator: (value) {
-
-                  if (value == null ||
-                      value.isEmpty) {
-
+                  if (value == null || value.trim().isEmpty) {
                     return 'Vui lòng nhập tên cơ sở';
                   }
-
                   return null;
                 },
               ),
-
-              const SizedBox(
-                height: 16,
-              ),
-
+              const SizedBox(height: 16),
               TextFormField(
-                controller:
-                    _diaChiController,
-
-                decoration:
-                    const InputDecoration(
-                  labelText:
-                      'Địa chỉ',
-                ),
-
+                controller: _diaChiController,
+                decoration: const InputDecoration(labelText: 'Địa chỉ'),
                 validator: (value) {
-
-                  if (value == null ||
-                      value.isEmpty) {
-
+                  if (value == null || value.trim().isEmpty) {
                     return 'Vui lòng nhập địa chỉ';
                   }
-
                   return null;
                 },
               ),
-
-              const SizedBox(
-                height: 16,
-              ),
-
+              const SizedBox(height: 16),
               TextFormField(
-                controller:
-                    _sdtController,
-
-                keyboardType:
-                    TextInputType.phone,
-
-                decoration:
-                    const InputDecoration(
-                  labelText:
-                      'Số điện thoại',
-                ),
+                controller: _sdtController,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(labelText: 'Số điện thoại'),
               ),
-
-              const SizedBox(
-                height: 16,
-              ),
-
+              const SizedBox(height: 16),
               TextFormField(
-                controller:
-                    _loaiController,
-
-                decoration:
-                    const InputDecoration(
-                  labelText:
-                      'Loại cơ sở',
-                ),
+                controller: _loaiController,
+                decoration: const InputDecoration(labelText: 'Loại cơ sở'),
               ),
-
               const SizedBox(height: 32),
-
               SizedBox(
-                width:
-                    double.infinity,
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _dangLuu
+                      ? null
+                      : () async {
+                          if (!_formKey.currentState!.validate()) {
+                            return;
+                          }
 
-                child:
-                    ElevatedButton(
+                          setState(() => _dangLuu = true);
+                          try {
+                            await CoSoRepository.luuCoSo(
+                              goc: _goc,
+                              tenCoSo: _tenController.text,
+                              diaChi: _diaChiController.text,
+                              soDienThoai: _sdtController.text,
+                              loaiCoSo: _loaiController.text,
+                            );
 
-                  onPressed: () {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  _isEdit
+                                      ? 'Cập nhật cơ sở thành công'
+                                      : 'Thêm cơ sở thành công',
+                                ),
+                              ),
+                            );
 
-                    if (!_formKey
-                        .currentState!
-                        .validate()) {
-
-                      return;
-                    }
-
-                    _luuVaoMock();
-
-                    ScaffoldMessenger.of(
-                            context)
-                        .showSnackBar(
-
-                      SnackBar(
-                        content: Text(
-
-                          _isEdit
-                              ? 'Cập nhật cơ sở thành công'
-                              : 'Thêm cơ sở thành công',
-
-                        ),
-                      ),
-                    );
-
-                    Navigator.pop(
-                      context,
-                    );
-                  },
-
-                  child: Text(
-                    _isEdit
-                        ? 'CẬP NHẬT'
-                        : 'THÊM MỚI',
-                  ),
+                            Navigator.pop(context);
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Lỗi lưu cơ sở: $e')),
+                            );
+                          } finally {
+                            if (mounted) setState(() => _dangLuu = false);
+                          }
+                        },
+                  child: _dangLuu
+                      ? const CircularProgressIndicator()
+                      : Text(_isEdit ? 'CẬP NHẬT' : 'THÊM MỚI'),
                 ),
               ),
             ],
           ),
         ),
-      ),
       ),
     );
   }
