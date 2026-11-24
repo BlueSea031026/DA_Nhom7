@@ -35,15 +35,10 @@ class BacSiRepo {
     return d;
   }
 
-  /// Ghi chú / kết quả khám của lượt đặt. Trường `ghiChu` do Hải thêm vào
-  /// model DatLich; khi chưa có thì trả về null (không làm hỏng màn hình).
+  /// Ghi chú / kết quả khám của lượt đặt (trường ghiChu của DatLich).
   static String? ghiChuCua(DatLich d) {
-    try {
-      final dynamic v = (d as dynamic).ghiChu;
-      return (v is String && v.trim().isNotEmpty) ? v.trim() : null;
-    } catch (_) {
-      return null;
-    }
+    final String? v = d.ghiChu?.trim();
+    return (v == null || v.isEmpty) ? null : v;
   }
 
   /// Các lượt đặt của bác sĩ trong 1 ngày, bỏ lượt đã hủy.
