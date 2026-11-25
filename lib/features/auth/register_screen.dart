@@ -54,11 +54,47 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool get _laCaNhan => _vaiTro == VaiTro.benhNhan;
 
+  /// #34: "nguyễn  văn an" → "Nguyễn Văn An".
+  static String vietHoaHoTen(String s) => s
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((w) => w.isNotEmpty)
+      .map((w) => w.characters.first.toUpperCase() +
+          w.characters.skip(1).toString().toLowerCase())
+      .join(' ');
+
+  /// #34: CCCD 12 số – số thứ 4 là mã giới tính + thế kỷ (0/1: Nam/Nữ sinh
+  /// 1900–1999, 2/3: Nam/Nữ sinh 2000–2099), số 5–6 là 2 số cuối năm sinh.
+  static (String, int)? docCccd(String cccd) {
+    final c = cccd.trim();
+    if (!RegExp(r'^\d{12}$').hasMatch(c)) return null;
+    final ma = int.parse(c[3]);
+    if (ma > 3) return null;
+    final gioiTinh = ma.isEven ? 'Nam' : 'Nữ';
+    final nam = (ma < 2 ? 1900 : 2000) + int.parse(c.substring(4, 6));
+    return (gioiTinh, nam);
+  }
+
+  int? _namTheoCccd;
+
+  void _tuDienTuCccd(String v) {
+    final kq = docCccd(v);
+    if (kq == null) {
+      if (_namTheoCccd != null) setState(() => _namTheoCccd = null);
+      return;
+    }
+    setState(() {
+      _gioiTinhChon = kq.$1;
+      _namTheoCccd = kq.$2;
+    });
+  }
+
   Future<void> _chonNgaySinh() async {
     final now = DateTime.now();
     final chon = await showDatePicker(
       context: context,
-      initialDate: _ngaySinh ?? DateTime(now.year - 25),
+      initialDate: _ngaySinh ??
+          (_namTheoCccd != null ? DateTime(_namTheoCccd!) : DateTime(now.year - 25)),
       firstDate: DateTime(1900),
       lastDate: now,
       helpText: 'Chọn ngày sinh',
@@ -87,7 +123,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final email = _emailCtrl.text.trim();
     final cccd = _cccdCtrl.text.trim();
     final thongTin = ThongTinDangKy(
-      hoTen: _hoTenCtrl.text.trim(),
+      hoTen: vietHoaHoTen(_hoTenCtrl.text),
       soDienThoai: _sdtCtrl.text.trim(),
       email: email.isEmpty ? null : email,
       vaiTro: _vaiTro!,
@@ -286,6 +322,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       keyboardType: TextInputType.number,
       prefixIcon: Icons.badge_outlined,
       validator: AuthValidators.cccdTuyChon,
+      onChanged: _tuDienTuCccd,
     ),
+    if (_namTheoCccd != null)
+      Padding(
+        padding: const EdgeInsets.only(top: 6, left: 4),
+        child: Text(
+          'Đã tự điền theo CCCD: giới tính $_gioiTinhChon, năm sinh $_namTheoCccd',
+          style: AppTextStyles.caption.copyWith(color: AppColors.success),
+        ),
+      ),
   ];
 }

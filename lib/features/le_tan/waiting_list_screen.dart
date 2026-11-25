@@ -9,7 +9,10 @@ import 'le_tan_repo.dart';
 import 'le_tan_routes.dart';
 
 class WaitingListScreen extends StatefulWidget {
-  const WaitingListScreen({super.key});
+  const WaitingListScreen({super.key, this.locBanDau = 0});
+
+  /// Bộ lọc khi mở: 0 = Tất cả, 1 = Chờ đến, 2 = Đã đến (#47).
+  final int locBanDau;
 
   @override
   State<WaitingListScreen> createState() => _WaitingListScreenState();
@@ -31,7 +34,7 @@ enum _BoLoc {
 }
 
 class _WaitingListScreenState extends State<WaitingListScreen> {
-  _BoLoc _boLoc = _BoLoc.tatCa;
+  late _BoLoc _boLoc = _BoLoc.values[widget.locBanDau.clamp(0, 2)];
   String _tuKhoa = '';
   String? _khoa; // null = mọi chuyên khoa
   int? _maBacSi; // null = mọi bác sĩ

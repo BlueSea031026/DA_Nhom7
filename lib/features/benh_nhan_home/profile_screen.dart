@@ -7,11 +7,7 @@ import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import '../auth/auth_routes.dart';
 import '../ho_so_nguoi_than/ho_so_nguoi_than_routes.dart';
-import '../lich_su/lich_su_routes.dart';
-import '../thong_bao/thong_bao_routes.dart';
-import 'benh_nhan_home_routes.dart';
 import 'widgets/logout_dialog.dart';
-import 'widgets/patient_bottom_nav.dart';
 import 'widgets/profile_menu_item.dart';
 
 /// Trang cá nhân
@@ -32,25 +28,6 @@ class ProfileScreen extends StatelessWidget {
       if (benhNhan.laBanThan) return benhNhan;
     }
     return null;
-  }
-
-  // Chuyển tab ở thanh điều hướng dưới
-  void _chuyenTab(BuildContext context, int viTri) {
-    switch (viTri) {
-      case 0:
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context);
-        } else {
-          Navigator.pushReplacementNamed(
-            context,
-            BenhNhanHomeRoutes.patientHome,
-          );
-        }
-      case 1:
-        Navigator.pushNamed(context, LichSuRoutes.history);
-      case 2:
-        Navigator.pushNamed(context, ThongBaoRoutes.notification);
-    }
   }
 
   // Logout
@@ -292,10 +269,6 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: PatientBottomNav(
-        viTriDangChon: 3,
-        onChon: (viTri) => _chuyenTab(context, viTri),
-      ),
     );
   }
 
@@ -303,18 +276,15 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildThongTinTaiKhoan(TaiKhoan taiKhoan) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(3),
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            shape: BoxShape.circle,
-          ),
-          child: const CircleAvatar(
-            radius: 50,
-            backgroundColor: AppColors.infoLight,
-            child: Icon(Icons.person, size: 64, color: AppColors.secondary),
-          ),
+        // #5: bấm vào ảnh để đổi ảnh đại diện (lưu trên Firestore).
+        AnhDaiDien(
+          maTaiKhoan: taiKhoan.maTaiKhoan,
+          hoTen: taiKhoan.hoTen,
+          kichThuoc: 104,
+          choDoi: true,
         ),
+        const SizedBox(height: 4),
+        const Text('Chạm vào ảnh để đổi', style: AppTextStyles.caption),
         const SizedBox(height: 10),
         Text(
           taiKhoan.hoTen,
