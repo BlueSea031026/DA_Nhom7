@@ -5,30 +5,69 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
 
-// Lịch sử đánh giá của các bác sĩ
-class DoctorReviewsScreen extends StatelessWidget {
+// FR-24 Bác sĩ xem đánh giá từ bệnh nhân (chỉ đọc dữ liệu)
+class DoctorReviewsScreen extends StatefulWidget {
   const DoctorReviewsScreen({super.key, this.maBacSi});
   final int? maBacSi;
 
-  // Xác định bác sĩ
-  BacSi _resolveDoctor(BuildContext context) {
-    final arg = ModalRoute.of(context)?.settings.arguments;
-    final id = maBacSi ?? (arg is int ? arg : null);
-    if (id != null) return MockData.bacSiById(id);
-    return MockData.bacSi.firstWhere(
-      (b) => b.maTaiKhoan != null,
-      orElse: () => MockData.bacSi.first,
-    );
+  @override
+  State<DoctorReviewsScreen> createState() => _DoctorReviewsScreenState();
+}
+
+class _DoctorReviewsScreenState extends State<DoctorReviewsScreen> {
+  // Số sao đang lọc, null = tất cả
+  int? _saoDangLoc;
+
+  // Xác định bác sĩ: arguments → bác sĩ đang đăng nhập → bác sĩ đầu tiên
+  BacSi? _layBacSi() {
+    final Object? arg = ModalRoute.of(context)?.settings.arguments;
+    final int? ma = widget.maBacSi ?? (arg is int ? arg : null);
+    if (ma != null) {
+      return MockData.bacSi.where((b) => b.maBacSi == ma).firstOrNull;
+    }
+    final int? maTaiKhoan =
+        (MockData.phienDangNhap ?? MockData.taiKhoan.firstOrNull)?.maTaiKhoan;
+    return MockData.bacSi
+            .where((b) => maTaiKhoan != null && b.maTaiKhoan == maTaiKhoan)
+            .firstOrNull ??
+        MockData.bacSi.firstOrNull;
+  }
+
+  // Đánh giá của bác sĩ, mới nhất trước.
+  // null = có đánh giá trỏ tới lịch không tồn tại nên hàm tra cứu báo lỗi.
+  List<DanhGia>? _layDanhGia(int maBacSi) {
+    try {
+      return MockData.danhGiaCuaBacSi(maBacSi)..sort((a, b) {
+        final int c = b.ngayDanhGia.compareTo(a.ngayDanhGia);
+        return c != 0 ? c : b.maDanhGia.compareTo(a.maDanhGia);
+      });
+    } on StateError {
+      return null;
+    }
   }
 
   // Giao diện
   @override
   Widget build(BuildContext context) {
-    final doctor = _resolveDoctor(context);
-    final reviews = MockData.danhGiaCuaBacSi(doctor.maBacSi)
-      ..sort((a, b) => b.ngayDanhGia.compareTo(a.ngayDanhGia));
-    final specialty = MockData.chuyenKhoaById(doctor.maChuyenKhoa)
-        .tenChuyenKhoa;
+    final BacSi? bacSi = _layBacSi();
+    if (bacSi == null) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppHeader(title: 'Đánh giá từ bệnh nhân'),
+        body: EmptyState(
+          icon: Icons.person_off_outlined,
+          message: 'Không tìm thấy bác sĩ',
+        ),
+      );
+    }
+
+    final List<DanhGia>? danhGia = _layDanhGia(bacSi.maBacSi);
+    final String chuyenKhoa =
+        MockData.chuyenKhoa
+            .where((c) => c.maChuyenKhoa == bacSi.maChuyenKhoa)
+            .firstOrNull
+            ?.tenChuyenKhoa ??
+        '—';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -36,28 +75,82 @@ class DoctorReviewsScreen extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: [
           _DoctorHeader(
-            doctor: doctor,
-            specialty: specialty,
-            reviewCount: reviews.length,
+            doctor: bacSi,
+            specialty: chuyenKhoa,
+            reviewCount: danhGia?.length ?? 0,
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-            child: reviews.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.only(top: 24),
-                    child: EmptyState(message: 'Chưa có đánh giá nào'),
+            child: danhGia == null
+                ? const EmptyState(
+                    icon: Icons.error_outline,
+                    message:
+                        'Dữ liệu đánh giá đang bị lỗi, vui lòng thử lại sau',
                   )
-                : Column(
-                    children: [
-                      for (final r in reviews) ...[
-                        _ReviewCard(review: r),
-                        const SizedBox(height: 16),
-                      ],
-                    ],
-                  ),
+                : danhGia.isEmpty
+                ? const EmptyState(
+                    icon: Icons.star_outline,
+                    message: 'Chưa có đánh giá nào',
+                  )
+                : _buildNoiDung(danhGia),
           ),
         ],
       ),
+    );
+  }
+
+  // Biểu đồ + bộ lọc + danh sách nhận xét
+  Widget _buildNoiDung(List<DanhGia> danhGia) {
+    final Map<int, int> soLuotTheoSao = {
+      for (int sao = 5; sao >= 1; sao--)
+        sao: danhGia.where((d) => d.soSao == sao).length,
+    };
+    final int? sao = _saoDangLoc;
+    final List<DanhGia> dangHien = sao == null
+        ? danhGia
+        : danhGia.where((d) => d.soSao == sao).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _BieuDoSao(soLuotTheoSao: soLuotTheoSao, tong: danhGia.length),
+        const SizedBox(height: 16),
+        _buildBoLoc(),
+        const SizedBox(height: 16),
+        if (dangHien.isEmpty)
+          EmptyState(
+            icon: Icons.star_outline,
+            message: 'Chưa có đánh giá $sao sao',
+          ),
+        for (final DanhGia d in dangHien) ...[
+          _ReviewCard(review: d),
+          const SizedBox(height: 16),
+        ],
+      ],
+    );
+  }
+
+  // Lọc nhanh theo số sao
+  Widget _buildBoLoc() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: [
+        for (final int? sao in const [null, 5, 4, 3, 2, 1])
+          ChoiceChip(
+            label: Text(sao == null ? 'Tất cả' : '$sao★'),
+            labelStyle: AppTextStyles.label.copyWith(
+              color: _saoDangLoc == sao
+                  ? AppColors.surface
+                  : AppColors.textPrimary,
+            ),
+            selected: _saoDangLoc == sao,
+            showCheckmark: false,
+            selectedColor: AppColors.info,
+            backgroundColor: AppColors.surface,
+            onSelected: (_) => setState(() => _saoDangLoc = sao),
+          ),
+      ],
     );
   }
 }
@@ -125,15 +218,11 @@ class _DoctorHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
+              _HangSao(diem: doctor.diemDanhGiaTb, kichThuoc: 28),
+              const SizedBox(height: 6),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.star_rounded,
-                    color: AppColors.warning,
-                    size: 28,
-                  ),
-                  const SizedBox(width: 4),
                   Text(
                     '${doctor.diemDanhGiaTb.toStringAsFixed(1)} / 5',
                     style: AppTextStyles.title.copyWith(color: AppColors.info),
@@ -178,17 +267,111 @@ class _DoctorAvatar extends StatelessWidget {
   }
 }
 
-// Cấu hình đánh giá của bác sĩ
+// Hàng 5 sao (có nửa sao), VD 4.5 → 4 sao đầy + 1 nửa sao
+class _HangSao extends StatelessWidget {
+  const _HangSao({required this.diem, required this.kichThuoc});
+  final double diem;
+  final double kichThuoc;
+
+  @override
+  Widget build(BuildContext context) {
+    final double lamTron = (diem * 2).round() / 2;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int i = 1; i <= 5; i++)
+          Icon(
+            lamTron >= i
+                ? Icons.star_rounded
+                : lamTron >= i - 0.5
+                ? Icons.star_half_rounded
+                : Icons.star_outline_rounded,
+            color: AppColors.warning,
+            size: kichThuoc,
+          ),
+      ],
+    );
+  }
+}
+
+// Biểu đồ số lượt theo từng mức sao, 5 sao trên cùng
+class _BieuDoSao extends StatelessWidget {
+  const _BieuDoSao({required this.soLuotTheoSao, required this.tong});
+  final Map<int, int> soLuotTheoSao;
+  final int tong;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          for (final MapEntry<int, int> e in soLuotTheoSao.entries)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 32,
+                    child: Text('${e.key}★', style: AppTextStyles.label),
+                  ),
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(5),
+                      child: LinearProgressIndicator(
+                        value: tong == 0 ? 0 : e.value / tong,
+                        minHeight: 10,
+                        color: AppColors.warning,
+                        backgroundColor: AppColors.warningLight,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 40,
+                    child: Text(
+                      '${e.value}',
+                      textAlign: TextAlign.right,
+                      style: AppTextStyles.label,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// Thẻ 1 nhận xét
 class _ReviewCard extends StatelessWidget {
   const _ReviewCard({required this.review});
   final DanhGia review;
 
+  // Tên bệnh nhân đã ẩn bớt (qua datLich → benhNhan)
+  String get _tenBenhNhan {
+    final int? maBenhNhan = MockData.datLich
+        .where((d) => d.maDatLich == review.maDatLich)
+        .firstOrNull
+        ?.maBenhNhan;
+    final String hoTen =
+        MockData.benhNhan
+            .where((b) => b.maBenhNhan == maBenhNhan)
+            .firstOrNull
+            ?.hoTen ??
+        '';
+    final List<String> tu = hoTen.trim().split(RegExp(r'\s+'));
+    if (tu.first.isEmpty) return 'Bệnh nhân';
+
+    String chuCai(String s) => '${s.characters.first.toUpperCase()}.';
+    if (tu.length == 1) return chuCai(tu.first);
+    // "Nguyễn Văn An" → "Nguyễn V. A."
+    return [tu.first, ...tu.skip(1).map(chuCai)].join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
-    final name = MockData.taiKhoanById(review.nguoiDanhGia).hoTen;
-    final initial = name.trim().isEmpty
-        ? '?'
-        : name.trim().substring(0, 1).toUpperCase();
+    final String name = _tenBenhNhan;
     final comment = review.nhanXet?.trim() ?? '';
     return AppCard(
       padding: const EdgeInsets.all(16),
@@ -199,7 +382,7 @@ class _ReviewCard extends StatelessWidget {
             radius: 24,
             backgroundColor: AppColors.success,
             child: Text(
-              initial,
+              name.characters.first.toUpperCase(),
               style: const TextStyle(
                 color: AppColors.surface,
                 fontSize: 20,

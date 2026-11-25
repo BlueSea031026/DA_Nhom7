@@ -9,6 +9,7 @@ import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import '../benh_nhan_home/benh_nhan_home_routes.dart';
 import '../ho_so_nguoi_than/ho_so_nguoi_than_routes.dart';
+import 'dat_lich_repo.dart';
 import 'dat_lich_routes.dart';
 import 'thong_tin_dat_lich.dart';
 import 'widgets/booking_step_indicator.dart';
@@ -26,25 +27,34 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
     PhuongThucThanhToan.viDienTu,
   ];
 
-  DatLich? _datLich;
   PhuongThucThanhToan _phuongThuc = PhuongThucThanhToan.chuyenKhoan;
   Duration _conLai = _thoiGianGiuCho;
   Timer? _dongHo;
   bool _dangXuLy = false;
 
-  // Lây thông tin nhận lượt đặt lịch cần thanh toán
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_datLich != null) return;
-    final Object? thamSo = ModalRoute.of(context)?.settings.arguments;
-    _datLich = thamSo is DatLich
-        ? thamSo
-        : MockData.datLich.firstWhere(
-            (d) => d.trangThai == TrangThaiDatLich.choThanhToan,
-            orElse: () => MockData.datLich.first,
-          );
+  void initState() {
+    super.initState();
     _batDauDemNguoc();
+  }
+
+  // Lấy lượt đặt lịch cần thanh toán theo mã (arguments).
+  // null = lịch vừa tạo, Firestore chưa kịp đồng bộ về máy.
+  DatLich? _layDatLich() {
+    final Object? thamSo = ModalRoute.of(context)?.settings.arguments;
+    final int? maDatLich = thamSo is DatLich
+        ? thamSo.maDatLich
+        : (thamSo is int ? thamSo : null);
+    if (maDatLich != null) {
+      return MockData.datLich
+          .where((d) => d.maDatLich == maDatLich)
+          .firstOrNull;
+    }
+    // Mở thử từ menu Dev
+    return MockData.datLich
+            .where((d) => d.trangThai == TrangThaiDatLich.choThanhToan)
+            .firstOrNull ??
+        MockData.datLich.firstOrNull;
   }
 
   // Hàm countdown thời gian
@@ -83,109 +93,125 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
           route.isFirst ||
           route.settings.name == BenhNhanHomeRoutes.patientHome ||
           route.settings.name == HoSoNguoiThanRoutes.guardianHome,
-      arguments: datLich,
+      arguments: datLich.maDatLich,
     );
   }
 
-  // Giả lập thanh toán online thành công
-  Future<void> _xacNhanDaThanhToan() async {
-    final DatLich datLich = _datLich!;
+  // Thanh toán online GIẢ LẬP: không nối cổng thanh toán thật, chỉ chờ 2 giây
+  // như đang xử lý rồi ghi nhận kết quả thành công lên Firestore.
+  Future<void> _xacNhanDaThanhToan(DatLich datLich) async {
+    if (_dangXuLy) return;
     setState(() => _dangXuLy = true);
-    await Future<void>.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-
-    final DatLich daThanhToan = ThongTinDatLich.doiTrangThai(
-      datLich,
-      TrangThaiDatLich.daThanhToan,
-    );
-    final int viTri = MockData.datLich.indexWhere(
-      (d) => d.maDatLich == datLich.maDatLich,
-    );
-    if (viTri >= 0) MockData.datLich[viTri] = daThanhToan;
-
-    MockData.thanhToan.add(
-      ThanhToan(
-        maThanhToan: MockData.thanhToan.length + 1,
+    try {
+      await Future<void>.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
+      await DatLichRepo.thanhToanOnline(
         maDatLich: datLich.maDatLich,
-        soTien: ThongTinDatLich.tienPhaiTraCua(datLich),
         phuongThuc: _phuongThuc,
-        trangThai: TrangThaiThanhToan.daThanhToan,
-        ngayThanhToan: DateTime.now(),
-      ),
-    );
-
-    final LichLamViec lich = MockData.lichById(datLich.maLich);
-    MockData.thongBao.add(
-      ThongBao(
-        maThongBao: MockData.thongBao.length + 1,
-        maDatLich: datLich.maDatLich,
-        loaiThongBao: LoaiThongBao.xacNhan,
-        noiDung:
-            'Đặt lịch thành công. Mã xác nhận ${datLich.maXacNhan}, khám lúc '
-            '${lich.gioBatDau} ngày ${Fmt.ngay(lich.ngay)}.',
-        thoiGianGui: DateTime.now(),
-      ),
-    );
-
-    _dongHo?.cancel();
-    _moManMaQr(daThanhToan);
+      );
+      if (!mounted) return;
+      _moManMaQr(datLich);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _dangXuLy = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
   }
+
+  // Chữ trên nút thanh toán theo trạng thái lịch
+  String _nhanNut(DatLich datLich, int soTien, bool hetGio) =>
+      switch (datLich.trangThai) {
+        TrangThaiDatLich.choThanhToan =>
+          hetGio
+              ? 'Hết thời gian giữ chỗ'
+              : 'Tôi đã thanh toán ${Fmt.tien(soTien)}',
+        TrangThaiDatLich.daThanhToan => 'Lịch này đã được thanh toán',
+        TrangThaiDatLich.daHuy => 'Lịch này đã bị hủy',
+        _ => 'Lịch này không còn chờ thanh toán',
+      };
 
   // Giao diện
   @override
   Widget build(BuildContext context) {
-    final DatLich datLich = _datLich!;
+    final DatLich? datLich = _layDatLich();
+    if (datLich == null) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppHeader(title: 'Thanh toán phí khám'),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     final int soTien = ThongTinDatLich.tienPhaiTraCua(datLich);
     final bool hetGio = _conLai == Duration.zero;
+    final bool choThanhToan =
+        datLich.trangThai == TrangThaiDatLich.choThanhToan;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const AppHeader(title: 'Thanh toán phí khám'),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-        children: [
-          const BookingStepIndicator(buocHienTai: 3),
-          const SizedBox(height: 20),
-          _buildTheSoTien(datLich, soTien, hetGio),
-          const SizedBox(height: 20),
-          const SectionTitle('PHƯƠNG THỨC THANH TOÁN'),
-          for (final PhuongThucThanhToan pt in _phuongThucOnline) ...[
-            _buildPhuongThuc(pt),
-            const SizedBox(height: 10),
-          ],
-          const SizedBox(height: 6),
-          if (_phuongThuc == PhuongThucThanhToan.chuyenKhoan)
-            _buildChuyenKhoan(datLich, soTien)
-          else
-            _buildViDienTu(),
-          const SizedBox(height: 12),
-          Center(
-            child: TextButton(
-              onPressed: _dangXuLy ? null : () => _moManMaQr(datLich),
-              child: const Text('Thanh toán tại quầy khi đến khám'),
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-        child: _dangXuLy
-            ? const SizedBox(
-                height: 48,
-                child: Center(child: CircularProgressIndicator()),
-              )
-            : AppButton(
-                label: hetGio
-                    ? 'Hết thời gian giữ chỗ'
-                    : 'Tôi đã thanh toán ${Fmt.tien(soTien)}',
-                onPressed: hetGio ? null : _xacNhanDaThanhToan,
+    return PopScope(
+      canPop: !_dangXuLy, // đang xử lý thì không cho quay lại
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: const AppHeader(title: 'Thanh toán phí khám'),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          children: [
+            const BookingStepIndicator(buocHienTai: 3),
+            const SizedBox(height: 20),
+            _buildTheSoTien(datLich, soTien, hetGio),
+            const SizedBox(height: 20),
+            if (choThanhToan) ...[
+              const SectionTitle('PHƯƠNG THỨC THANH TOÁN'),
+              for (final PhuongThucThanhToan pt in _phuongThucOnline) ...[
+                _buildPhuongThuc(pt),
+                const SizedBox(height: 10),
+              ],
+              const SizedBox(height: 6),
+              if (_phuongThuc == PhuongThucThanhToan.chuyenKhoan)
+                _buildChuyenKhoan(datLich, soTien)
+              else
+                _buildViDienTu(),
+              const SizedBox(height: 12),
+            ],
+            // Không ghi gì: lịch giữ nguyên "Chờ thanh toán"
+            if (datLich.trangThai != TrangThaiDatLich.daHuy)
+              Center(
+                child: TextButton(
+                  onPressed: _dangXuLy ? null : () => _moManMaQr(datLich),
+                  child: Text(
+                    choThanhToan
+                        ? 'Thanh toán tại quầy khi đến khám'
+                        : 'Xem mã QR',
+                  ),
+                ),
               ),
+          ],
+        ),
+        bottomNavigationBar: SafeArea(
+          minimum: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+          child: _dangXuLy
+              ? const SizedBox(
+                  height: 48,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : AppButton(
+                  label: _nhanNut(datLich, soTien, hetGio),
+                  onPressed: (!choThanhToan || hetGio)
+                      ? null
+                      : () => _xacNhanDaThanhToan(datLich),
+                ),
+        ),
       ),
     );
   }
 
   // Banner giao diện số tiền cần thanh toán
   Widget _buildTheSoTien(DatLich datLich, int soTien, bool hetGio) {
+    final bool choThanhToan =
+        datLich.trangThai == TrangThaiDatLich.choThanhToan;
     final TextStyle chuTrang = AppTextStyles.caption.copyWith(
       color: AppColors.surface,
     );
@@ -198,7 +224,10 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Số tiền cần thanh toán', style: chuTrang),
+          Text(
+            choThanhToan ? 'Số tiền cần thanh toán' : 'Phí khám',
+            style: chuTrang,
+          ),
           const SizedBox(height: 4),
           Text(
             Fmt.tien(soTien),
@@ -216,16 +245,18 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
                   style: chuTrang,
                 ),
               ),
-              const Icon(
-                Icons.timer_outlined,
-                size: 16,
-                color: AppColors.surface,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                hetGio ? 'Hết giờ' : 'Giữ chỗ $_chuoiDemNguoc',
-                style: chuTrang.copyWith(fontWeight: FontWeight.w700),
-              ),
+              if (choThanhToan) ...[
+                const Icon(
+                  Icons.timer_outlined,
+                  size: 16,
+                  color: AppColors.surface,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  hetGio ? 'Hết giờ' : 'Giữ chỗ $_chuoiDemNguoc',
+                  style: chuTrang.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ],
             ],
           ),
         ],
@@ -244,7 +275,7 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
         : 'MoMo, ZaloPay, VNPay…';
 
     return AppCard(
-      onTap: () => setState(() => _phuongThuc = pt),
+      onTap: _dangXuLy ? null : () => setState(() => _phuongThuc = pt),
       color: dangChon ? AppColors.infoLight : AppColors.surface,
       child: Row(
         children: [
