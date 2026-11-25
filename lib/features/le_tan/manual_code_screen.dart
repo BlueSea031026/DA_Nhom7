@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
-import 'le_tan_mock.dart';
+import 'le_tan_repo.dart';
 import 'le_tan_routes.dart';
 import 'widgets/dat_lich_info_card.dart';
 
@@ -17,7 +17,6 @@ class ManualCodeScreen extends StatefulWidget {
 
 class _ManualCodeScreenState extends State<ManualCodeScreen> {
   final _maCtrl = TextEditingController();
-  DatLich? _ketQua;
   bool _daTim = false;
 
   @override
@@ -34,10 +33,19 @@ class _ManualCodeScreenState extends State<ManualCodeScreen> {
       );
       return;
     }
-    setState(() {
-      _daTim = true;
-      _ketQua = LeTanMock.timTheoMa(_maCtrl.text);
-    });
+    setState(() => _daTim = true);
+  }
+
+  /// Tự chuyển chữ hoa, bỏ khoảng trắng khi gõ.
+  void _khiGo(String v) {
+    final ma = LeTanRepo.chuanHoaMa(v);
+    if (ma != v) {
+      _maCtrl.value = TextEditingValue(
+        text: ma,
+        selection: TextSelection.collapsed(offset: ma.length),
+      );
+    }
+    if (_daTim) setState(() => _daTim = false);
   }
 
   Future<void> _tiepNhan(DatLich d) async {
@@ -51,7 +59,8 @@ class _ManualCodeScreenState extends State<ManualCodeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final DatLich? ketQua = _ketQua;
+    // Tìm lại mỗi lần vẽ → trạng thái luôn là bản mới nhất
+    final DatLich? ketQua = _daTim ? LeTanRepo.timTheoMa(_maCtrl.text) : null;
     return Scaffold(
       appBar: const AppHeader(title: 'Tìm lịch hẹn'),
       body: SafeArea(
@@ -63,9 +72,7 @@ class _ManualCodeScreenState extends State<ManualCodeScreen> {
               hint: 'Nhập mã xác nhận, ví dụ DL260001',
               controller: _maCtrl,
               prefixIcon: Icons.confirmation_number_outlined,
-              onChanged: (_) {
-                if (_daTim) setState(() => _daTim = false);
-              },
+              onChanged: _khiGo,
             ),
             const SizedBox(height: 12),
             Align(
@@ -86,7 +93,7 @@ class _ManualCodeScreenState extends State<ManualCodeScreen> {
                 const EmptyState(
                   icon: Icons.search_off,
                   message:
-                      'Không tìm thấy lịch hẹn với mã này.\n'
+                      'Không tìm thấy lịch hẹn.\n'
                       'Vui lòng kiểm tra lại mã xác nhận.',
                 )
               else ...[

@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
-import 'auth_mock.dart';
+import 'auth_repo.dart';
 import 'auth_routes.dart';
+import 'auth_validators.dart';
 import 'widgets/auth_widgets.dart';
 
 /// Đăng ký tài khoản + chọn loại (cá nhân / người giám hộ)
@@ -33,6 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _gioiTinhChon;
   bool _dongY = false;
   String? _loi;
+  bool _dangXuLy = false;
 
   @override
   void dispose() {
@@ -68,7 +70,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
   }
 
-  void _dangKy() {
+  Future<void> _dangKy() async {
+    if (_dangXuLy) return;
     FocusScope.of(context).unfocus();
     setState(() => _loi = null);
     if (!_formKey.currentState!.validate()) return;
@@ -81,28 +84,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    final sdt = _sdtCtrl.text.trim();
     final email = _emailCtrl.text.trim();
-    if (AuthMock.timTaiKhoan(sdt) != null ||
-        (email.isNotEmpty && AuthMock.timTaiKhoan(email) != null)) {
-      setState(
-        () => _loi =
-            'Số điện thoại hoặc email đã được đăng ký. '
-            'Hãy đăng nhập hoặc dùng thông tin khác.',
-      );
-      return;
-    }
-
-    //Gửi OTP thật và lưu tạm thông tin đăng ký.
-    Navigator.pushNamed(
-      context,
-      AuthRoutes.otp,
-      arguments: OtpArgs(
-        soDienThoai: sdt,
-        mucDich: MucDichOtp.dangKy,
-        laGiamHo: _vaiTro == VaiTro.nguoiGiamHo,
-      ),
+    final cccd = _cccdCtrl.text.trim();
+    final thongTin = ThongTinDangKy(
+      hoTen: _hoTenCtrl.text.trim(),
+      soDienThoai: _sdtCtrl.text.trim(),
+      email: email.isEmpty ? null : email,
+      vaiTro: _vaiTro!,
+      ngaySinh: _laCaNhan ? _ngaySinh : null,
+      gioiTinh: _laCaNhan ? _gioiTinhChon : null,
+      soCccd: _laCaNhan && cccd.isNotEmpty ? cccd : null,
     );
+
+    setState(() => _dangXuLy = true);
+    try {
+      await AuthRepo.batDauDangKy(thongTin, _matKhauCtrl.text);
+      if (!mounted) {
+        await AuthRepo.huyDangKy();
+        return;
+      }
+      // Màn OTP gửi mã, ghi tài khoản; thoát giữa chừng thì tự xóa user.
+      Navigator.pushNamed(
+        context,
+        AuthRoutes.otp,
+        arguments: OtpArgs(
+          soDienThoai: thongTin.soDienThoai,
+          mucDich: MucDichOtp.dangKy,
+          dangKy: thongTin,
+        ),
+      );
+    } catch (e) {
+      if (mounted) setState(() => _loi = AuthRepo.thongBaoLoi(e));
+    } finally {
+      if (mounted) setState(() => _dangXuLy = false);
+    }
   }
 
   @override
@@ -219,7 +234,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             if (loi != null) ...[const SizedBox(height: 4), AuthErrorBox(loi)],
             const SizedBox(height: 12),
-            AppButton(label: 'Đăng ký', onPressed: _dangKy),
+            AppButton(
+              label: _dangXuLy ? 'Đang xử lý...' : 'Đăng ký',
+              onPressed: _dangXuLy ? null : _dangKy,
+            ),
             const SizedBox(height: 12),
             AuthLinkRow(
               text: 'Bạn đã có tài khoản?',

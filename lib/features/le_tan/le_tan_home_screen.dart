@@ -5,9 +5,8 @@ import '../../core/mock/mock_data.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
-import '../auth/auth_mock.dart';
 import '../auth/auth_routes.dart';
-import 'le_tan_mock.dart';
+import 'le_tan_repo.dart';
 import 'le_tan_routes.dart';
 
 class LeTanHomeScreen extends StatefulWidget {
@@ -21,7 +20,7 @@ class _LeTanHomeScreenState extends State<LeTanHomeScreen> {
   int _tab = 0;
 
   TaiKhoan get _taiKhoan =>
-      AuthMock.dangNhap ??
+      MockData.phienDangNhap ??
       MockData.taiKhoan.firstWhere((t) => t.vaiTro == VaiTro.leTan);
 
   @override
@@ -75,14 +74,14 @@ class _TrangChuTabState extends State<_TrangChuTab> {
 
   @override
   Widget build(BuildContext context) {
-    final homNay = LeTanMock.danhSachHomNay();
+    final homNay = LeTanRepo.danhSachHomNay();
     final daDen = homNay
-        .where((d) => LeTanMock.trangThai(d) == TrangThaiDatLich.daDen)
+        .where((d) => d.trangThai == TrangThaiDatLich.daDen)
         .length;
     final chuaThanhToan = homNay
-        .where((d) => LeTanMock.trangThai(d) == TrangThaiDatLich.choThanhToan)
+        .where((d) => d.trangThai == TrangThaiDatLich.choThanhToan)
         .length;
-    final coSo = LeTanMock.coSoCuaNhanVien(widget.taiKhoan.maTaiKhoan);
+    final coSo = LeTanRepo.coSoCuaNhanVien(widget.taiKhoan.maTaiKhoan);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
@@ -231,7 +230,7 @@ class _CaNhanTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final coSo = LeTanMock.coSoCuaNhanVien(taiKhoan.maTaiKhoan);
+    final coSo = LeTanRepo.coSoCuaNhanVien(taiKhoan.maTaiKhoan);
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [

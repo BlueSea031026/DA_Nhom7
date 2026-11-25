@@ -6,12 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/widgets/widgets.dart';
-import 'auth_mock.dart';
 import 'auth_repo.dart';
 import 'auth_routes.dart';
+import 'auth_validators.dart';
 import 'widgets/auth_widgets.dart';
 
-/// Xác thực OTP
+/// Xác thực OTP (đăng ký, quên mật khẩu) – mã gửi
+/// thật qua Firebase. Gói Spark chỉ dùng được số thử, mã 123456.
 
 class OtpScreen extends StatefulWidget {
   const OtpScreen({super.key});
@@ -26,57 +27,74 @@ class _OtpScreenState extends State<OtpScreen> {
   final _otpCtrl = TextEditingController();
   final _focus = FocusNode();
   Timer? _timer;
-  int _conLai = AuthMock.thoiGianOtpGiay;
+  int _conLai = OtpConfig.thoiGianGiay;
   int _soLanSai = 0;
   String? _loi;
 
-  /// Quên mật khẩu / liên kết: gửi OTP thật qua Firebase (Duy).
-  /// Đăng ký vẫn dùng mã mẫu cho đến khi làm FR-01.
   String? _verificationId;
+
+  /// Lý do lần gửi gần nhất thất bại (giữ lại để nhập mã xong vẫn báo đúng).
+  String? _loiGui;
   bool _dangGui = false;
   bool _dangXuLy = false;
   bool _daGuiLanDau = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _batDauDemNguoc();
-  }
+  /// Đăng ký đã xong → thoát màn không xóa user nữa.
+  bool _hoanTat = false;
+  bool _laDangKy = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_daGuiLanDau) {
-      _daGuiLanDau = true;
-      if (_otpThat) _guiOtpThat();
-    }
+    if (_daGuiLanDau) return;
+    _daGuiLanDau = true;
+    _laDangKy = _args.dangKy != null;
+    _guiOtp();
   }
 
   @override
   void dispose() {
+    // Thoát giữa chừng → xóa user vừa tạo để lần sau đăng ký lại được.
+    if (_laDangKy && !_hoanTat) AuthRepo.huyDangKy();
     _timer?.cancel();
     _otpCtrl.dispose();
     _focus.dispose();
     super.dispose();
   }
 
-  ///giả lập luồng đăng ký.
+  /// Mở thử từ menu Dev (không có arguments) → số mẫu.
   OtpArgs get _args {
     final a = ModalRoute.of(context)?.settings.arguments;
     return a is OtpArgs
         ? a
-        : const OtpArgs(soDienThoai: '0909123459', mucDich: MucDichOtp.dangKy);
+        : const OtpArgs(
+            soDienThoai: '0900000001',
+            mucDich: MucDichOtp.quenMatKhau,
+          );
   }
 
-  bool get _hetLuot => _soLanSai >= AuthMock.soLanNhapOtpToiDa;
+  bool get _hetLuot => _soLanSai >= OtpConfig.soLanNhapToiDa;
 
-  bool get _otpThat => _args.mucDich != MucDichOtp.dangKy;
-
-  Future<void> _guiOtpThat() async {
+  Future<void> _guiOtp() async {
     setState(() {
       _dangGui = true;
       _verificationId = null;
+      _loiGui = null;
+      _loi = null;
+      _soLanSai = 0;
+      _batDauDemNguoc();
     });
+    void baoLoi(String m) {
+      if (!mounted) return;
+      _timer?.cancel();
+      setState(() {
+        _conLai = 0; // cho bấm "Gửi lại mã" ngay
+        _loiGui = m;
+        _loi = m;
+        _dangGui = false;
+      });
+    }
+
     try {
       await AuthRepo.guiOtp(
         _args.soDienThoai,
@@ -85,29 +103,20 @@ class _OtpScreenState extends State<OtpScreen> {
           setState(() {
             _verificationId = id;
             _dangGui = false;
+            _batDauDemNguoc();
           });
         },
-        loi: (m) {
-          if (!mounted) return;
-          setState(() {
-            _loi = m;
-            _dangGui = false;
-          });
-        },
+        loi: baoLoi,
       );
     } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loi = AuthRepo.thongBaoLoi(e);
-        _dangGui = false;
-      });
+      baoLoi(AuthRepo.thongBaoLoi(e));
     }
   }
 
   ///đặt lại đồng hồ 60 giây.
   void _batDauDemNguoc() {
     _timer?.cancel();
-    _conLai = AuthMock.thoiGianOtpGiay;
+    _conLai = OtpConfig.thoiGianGiay;
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (_conLai <= 1) t.cancel();
       setState(() => _conLai--);
@@ -115,84 +124,55 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   void _guiLai() {
+    if (_dangGui || _dangXuLy) return;
+    if (_conLai > 0) {
+      setState(() => _loi = 'Vui lòng đợi $_conLai giây để gửi lại mã.');
+      return;
+    }
     _otpCtrl.clear();
-    setState(() {
-      _soLanSai = 0;
-      _loi = null;
-      _batDauDemNguoc();
-    });
-    if (_otpThat) _guiOtpThat();
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Đã gửi lại mã OTP')));
+    _guiOtp();
   }
 
   void _xacNhan() {
+    if (_hetLuot || _dangXuLy) return;
     final otp = _otpCtrl.text;
     if (otp.length < _soO) {
       setState(() => _loi = 'Vui lòng nhập đủ $_soO số');
+      return;
+    }
+    if (_loiGui != null) {
+      setState(() => _loi = _loiGui);
       return;
     }
     if (_conLai <= 0) {
       setState(() => _loi = 'Mã OTP đã hết hạn, vui lòng gửi lại mã');
       return;
     }
-    if (_hetLuot || _dangXuLy) return;
-    if (_otpThat) {
-      _xacNhanThat(otp);
-      return;
-    }
-    if (!AuthMock.dungOtp(otp)) {
-      _otpCtrl.clear();
-      setState(() {
-        _soLanSai++;
-        final conThu = AuthMock.soLanNhapOtpToiDa - _soLanSai;
-        _loi = conThu > 0
-            ? 'Mã OTP không đúng. Bạn còn $conThu lần thử.'
-            : 'Bạn đã nhập sai quá ${AuthMock.soLanNhapOtpToiDa} lần. '
-                  'Vui lòng gửi lại mã mới.';
-      });
-      return;
-    }
-
-    _timer?.cancel();
-    //tạo TaiKhoan.
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      AuthRoutes.registerSuccess,
-      (route) => route.isFirst,
-      arguments: _args.laGiamHo,
-    );
+    _xacNhanThat(otp);
   }
 
-  /// Xác thực mã OTP thật (quên mật khẩu / liên kết số điện thoại).
+  /// Gửi mã người dùng nhập lên Firebase rồi làm tiếp theo mục đích.
   Future<void> _xacNhanThat(String otp) async {
     final args = _args;
     final id = _verificationId;
     if (id == null) {
-      setState(
-        () => _loi = _dangGui
-            ? 'Đang gửi mã OTP, vui lòng đợi giây lát.'
-            : 'Chưa gửi được mã OTP, bấm "Gửi lại mã".',
-      );
+      setState(() => _loi = 'Đang gửi mã OTP, vui lòng đợi giây lát.');
       return;
     }
     setState(() => _dangXuLy = true);
     try {
-      if (args.mucDich == MucDichOtp.lienKet) {
-        await AuthRepo.lienKetSoDienThoai(
-          sdt: args.soDienThoai,
-          matKhau: args.matKhau ?? '',
-          verificationId: id,
-          otp: otp,
-        );
+      final ThongTinDangKy? dangKy = args.dangKy;
+      if (dangKy != null) {
+        await AuthRepo.hoanTatDangKy(tt: dangKy, verificationId: id, otp: otp);
+        _hoanTat = true;
         if (!mounted) return;
         _timer?.cancel();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã liên kết số điện thoại với tài khoản.'),
-          ),
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AuthRoutes.registerSuccess,
+          (route) => route.isFirst,
+          arguments: !dangKy.laCaNhan,
         );
-        Navigator.pop(context);
         return;
       }
       await AuthRepo.xacThucOtpQuenMatKhau(
@@ -213,10 +193,14 @@ class _OtpScreenState extends State<OtpScreen> {
       setState(() {
         if (e.code == 'invalid-verification-code') {
           _soLanSai++;
-          final conThu = AuthMock.soLanNhapOtpToiDa - _soLanSai;
+          if (_hetLuot) {
+            _timer?.cancel();
+            _conLai = 0; // cho gửi lại mã mới
+          }
+          final conThu = OtpConfig.soLanNhapToiDa - _soLanSai;
           _loi = conThu > 0
               ? 'Mã OTP không đúng. Bạn còn $conThu lần thử.'
-              : 'Bạn đã nhập sai quá ${AuthMock.soLanNhapOtpToiDa} lần. '
+              : 'Bạn đã nhập sai quá ${OtpConfig.soLanNhapToiDa} lần. '
                     'Vui lòng gửi lại mã mới.';
         } else {
           _loi = AuthRepo.thongBaoLoi(e);
@@ -240,71 +224,80 @@ class _OtpScreenState extends State<OtpScreen> {
         ? 'XÁC THỰC TÀI KHOẢN'
         : 'XÁC THỰC OTP';
 
-    return AuthScaffold(
-      child: Column(
-        children: [
-          const Icon(Icons.lock, size: 56, color: AppColors.primary),
-          const SizedBox(height: 16),
-          Text(
-            tieuDe,
-            style: AppTextStyles.title.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Mã OTP đã được gửi đến số điện thoại',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodySecondary,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            AuthMock.anSoDienThoai(args.soDienThoai),
-            style: AppTextStyles.title,
-          ),
-          const SizedBox(height: 28),
-          _OtpBoxes(
-            controller: _otpCtrl,
-            focusNode: _focus,
-            length: _soO,
-            onChanged: () => setState(() => _loi = null),
-            onCompleted: _xacNhan,
-          ),
-          const SizedBox(height: 20),
-          Text(
-            _conLai > 0 ? 'Còn lại $phut:$giay giây' : 'Mã OTP đã hết hạn',
-            style: AppTextStyles.body.copyWith(
-              color: _conLai > 0 ? AppColors.textPrimary : AppColors.danger,
-            ),
-          ),
-          if (loi != null) ...[const SizedBox(height: 16), AuthErrorBox(loi)],
-          const SizedBox(height: 16),
-          AuthLinkRow(
-            text: 'Bạn không nhận được mã?',
-            linkText: 'Gửi lại mã',
-            onTap: _guiLai,
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: 180,
-            child: AppButton(
-              label: _dangXuLy ? 'Đang xác thực...' : 'Xác nhận',
-              onPressed: _hetLuot || _dangXuLy ? null : _xacNhan,
-            ),
-          ),
-          if (kDebugMode) ...[
+    return PopScope(
+      canPop: !_dangXuLy, // đang ghi tài khoản thì không cho thoát
+      child: AuthScaffold(
+        child: Column(
+          children: [
+            const Icon(Icons.lock, size: 56, color: AppColors.primary),
             const SizedBox(height: 16),
             Text(
-              _otpThat
-                  ? 'Dữ liệu thử: dùng số điện thoại thử trên Firebase, '
-                        'mã OTP 123456'
-                  : 'Dữ liệu thử: mã OTP là ${AuthMock.otpMau}',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.caption,
+              tieuDe,
+              style: AppTextStyles.title.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w800,
+              ),
             ),
+            const SizedBox(height: 8),
+            Text(
+              _dangGui
+                  ? 'Đang gửi mã OTP đến số điện thoại'
+                  : _loiGui != null
+                  ? 'Chưa gửi được mã OTP đến số điện thoại'
+                  : 'Mã OTP đã được gửi đến số điện thoại',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodySecondary,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              OtpConfig.anSoDienThoai(args.soDienThoai),
+              style: AppTextStyles.title,
+            ),
+            const SizedBox(height: 28),
+            _OtpBoxes(
+              controller: _otpCtrl,
+              focusNode: _focus,
+              length: _soO,
+              onChanged: () => setState(() => _loi = null),
+              onCompleted: _xacNhan,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _conLai > 0
+                  ? 'Còn lại $phut:$giay giây'
+                  : _loiGui != null
+                  ? 'Bấm "Gửi lại mã" để thử lại'
+                  : 'Mã OTP đã hết hạn',
+              style: AppTextStyles.body.copyWith(
+                color: _conLai > 0 ? AppColors.textPrimary : AppColors.danger,
+              ),
+            ),
+            if (loi != null) ...[const SizedBox(height: 16), AuthErrorBox(loi)],
+            const SizedBox(height: 16),
+            AuthLinkRow(
+              text: 'Bạn không nhận được mã?',
+              linkText: 'Gửi lại mã',
+              onTap: _guiLai,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: 180,
+              child: AppButton(
+                label: _dangXuLy ? 'Đang xác thực...' : 'Xác nhận',
+                onPressed: _hetLuot || _dangXuLy ? null : _xacNhan,
+              ),
+            ),
+            if (kDebugMode) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Dữ liệu thử: dùng số điện thoại thử trên Firebase '
+                '(0900000001 → 0900000005), mã OTP 123456',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.caption,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

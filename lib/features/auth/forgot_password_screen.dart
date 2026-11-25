@@ -1,10 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/widgets/widgets.dart';
-import 'auth_mock.dart';
 import 'auth_repo.dart';
 import 'auth_routes.dart';
+import 'auth_validators.dart';
 import 'widgets/auth_widgets.dart';
 
 /// Quên mật khẩu
@@ -20,6 +19,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _sdtCtrl = TextEditingController();
   String? _loi;
+  bool _dangXuLy = false;
 
   @override
   void dispose() {
@@ -27,61 +27,34 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  void _tiepTuc() {
+  Future<void> _tiepTuc() async {
+    if (_dangXuLy) return;
     FocusScope.of(context).unfocus();
     setState(() => _loi = null);
     if (!_formKey.currentState!.validate()) return;
 
-    final taiKhoan = AuthMock.timTaiKhoan(_sdtCtrl.text);
-    if (taiKhoan == null) {
-      setState(() => _loi = 'Không tìm thấy tài khoản với số điện thoại này.');
-      return;
-    }
-    //gửi OTP đặt lại mật khẩu.
-    Navigator.pushNamed(
-      context,
-      AuthRoutes.otp,
-      arguments: OtpArgs(
-        soDienThoai: taiKhoan.soDienThoai,
-        mucDich: MucDichOtp.quenMatKhau,
-      ),
-    );
-  }
-
-  /// Chỉ chế độ debug: liên kết số điện thoại cho tài khoản mẫu (tạo trước khi
-  /// có FR-01 nên chưa gắn số) để thử được quên mật khẩu bằng OTP.
-  Future<void> _lienKetThu() async {
-    FocusScope.of(context).unfocus();
-    setState(() => _loi = null);
-    if (!_formKey.currentState!.validate()) return;
     final sdt = _sdtCtrl.text.trim();
-    final String? matKhau = await showDialog<String>(
-      context: context,
-      builder: (_) => const _NhapMatKhauDialog(),
-    );
-    if (matKhau == null || matKhau.isEmpty || !mounted) return;
+    setState(() => _dangXuLy = true);
     try {
-      final daLienKet = await AuthRepo.kiemTraMatKhau(sdt, matKhau);
+      final co = await AuthRepo.coTaiKhoan(sdt);
       if (!mounted) return;
-      if (daLienKet) {
-        setState(() => _loi = 'Tài khoản này đã liên kết số điện thoại.');
+      if (!co) {
+        setState(
+          () => _loi = 'Không tìm thấy tài khoản với số điện thoại này.',
+        );
         return;
       }
+      //gửi OTP đặt lại mật khẩu.
+      Navigator.pushNamed(
+        context,
+        AuthRoutes.otp,
+        arguments: OtpArgs(soDienThoai: sdt, mucDich: MucDichOtp.quenMatKhau),
+      );
     } catch (e) {
-      if (!mounted) return;
-      setState(() => _loi = AuthRepo.thongBaoLoi(e));
-      return;
+      if (mounted) setState(() => _loi = AuthRepo.thongBaoLoi(e));
+    } finally {
+      if (mounted) setState(() => _dangXuLy = false);
     }
-    if (!mounted) return;
-    Navigator.pushNamed(
-      context,
-      AuthRoutes.otp,
-      arguments: OtpArgs(
-        soDienThoai: sdt,
-        mucDich: MucDichOtp.lienKet,
-        matKhau: matKhau,
-      ),
-    );
   }
 
   @override
@@ -121,64 +94,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   child: AppButton(
                     label: 'Tiếp tục',
                     expanded: false,
-                    onPressed: _tiepTuc,
+                    onPressed: _dangXuLy ? null : _tiepTuc,
                   ),
                 ),
-                if (kDebugMode) ...[
-                  const SizedBox(height: 24),
-                  TextButton.icon(
-                    onPressed: _lienKetThu,
-                    icon: const Icon(Icons.link),
-                    label: const Text('Liên kết SĐT cho tài khoản mẫu (thử)'),
-                  ),
-                ],
               ],
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Hộp thoại nhập mật khẩu – tự quản lý controller để không bị dispose
-/// trong lúc hộp thoại đang chạy hiệu ứng đóng.
-class _NhapMatKhauDialog extends StatefulWidget {
-  const _NhapMatKhauDialog();
-
-  @override
-  State<_NhapMatKhauDialog> createState() => _NhapMatKhauDialogState();
-}
-
-class _NhapMatKhauDialogState extends State<_NhapMatKhauDialog> {
-  final _ctrl = TextEditingController();
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Liên kết số điện thoại (thử)'),
-      content: TextField(
-        controller: _ctrl,
-        obscureText: true,
-        autofocus: true,
-        decoration: const InputDecoration(labelText: 'Mật khẩu hiện tại'),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Hủy'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, _ctrl.text),
-          child: const Text('Tiếp tục'),
-        ),
-      ],
     );
   }
 }

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../core/mock/mock_data.dart';
-import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
-import 'le_tan_mock.dart';
+import 'le_tan_repo.dart';
 import 'le_tan_routes.dart';
 import 'widgets/dat_lich_info_card.dart';
 
@@ -17,20 +16,36 @@ class AppointmentInfoScreen extends StatefulWidget {
 }
 
 class _AppointmentInfoScreenState extends State<AppointmentInfoScreen> {
+  bool _dangLuu = false;
+
   DatLich? _layDatLich() {
     final a = ModalRoute.of(context)?.settings.arguments;
     if (a is int) return MockData.datLichById(a);
-    final homNay = LeTanMock.danhSachHomNay();
+    final homNay = LeTanRepo.danhSachHomNay();
     return homNay.isEmpty ? null : homNay.first;
   }
 
-  void _xacNhanDaDen(DatLich d) {
-    LeTanMock.tiepNhan(d);
-    Navigator.pushReplacementNamed(
-      context,
-      LeTanRoutes.checkinSuccess,
-      arguments: d.maDatLich,
-    );
+  Future<void> _xacNhanDaDen(DatLich d) async {
+    if (_dangLuu) return;
+    setState(() => _dangLuu = true);
+    try {
+      final soThuTu = await LeTanRepo.tiepNhan(d);
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(
+        context,
+        LeTanRoutes.checkinSuccess,
+        arguments: KetQuaTiepNhan(maDatLich: d.maDatLich, soThuTu: soThuTu),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _dangLuu = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.danger,
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    }
   }
 
   void _chuyenThuNgan() {
@@ -45,75 +60,24 @@ class _AppointmentInfoScreenState extends State<AppointmentInfoScreen> {
     Navigator.pop(context);
   }
 
-  /// Thông báo + nút
-  (Widget, List<Widget>) _hanhDong(DatLich d) {
-    final trangThai = LeTanMock.trangThai(d);
-    final lich = MockData.lichById(d.maLich);
-
-    if (trangThai == TrangThaiDatLich.daHuy) {
-      return (
-        const LeTanNotice.error(message: 'Lịch hẹn này đã bị hủy.'),
-        const <Widget>[],
+  /// Hộp thông báo: được tiếp nhận hay lý do không được.
+  Widget _thongBao(DatLich d, String? lyDo) {
+    if (_dangLuu) {
+      return const LeTanNotice(message: 'Đang tiếp nhận bệnh nhân...');
+    }
+    if (lyDo == null) {
+      return const LeTanNotice.success(
+        message: 'Đã thanh toán, đúng ngày khám. Có thể tiếp nhận.',
       );
     }
-    if (trangThai == TrangThaiDatLich.daDen) {
-      final gio = LeTanMock.gioTiepNhan(d);
-      return (
-        LeTanNotice.success(
-          message: gio == null
-              ? 'Bệnh nhân đã được tiếp nhận.'
-              : 'Bệnh nhân đã được tiếp nhận lúc ${Fmt.gio(gio)}.',
-        ),
-        const <Widget>[],
-      );
-    }
-    if (!LeTanMock.laHomNay(d)) {
-      return (
-        LeTanNotice.error(
-          message:
-              'Không đúng ngày khám. Lịch hẹn vào ngày '
-              '${Fmt.ngay(lich.ngay)}, lúc ${lich.gioBatDau}.',
-        ),
-        const <Widget>[],
-      );
-    }
-    if (trangThai == TrangThaiDatLich.choThanhToan) {
-      return (
-        const LeTanNotice.warning(
-          message:
-              'Bệnh nhân chưa thanh toán phí khám. '
-              'Vui lòng hướng dẫn sang quầy Thu ngân trước khi check-in.',
-        ),
-        [
-          AppButton(
-            label: 'Chuyển sang quầy Thu ngân',
-            icon: Icons.point_of_sale,
-            color: AppColors.warning,
-            onPressed: _chuyenThuNgan,
-          ),
-        ],
-      );
-    }
-    if (LeTanMock.coTheTiepNhan(d)) {
-      return (
-        const LeTanNotice.success(
-          message: 'Đã thanh toán, đúng ngày khám. Có thể tiếp nhận.',
-        ),
-        [
-          AppButton(
-            label: 'Xác nhận đã đến',
-            icon: Icons.how_to_reg,
-            onPressed: () => _xacNhanDaDen(d),
-          ),
-        ],
-      );
-    }
-    return (
-      LeTanNotice(
-        message: 'Trạng thái "${trangThai.label}" không cần check-in.',
-      ),
-      const <Widget>[],
-    );
+    return switch (d.trangThai) {
+      TrangThaiDatLich.daDen => LeTanNotice.success(message: lyDo),
+      TrangThaiDatLich.daKham => LeTanNotice(message: lyDo),
+      TrangThaiDatLich.hoan => LeTanNotice.warning(message: lyDo),
+      TrangThaiDatLich.choThanhToan when LeTanRepo.laHomNay(d) =>
+        LeTanNotice.warning(message: lyDo),
+      _ => LeTanNotice.error(message: lyDo),
+    };
   }
 
   @override
@@ -129,7 +93,10 @@ class _AppointmentInfoScreenState extends State<AppointmentInfoScreen> {
       );
     }
 
-    final (Widget thongBao, List<Widget> nut) = _hanhDong(datLich);
+    final String? lyDo = LeTanRepo.lyDoKhongTiepNhan(datLich);
+    final bool sangThuNgan =
+        datLich.trangThai == TrangThaiDatLich.choThanhToan &&
+        LeTanRepo.laHomNay(datLich);
     return Scaffold(
       appBar: const AppHeader(title: 'Thông tin lịch hẹn'),
       body: SafeArea(
@@ -138,13 +105,30 @@ class _AppointmentInfoScreenState extends State<AppointmentInfoScreen> {
           children: [
             DatLichInfoCard(datLich: datLich),
             const SizedBox(height: 16),
-            thongBao,
+            _thongBao(datLich, lyDo),
             const SizedBox(height: 24),
-            for (final n in nut) ...[n, const SizedBox(height: 12)],
+            if (sangThuNgan) ...[
+              AppButton(
+                label: 'Chuyển sang quầy Thu ngân',
+                icon: Icons.point_of_sale,
+                color: AppColors.warning,
+                onPressed: _chuyenThuNgan,
+              ),
+              const SizedBox(height: 12),
+            ],
+            // Chỉ bật khi Đã thanh toán + đúng ngày khám
             AppButton(
-              label: nut.isEmpty ? 'Quay lại' : 'Hủy',
+              label: _dangLuu ? 'Đang tiếp nhận...' : 'Tiếp nhận',
+              icon: Icons.how_to_reg,
+              onPressed: lyDo == null && !_dangLuu
+                  ? () => _xacNhanDaDen(datLich)
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            AppButton(
+              label: 'Quay lại',
               outlined: true,
-              onPressed: () => Navigator.pop(context),
+              onPressed: _dangLuu ? null : () => Navigator.pop(context),
             ),
           ],
         ),

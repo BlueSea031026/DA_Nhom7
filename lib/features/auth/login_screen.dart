@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 
 import '../../app/dieu_huong.dart';
 import '../../core/widgets/widgets.dart';
-import 'auth_mock.dart';
+import 'auth_repo.dart';
 import 'auth_routes.dart';
+import 'auth_validators.dart';
 import 'widgets/auth_widgets.dart';
 
 /// Đăng nhập (dùng chung 6 vai trò)
@@ -21,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _taiKhoanCtrl = TextEditingController();
   final _matKhauCtrl = TextEditingController();
   String? _loi;
+  bool _dangXuLy = false;
 
   @override
   void dispose() {
@@ -29,28 +31,26 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _dangNhap() {
+  Future<void> _dangNhap() async {
+    if (_dangXuLy) return;
     FocusScope.of(context).unfocus();
     setState(() => _loi = null);
     if (!_formKey.currentState!.validate()) return;
 
-    final taiKhoan = AuthMock.timTaiKhoan(_taiKhoanCtrl.text);
-    if (taiKhoan == null ||
-        !AuthMock.dungMatKhau(taiKhoan, _matKhauCtrl.text)) {
-      setState(() => _loi = 'Số điện thoại/email hoặc mật khẩu không đúng.');
-      return;
-    }
-    if (!taiKhoan.dangHoatDong) {
-      setState(
-        () => _loi =
-            'Tài khoản đã bị khóa. '
-            'Vui lòng liên hệ trung tâm y tế để được hỗ trợ.',
+    setState(() => _dangXuLy = true);
+    try {
+      final taiKhoan = await AuthRepo.dangNhap(
+        _taiKhoanCtrl.text,
+        _matKhauCtrl.text,
       );
-      return;
+      if (!mounted) return;
+      // Lưu phiên + mở trang chủ đúng vai trò (lib/app/dieu_huong.dart)
+      await DieuHuong.vaoTrangChu(context, taiKhoan);
+    } catch (e) {
+      if (mounted) setState(() => _loi = AuthRepo.thongBaoLoi(e));
+    } finally {
+      if (mounted) setState(() => _dangXuLy = false);
     }
-
-    // Lưu phiên + mở trang chủ đúng vai trò (lib/app/dieu_huong.dart)
-    DieuHuong.vaoTrangChu(context, taiKhoan);
   }
 
   @override
@@ -97,7 +97,10 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            AppButton(label: 'Đăng nhập', onPressed: _dangNhap),
+            AppButton(
+              label: _dangXuLy ? 'Đang đăng nhập...' : 'Đăng nhập',
+              onPressed: _dangXuLy ? null : _dangNhap,
+            ),
             const SizedBox(height: 24),
             const Divider(thickness: 1),
             const SizedBox(height: 8),
@@ -111,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const Text(
                 'Dữ liệu thử: SĐT 0901000001 → 0901000006 (Bệnh nhân, Giám hộ, '
                 'Bác sĩ, Lễ tân, Thu ngân, Quản trị), mật khẩu '
-                '${AuthMock.matKhauMau}. SĐT 0901000007 là tài khoản bị khóa.',
+                '123456. SĐT 0901000007 là tài khoản bị khóa.',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.caption,
               ),

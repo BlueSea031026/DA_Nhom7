@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../core/widgets/widgets.dart';
-import 'le_tan_mock.dart';
+import 'le_tan_repo.dart';
 import 'le_tan_routes.dart';
 
 /// Quét mã QR check-in
@@ -35,14 +35,14 @@ class _ScanQrScreenState extends State<ScanQrScreen> {
     if (noiDung == null || noiDung.isEmpty) return;
 
     _dangXuLy = true;
-    final datLich = LeTanMock.timTheoMa(noiDung);
+    final datLich = LeTanRepo.timTheoMa(noiDung);
     if (datLich == null) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
           const SnackBar(
             backgroundColor: AppColors.danger,
-            content: Text('Mã QR không hợp lệ hoặc không tìm thấy lịch hẹn.'),
+            content: Text('Không tìm thấy lịch hẹn với mã QR này.'),
           ),
         );
       await Future<void>.delayed(const Duration(seconds: 2));
