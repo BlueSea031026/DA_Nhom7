@@ -5,6 +5,10 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import '../danh_gia/danh_gia_routes.dart';
+import '../../app/phien_dat_lich.dart';
+import '../chon_bac_si/chon_bac_si_routes.dart';
+import '../dat_lich/dat_lich_routes.dart';
+import '../hinh_thuc_kham/widgets/lien_he_co_so.dart';
 import 'lich_su_routes.dart';
 
 /// Chi tiết lịch khám · FR-16
@@ -59,6 +63,29 @@ class AppointmentDetailScreen extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 12),
+          // #10: gọi cơ sở / chỉ đường tới nơi khám
+          LienHeCoSo(coSo: coSo),
+          // #14: kết quả khám bác sĩ đã ghi
+          if (datLich.trangThai == TrangThaiDatLich.daKham &&
+              (datLich.ghiChu ?? '').trim().isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const SectionTitle('Kết quả khám'),
+            AppCard(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.assignment_outlined,
+                      color: AppColors.success),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(datLich.ghiChu!.trim(),
+                        style: AppTextStyles.body),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           const SectionTitle('Thanh toán'),
           AppCard(
@@ -109,7 +136,19 @@ class AppointmentDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
           ],
-          if (datLich.trangThai == TrangThaiDatLich.daKham && !daDanhGia)
+          if (datLich.trangThai == TrangThaiDatLich.daThanhToan) ...[
+            AppButton(
+              label: 'Xem mã QR check-in',
+              icon: Icons.qr_code_2,
+              onPressed: () => Navigator.pushNamed(
+                context,
+                DatLichRoutes.bookingQr,
+                arguments: datLich.maDatLich,
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (datLich.trangThai == TrangThaiDatLich.daKham && !daDanhGia) ...[
             AppButton(
               label: 'Đánh giá bác sĩ',
               onPressed: () => Navigator.pushNamed(
@@ -117,6 +156,24 @@ class AppointmentDetailScreen extends StatelessWidget {
                 DanhGiaRoutes.rateDoctor,
                 arguments: datLich.maDatLich,
               ),
+            ),
+            const SizedBox(height: 10),
+          ],
+          // #11: đặt lại cùng bác sĩ (lịch đã xong / đã hủy / không đến)
+          if (!datLich.trangThai.sapToi &&
+              datLich.trangThai != TrangThaiDatLich.hoan &&
+              bacSi.trangThai)
+            AppButton(
+              label: 'Đặt lại với ${bacSi.tenHienThi}',
+              icon: Icons.replay,
+              outlined: true,
+              onPressed: () {
+                PhienDatLich.batDau(benhNhan: benhNhan);
+                PhienDatLich.hinhThucKham = datLich.hinhThucKham;
+                PhienDatLich.maCoSo = coSo.maCoSo;
+                Navigator.pushNamed(context, ChonBacSiRoutes.doctorDetail,
+                    arguments: bacSi);
+              },
             ),
         ],
       ),

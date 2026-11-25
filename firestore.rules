@@ -57,6 +57,10 @@ service cloud.firestore {
     match /thongBao/{id}  { allow read, write: if daDangNhap(); }
     match /boDem/{id}     { allow read, write: if daDangNhap(); }
 
+    // Ảnh đại diện (base64) và bác sĩ yêu thích – id = maTaiKhoan.
+    match /anhDaiDien/{id} { allow read, write: if daDangNhap(); }
+    match /yeuThich/{id}   { allow read, write: if daDangNhap(); }
+
     // Bảng phụ cho rules: vaiTro/{uid} = { vaiTro: '...' } (xem mục 9 hướng dẫn).
     match /vaiTro/{uid} {
       allow read: if daDangNhap();
