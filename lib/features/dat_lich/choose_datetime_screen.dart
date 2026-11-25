@@ -70,9 +70,12 @@ class _ChooseDatetimeScreenState extends State<ChooseDatetimeScreen> {
     final List<LichLamViec> caCuaNgay = caTheoNgay[ngayDangXem] ?? const [];
 
     // Ca đã chọn mà vừa hết chỗ / quá giờ / bị hủy thì tự bỏ chọn
-    final LichLamViec? lichDaChon = caCuaNgay
-        .where((l) => l.maLich == _maLichDaChon && DatLichRepo.datDuoc(l))
-        .firstOrNull;
+    // #30: chưa chọn gì → TỰ GỢI Ý ca sớm nhất còn đặt được của ngày đó.
+    final LichLamViec? lichDaChon = _maLichDaChon == null
+        ? caCuaNgay.where(DatLichRepo.datDuoc).firstOrNull
+        : caCuaNgay
+            .where((l) => l.maLich == _maLichDaChon && DatLichRepo.datDuoc(l))
+            .firstOrNull;
 
     return Scaffold(
       backgroundColor: AppColors.background,
