@@ -4,7 +4,6 @@ import '../../../core/mock/mock_data.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
-import '../le_tan_mock.dart';
 
 /// Thẻ thông tin 1 lượt đặt lịch
 class DatLichInfoCard extends StatelessWidget {
@@ -63,7 +62,7 @@ class DatLichInfoCard extends StatelessWidget {
               children: [
                 const Text('Trạng thái', style: AppTextStyles.bodySecondary),
                 const Spacer(),
-                StatusChip.datLich(LeTanMock.trangThai(datLich)),
+                StatusChip.datLich(datLich.trangThai),
               ],
             ),
           ],

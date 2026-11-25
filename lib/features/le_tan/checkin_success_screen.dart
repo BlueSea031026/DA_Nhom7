@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
-import 'le_tan_mock.dart';
+import 'le_tan_repo.dart';
 import 'le_tan_routes.dart';
 import 'widgets/dat_lich_info_card.dart';
 
@@ -29,10 +29,12 @@ class CheckinSuccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final a = ModalRoute.of(context)?.settings.arguments;
-    final List<DatLich> homNay = LeTanMock.danhSachHomNay();
-    final DatLich? datLich = a is int
-        ? MockData.datLichById(a)
+    final List<DatLich> homNay = LeTanRepo.danhSachHomNay();
+    // Mở thử từ menu Dev không có arguments → lượt đầu tiên hôm nay
+    final DatLich? datLich = a is KetQuaTiepNhan
+        ? MockData.datLichById(a.maDatLich)
         : (homNay.isEmpty ? null : homNay.first);
+    final int soThuTu = a is KetQuaTiepNhan ? a.soThuTu : 1;
 
     return PopScope(
       canPop: false,
@@ -58,7 +60,7 @@ class CheckinSuccessScreen extends StatelessWidget {
               ),
               if (datLich != null) ...[
                 const SizedBox(height: 16),
-                _SoThuTu(datLich: datLich),
+                _SoThuTu(datLich: datLich, soThuTu: soThuTu),
                 const SizedBox(height: 16),
                 DatLichInfoCard(
                   datLich: datLich,
@@ -67,7 +69,8 @@ class CheckinSuccessScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Đã cập nhật trạng thái "Đã đến" và thông báo cho bác sĩ.',
+                  'Đã cập nhật trạng thái "Đã đến". Bác sĩ thấy bệnh nhân trong '
+                  'danh sách chờ khám.',
                   textAlign: TextAlign.center,
                   style: AppTextStyles.caption,
                 ),
@@ -94,9 +97,10 @@ class CheckinSuccessScreen extends StatelessWidget {
 
 /// Số thứ tự khám + phòng khám
 class _SoThuTu extends StatelessWidget {
-  const _SoThuTu({required this.datLich});
+  const _SoThuTu({required this.datLich, required this.soThuTu});
 
   final DatLich datLich;
+  final int soThuTu;
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +115,7 @@ class _SoThuTu extends StatelessWidget {
             children: [
               const Text('Số thứ tự', style: AppTextStyles.caption),
               Text(
-                LeTanMock.soThuTu(datLich).toString().padLeft(2, '0'),
+                soThuTu.toString().padLeft(2, '0'),
                 style: AppTextStyles.h1.copyWith(
                   fontSize: 32,
                   color: AppColors.primary,

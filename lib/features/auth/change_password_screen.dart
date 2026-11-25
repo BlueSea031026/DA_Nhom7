@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../app/app_routes.dart';
+import '../../app/dieu_huong.dart';
+import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
-import 'auth_mock.dart';
 import 'auth_repo.dart';
 import 'auth_routes.dart';
+import 'auth_validators.dart';
 import 'widgets/auth_widgets.dart';
 
 /// Đặt mật khẩu mới / Đổi mật khẩu
@@ -54,7 +55,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       setState(() => _loi = 'Mật khẩu mới phải khác mật khẩu hiện tại.');
       return;
     }
-    final String? sdt = AuthMock.dangNhap?.soDienThoai;
+    final String? sdt = MockData.phienDangNhap?.soDienThoai;
     if (!_datLai && sdt == null) {
       setState(() => _loi = 'Bạn chưa đăng nhập.');
       return;
@@ -87,14 +88,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     }
   }
 
-  void _veDangNhap() {
-    AuthMock.dangXuat();
-    // Xóa hết màn cũ (kể cả trang chủ vai trò) → Màn chào → Đăng nhập
+  Future<void> _veDangNhap() async {
+    // Đăng xuất Firebase + xóa hết màn cũ → Màn chào → Đăng nhập
     final NavigatorState nav = Navigator.of(context);
-    nav.pushNamedAndRemoveUntil(
-      AuthRoutes.welcome,
-      (route) => route.settings.name == AppRoutes.devMenu,
-    );
+    await DieuHuong.dangXuat(context, hoiLai: false);
     nav.pushNamed(AuthRoutes.login);
   }
 

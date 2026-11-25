@@ -1,41 +1,4 @@
-import '../../core/mock/mock_data.dart';
 import '../../models/models.dart';
-
-class AuthMock {
-  AuthMock._();
-
-  static const String matKhauMau = '123456';
-  static const String otpMau = '123456';
-  static const int soLanNhapOtpToiDa = 5;
-  static const int thoiGianOtpGiay = 60;
-
-  /// Tài khoản đang đăng nhập
-  static TaiKhoan? get dangNhap => MockData.phienDangNhap;
-  static set dangNhap(TaiKhoan? taiKhoan) => MockData.phienDangNhap = taiKhoan;
-
-  /// Tìm tài khoản
-  static TaiKhoan? timTaiKhoan(String soDienThoaiHoacEmail) {
-    final v = soDienThoaiHoacEmail.trim().toLowerCase();
-    for (final t in MockData.taiKhoan) {
-      if (t.soDienThoai == v || (t.email ?? '').toLowerCase() == v) return t;
-    }
-    return null;
-  }
-
-  /// Kiểm tra mật khẩu.
-  static bool dungMatKhau(TaiKhoan taiKhoan, String matKhau) =>
-      matKhau == matKhauMau;
-
-  static bool dungOtp(String otp) => otp == otpMau;
-
-  static String anSoDienThoai(String sdt) {
-    if (sdt.length < 4) return sdt;
-    return '${sdt.substring(0, 2)}${'*' * (sdt.length - 3)}'
-        '${sdt.substring(sdt.length - 1)}';
-  }
-
-  static void dangXuat() => MockData.phienDangNhap = null;
-}
 
 /// Kiểm tra dữ liệu nhập.
 class AuthValidators {
@@ -89,22 +52,62 @@ class AuthValidators {
   }
 }
 
+/// Hằng số của màn OTP.
+class OtpConfig {
+  OtpConfig._();
+
+  static const int soLanNhapToiDa = 5;
+  static const int thoiGianGiay = 60;
+
+  /// 0901000001 → 09*******1
+  static String anSoDienThoai(String sdt) {
+    if (sdt.length < 4) return sdt;
+    return '${sdt.substring(0, 2)}${'*' * (sdt.length - 3)}'
+        '${sdt.substring(sdt.length - 1)}';
+  }
+}
+
+/// Thông tin người dùng nhập ở màn Đăng ký, giữ lại tới khi OTP đúng mới ghi
+/// Firestore. KHÔNG có mật khẩu: Firebase Auth đã băm và giữ từ lúc tạo user.
+class ThongTinDangKy {
+  const ThongTinDangKy({
+    required this.hoTen,
+    required this.soDienThoai,
+    this.email,
+    required this.vaiTro,
+    this.ngaySinh,
+    this.gioiTinh,
+    this.soCccd,
+  });
+
+  final String hoTen;
+  final String soDienThoai;
+  final String? email;
+
+  /// Bệnh nhân hoặc Người giám hộ
+  final VaiTro vaiTro;
+
+  // Chỉ có khi đăng ký cá nhân (tạo hồ sơ "Bản thân").
+  final DateTime? ngaySinh;
+  final String? gioiTinh;
+  final String? soCccd;
+
+  bool get laCaNhan => vaiTro == VaiTro.benhNhan;
+}
+
 /// Mục đích của màn OTP.
-/// lienKet: gắn số điện thoại vào tài khoản cũ để dùng được quên mật khẩu.
-enum MucDichOtp { dangKy, quenMatKhau, lienKet }
+enum MucDichOtp { dangKy, quenMatKhau }
 
 class OtpArgs {
   const OtpArgs({
     required this.soDienThoai,
     required this.mucDich,
-    this.laGiamHo = false,
-    this.matKhau,
+    this.dangKy,
   });
 
   final String soDienThoai;
   final MucDichOtp mucDich;
-  final bool laGiamHo;
 
-  /// Mật khẩu hiện tại – chỉ dùng cho [MucDichOtp.lienKet].
-  final String? matKhau;
+  /// Chỉ dùng cho [MucDichOtp.dangKy].
+  final ThongTinDangKy? dangKy;
 }
