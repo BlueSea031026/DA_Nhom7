@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../app/dieu_huong.dart';
 import '../../core/widgets/widgets.dart';
+import '../../models/models.dart';
 import '../auth/auth_routes.dart';
-import 'thu_ngan_mock.dart';
+import 'thu_ngan_repo.dart';
 import 'thu_ngan_routes.dart';
 
 /// Trang chủ Thu ngân · FR-31
@@ -17,19 +18,21 @@ class ThuNganHomeScreen extends StatefulWidget {
 }
 
 class _ThuNganHomeScreenState extends State<ThuNganHomeScreen> {
-  /// Mở màn con, quay lại thì cập nhật số liệu.
   Future<void> _mo(String route) async {
     await Navigator.pushNamed(context, route);
-    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    final int soChoThu = ThuNganMock.choThanhToan.length;
-    final int soCoTheHoan = ThuNganMock.coTheHoan.length;
     return Scaffold(
       appBar: AppBar(
-        title: Text("THU NGÂN · ${ThuNganMock.thuNgan.hoTen}"),
+        title: FutureBuilder<TaiKhoan>(
+          future: ThuNganRePo.layThuNganHienTai(),
+          builder: (context, snapshot) {
+            final ten = snapshot.data?.hoTen ?? 'Thu ngân';
+            return Text('THU NGÂN · $ten');
+          },
+        ),
         automaticallyImplyLeading: false,
         actions: [
           PopupMenuButton<String>(
@@ -51,43 +54,60 @@ class _ThuNganHomeScreenState extends State<ThuNganHomeScreen> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-        child: Container(
-          width: double.infinity,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Box_Function(
-                icon: Icons.money,
-                title: "CHỜ THANH TOÁN",
-                moTa: "$soChoThu lượt",
-                onTap: () => _mo(ThuNganRoutes.payment),
-              ),
-              Box_Function(
-                icon: Icons.reply,
-                title: 'HOÀN TIỀN',
-                moTa: '$soCoTheHoan khoản có thể hoàn',
-                onTap: () => _mo(ThuNganRoutes.refund),
-              ),
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+          child: SizedBox(
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                // 1. CHỜ THANH TOÁN (Dữ liệu thật từ Firestore)
+                StreamBuilder<List<DatLich>>(
+                  stream: ThuNganRePo.streamChoThanhToan(),
+                  builder: (context, snapshot) {
+                    final soChoThu = snapshot.data?.length ?? 0;
+                    return Box_Function(
+                      icon: Icons.money,
+                      title: 'CHỜ THANH TOÁN',
+                      moTa: '$soChoThu lượt',
+                      onTap: () => _mo(ThuNganRoutes.payment),
+                    );
+                  },
+                ),
 
-              Box_Function(
-                icon: Icons.receipt_long,
-                title: 'HÓA ĐƠN',
-                moTa: 'Xem hóa đơn đã xuất',
-                onTap: () => _mo(ThuNganRoutes.invoice),
-              ),
+                // 2. HOÀN TIỀN (Dữ liệu thật từ Firestore)
+                StreamBuilder<List<ThongTinChoHoan>>(
+                  stream: ThuNganRePo.streamChoHoanTien(),
+                  builder: (context, snapshot) {
+                    final soCoTheHoan = snapshot.data?.length ?? 0;
+                    return Box_Function(
+                      icon: Icons.reply,
+                      title: 'HOÀN TIỀN',
+                      moTa: '$soCoTheHoan khoản có thể hoàn',
+                      onTap: () => _mo(ThuNganRoutes.refund),
+                    );
+                  },
+                ),
 
-              Box_Function(
-                icon: Icons.bar_chart,
-                title: 'DOANH THU',
-                moTa: 'Xem báo cáo',
-                onTap: () => _mo(ThuNganRoutes.revenueReport),
-              ),
-            ],
+                // 3. HÓA ĐƠN
+                Box_Function(
+                  icon: Icons.receipt_long,
+                  title: 'HÓA ĐƠN',
+                  moTa: 'Xem hóa đơn đã xuất',
+                  onTap: () => _mo(ThuNganRoutes.invoice),
+                ),
+
+                // 4. DOANH THU
+                Box_Function(
+                  icon: Icons.bar_chart,
+                  title: 'DOANH THU',
+                  moTa: 'Xem báo cáo',
+                  onTap: () => _mo(ThuNganRoutes.revenueReport),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -106,36 +126,28 @@ class Box_Function extends StatelessWidget {
     required this.moTa,
     required this.onTap,
   });
+
   @override
   Widget build(BuildContext context) {
     return Card(
       color: Colors.white,
       elevation: 3,
-
       child: InkWell(
         onTap: onTap,
-
         borderRadius: BorderRadius.circular(12),
-
         child: Padding(
           padding: const EdgeInsets.all(16),
-
           child: Column(
             children: [
               Row(
                 children: [
                   Icon(icon, size: 30),
-
                   const SizedBox(width: 12),
-
                   Expanded(child: Text(title, style: AppTextStyles.title)),
-
                   const Icon(Icons.arrow_forward_ios),
                 ],
               ),
-
               const SizedBox(height: 10),
-
               Text(moTa, style: AppTextStyles.body),
             ],
           ),

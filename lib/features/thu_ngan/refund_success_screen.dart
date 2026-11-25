@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/utils/formatters.dart';
-import 'thu_ngan_mock.dart';
+import '../../models/models.dart';
 import 'thu_ngan_routes.dart';
 
 /// Hoàn tiền thành công · FR-33
@@ -14,25 +14,21 @@ class RefundSuccessScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Kết quả từ màn Hoàn tiền (có thể null khi mở từ menu Dev)
     final Object? thamSo = ModalRoute.of(context)?.settings.arguments;
-    final KetQuaHoanTien? kq = thamSo is KetQuaHoanTien ? thamSo : null;
+    final Map<String, dynamic>? kq =
+        thamSo is Map<String, dynamic> ? thamSo : null;
+    final ThanhToan? tt = kq?['thanhToan'] as ThanhToan?;
+    final String lyDo = (kq?['lyDo'] as String?) ?? '';
+
     return Scaffold(
-
       appBar: AppBar(
-        title: const Text(
-          'THÀNH CÔNG',
-        ),
+        title: const Text('THÀNH CÔNG'),
       ),
-
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-
           child: Column(
-            mainAxisAlignment:
-                MainAxisAlignment.center,
-
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-
               /// ICON THÀNH CÔNG
               const Icon(
                 Icons.check_circle,
@@ -40,9 +36,7 @@ class RefundSuccessScreen extends StatelessWidget {
                 size: 120,
               ),
 
-              const SizedBox(
-                height: 24,
-              ),
+              const SizedBox(height: 24),
 
               /// TIÊU ĐỀ
               const Text(
@@ -50,50 +44,37 @@ class RefundSuccessScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 24,
-                  fontWeight:
-                      FontWeight.bold,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
 
-              const SizedBox(
-                height: 12,
-              ),
+              const SizedBox(height: 12),
 
               /// MÔ TẢ
               Text(
-                kq == null
+                tt == null
                     ? 'Giao dịch đã được hoàn tiền thành công.'
-                    : 'Đã hoàn ${Fmt.tien(kq.thanhToan.soTien)} qua '
-                        '${kq.thanhToan.phuongThuc.label}.\nLý do: ${kq.lyDo}',
+                    : 'Đã hoàn ${Fmt.tien(tt.soTien)} qua '
+                        '${tt.phuongThuc.label}.\nLý do: $lyDo',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                ),
+                style: const TextStyle(fontSize: 16),
               ),
 
-              const SizedBox(
-                height: 40,
-              ),
+              const SizedBox(height: 40),
 
               /// BUTTON
               SizedBox(
                 width: double.infinity,
-
                 child: ElevatedButton(
                   onPressed: () {
-
                     Navigator.popUntil(
                       context,
                       (route) =>
                           route.settings.name == ThuNganRoutes.thuNganHome ||
                           route.isFirst,
                     );
-
                   },
-
-                  child: const Text(
-                    'VỀ TRANG CHỦ',
-                  ),
+                  child: const Text('VỀ TRANG CHỦ'),
                 ),
               ),
             ],

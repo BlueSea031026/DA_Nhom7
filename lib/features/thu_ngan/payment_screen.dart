@@ -1,10 +1,8 @@
-import 'package:da_nhom7/core/mock/mock_data.dart';
-import 'package:da_nhom7/models/dat_lich.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
-import 'thu_ngan_mock.dart';
+import 'thu_ngan_repo.dart';
 import 'thu_ngan_routes.dart';
 
 /// Thanh toán tại quầy · FR-31
@@ -14,16 +12,11 @@ class PaymentScreen extends StatefulWidget {
   const PaymentScreen({super.key});
 
   @override
-  State<PaymentScreen> createState() =>
-      _PaymentScreenState();
+  State<PaymentScreen> createState() => _PaymentScreenState();
 }
 
-class _PaymentScreenState
-    extends State<PaymentScreen> {
-
-  final TextEditingController _searchController =
-      TextEditingController();
-
+class _PaymentScreenState extends State<PaymentScreen> {
+  final TextEditingController _searchController = TextEditingController();
   String _tuKhoa = '';
 
   @override
@@ -32,84 +25,68 @@ class _PaymentScreenState
     super.dispose();
   }
 
-  /// Lấy lại danh sách mỗi lần vẽ → lượt vừa thu sẽ biến mất.
-  /// Tìm theo mã đặt lịch, mã xác nhận (DL...) hoặc tên bệnh nhân.
-  List<DatLich> get dsChoThanhToan {
-    final String k = _tuKhoa.trim().toLowerCase();
-    return ThuNganMock.choThanhToan.where((e) {
-      if (k.isEmpty) return true;
-      final String ten =
-          MockData.benhNhanById(e.maBenhNhan).hoTen.toLowerCase();
-      return e.maDatLich.toString().contains(k) ||
-          e.maXacNhan.toLowerCase().contains(k) ||
-          ten.contains(k);
-    }).toList();
-  }
-
   void search(String keyword) {
     setState(() => _tuKhoa = keyword);
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
       appBar: AppBar(
-        title:
-            const Text("CHỜ THANH TOÁN"),
+        title: const Text('CHỜ THANH TOÁN'),
       ),
-
       body: Padding(
-        padding:
-            const EdgeInsets.all(16),
-
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-
             TextField(
-              controller:
-                  _searchController,
+              controller: _searchController,
               onChanged: search,
-              decoration:
-                  InputDecoration(
-                hintText:
-                    "Tìm mã lịch hẹn hoặc tên bệnh nhân",
-                prefixIcon:
-                    const Icon(
-                  Icons.search,
-                ),
-                border:
-                    OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius
-                          .circular(
-                    12,
-                  ),
+              decoration: InputDecoration(
+                hintText: 'Tìm mã lịch hẹn hoặc tên bệnh nhân',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
-
-            const SizedBox(
-              height: 16,
-            ),
-
+            const SizedBox(height: 16),
             Expanded(
-              child:
-                  ListView.builder(
-                itemCount:
-                    dsChoThanhToan
-                        .length,
+              child: StreamBuilder<List<ThongTinThanhToan>>(
+                stream: ThuNganRePo.streamChiTietChoThanhToan(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                itemBuilder:
-                    (context, index) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text('Lỗi tải danh sách: ${snapshot.error}'),
+                    );
+                  }
 
-                  final datLich =
-                      dsChoThanhToan[
-                          index];
+                  final k = _tuKhoa.trim().toLowerCase();
+                  final dsChoThanhToan = (snapshot.data ?? []).where((info) {
+                    if (k.isEmpty) return true;
+                    final d = info.datLich;
+                    return d.maDatLich.toString().contains(k) ||
+                        d.maXacNhan.toLowerCase().contains(k) ||
+                        info.tenBenhNhan.toLowerCase().contains(k);
+                  }).toList();
 
-                  return PendingPaymentCard(
-                    datLich: datLich,
+                  if (dsChoThanhToan.isEmpty) {
+                    return const Center(
+                      child: Text('Không có lượt khám nào đang chờ thanh toán.'),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: dsChoThanhToan.length,
+                    itemBuilder: (context, index) {
+                      return PendingPaymentCard(
+                        info: dsChoThanhToan[index],
+                      );
+                    },
                   );
                 },
               ),
@@ -120,112 +97,59 @@ class _PaymentScreenState
     );
   }
 }
-class PendingPaymentCard
-    extends StatelessWidget {
 
-  final DatLich datLich;
+class PendingPaymentCard extends StatelessWidget {
+  final ThongTinThanhToan info;
 
   const PendingPaymentCard({
     super.key,
-    required this.datLich,
+    required this.info,
   });
 
   @override
   Widget build(BuildContext context) {
+    final datLich = info.datLich;
 
     return Card(
-      margin:
-          const EdgeInsets.only(
-        bottom: 12,
-      ),
-
+      margin: const EdgeInsets.only(bottom: 12),
       elevation: 3,
-
-      shape:
-          RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.circular(
-          16,
-        ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
       ),
-
       child: Padding(
-        padding:
-            const EdgeInsets.all(
-          16,
-        ),
-
+        padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment
-                  .start,
-
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             Text(
-              "Mã lịch hẹn: ${datLich.maXacNhan}",
-              style: AppTextStyles
-                  .title,
-            ),
-
-            const SizedBox(
-              height: 8,
-            ),
-
-            Text(
-              "Bệnh nhân: ${MockData.benhNhanById(datLich.maBenhNhan).hoTen}",
-            ),
-
-            const SizedBox(
-              height: 8,
-            ),
-
-            Text(
-              "Ngày đặt: ${datLich.ngayDat.day}/${datLich.ngayDat.month}/${datLich.ngayDat.year}",
-            ),
-
-            const SizedBox(
-              height: 8,
-            ),
-
-            Text(
-              "Hình thức khám: ${datLich.hinhThucKham.label}",
-            ),
-
-            const SizedBox(
-              height: 8,
-            ),
-
-            Text(
-              "Số tiền: ${Fmt.tien(ThuNganMock.soTienCua(datLich))}",
+              'Mã lịch hẹn: ${datLich.maXacNhan}',
               style: AppTextStyles.title,
             ),
-
-            const SizedBox(
-              height: 16,
+            const SizedBox(height: 8),
+            Text('Bệnh nhân: ${info.tenBenhNhan}'),
+            const SizedBox(height: 8),
+            Text(
+              'Ngày đặt: ${datLich.ngayDat.day}/${datLich.ngayDat.month}/${datLich.ngayDat.year}',
             ),
-
+            const SizedBox(height: 8),
+            Text('Hình thức khám: ${datLich.hinhThucKham.label}'),
+            const SizedBox(height: 8),
+            Text(
+              'Số tiền: ${Fmt.tien(info.soTienPhaiTra)}',
+              style: AppTextStyles.title,
+            ),
+            const SizedBox(height: 16),
             SizedBox(
-              width:
-                  double.infinity,
-
-              child:
-                  ElevatedButton(
+              width: double.infinity,
+              child: ElevatedButton(
                 onPressed: () {
-
-                  Navigator
-                      .pushNamed(
+                  Navigator.pushNamed(
                     context,
                     ThuNganRoutes.paymentSuccess,
-
-                    arguments:
-                        datLich,
+                    arguments: datLich,
                   );
                 },
-
-                child: const Text(
-                  "THANH TOÁN",
-                ),
+                child: const Text('THANH TOÁN'),
               ),
             ),
           ],

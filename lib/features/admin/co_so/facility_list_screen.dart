@@ -1,8 +1,7 @@
-import 'package:da_nhom7/core/mock/mock_data.dart';
+import 'package:da_nhom7/features/admin/co_so/co_so_repo.dart';
 import 'package:da_nhom7/features/admin/co_so/co_so_routes.dart';
 import 'package:da_nhom7/models/co_so_y_te.dart';
 import 'package:flutter/material.dart';
-
 
 /// Danh sách cơ sở y tế · FR-35
 /// Figma: Quản trị viên › Danh sách cở sở; Ẩn cơ sở
@@ -16,15 +15,7 @@ class FacilityListScreen extends StatefulWidget {
 
 class _FacilityListScreenState extends State<FacilityListScreen> {
   final TextEditingController _searchController = TextEditingController();
-
-  late List<CoSoYTe> facilities;
-
-  @override
-  void initState() {
-    super.initState();
-
-    facilities = _loc('');
-  }
+  String _tuKhoa = '';
 
   @override
   void dispose() {
@@ -32,64 +23,40 @@ class _FacilityListScreenState extends State<FacilityListScreen> {
     super.dispose();
   }
 
-  /// Luôn lọc lại từ MockData để thay đổi không bị mất.
-  List<CoSoYTe> _loc(String keyword) => MockData.coSoYTe
-      .where((e) => e.tenCoSo.toLowerCase().contains(keyword.toLowerCase()))
-      .toList();
-
   void searchFacility(String keyword) {
     setState(() {
-      facilities = _loc(keyword);
+      _tuKhoa = keyword;
     });
   }
 
-  /// Ẩn / mở cơ sở: sửa thẳng trong MockData (bệnh nhân đặt lịch cũng thấy).
-  void _doiTrangThai(CoSoYTe coSo) {
-    final int viTri =
-        MockData.coSoYTe.indexWhere((e) => e.maCoSo == coSo.maCoSo);
-    if (viTri >= 0) {
-      MockData.coSoYTe[viTri] = coSo.copyWith(trangThai: !coSo.trangThai);
-    }
-    facilities = _loc(_searchController.text);
-  }
-
-  /// Mở form thêm/sửa, quay lại thì tải lại danh sách.
+  /// Mở form thêm/sửa (StreamBuilder tự cập nhật khi Firestore thay đổi).
   Future<void> _moForm([CoSoYTe? coSo]) async {
     await Navigator.pushNamed(
       context,
       AdminCoSoRoutes.facilityForm,
       arguments: coSo,
     );
-    if (mounted) {
-      setState(() => facilities = _loc(_searchController.text));
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('QUẢN LÝ CƠ SỞ Y TẾ')),
-
       floatingActionButton: FloatingActionButton(
         onPressed: () => _moForm(),
         child: const Icon(Icons.add),
       ),
-
       body: Padding(
         padding: const EdgeInsets.all(16),
-
         child: Column(
           children: [
             /// SEARCH
             TextField(
               controller: _searchController,
               onChanged: searchFacility,
-
               decoration: InputDecoration(
                 hintText: 'Tìm kiếm cơ sở y tế',
-
                 prefixIcon: const Icon(Icons.search),
-
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -98,151 +65,189 @@ class _FacilityListScreenState extends State<FacilityListScreen> {
 
             const SizedBox(height: 16),
 
-            /// LIST
+            /// LIST (StreamBuilder lắng nghe dữ liệu thật từ Firestore)
             Expanded(
-              child: ListView.builder(
-                itemCount: facilities.length,
+              child: StreamBuilder<List<CoSoYTe>>(
+                stream: CoSoRepository.streamTatCaCoSo(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                itemBuilder: (context, index) {
-                  final coSo = facilities[index];
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text('Lỗi tải cơ sở y tế: ${snapshot.error}'),
+                    );
+                  }
 
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
+                  final k = _tuKhoa.trim().toLowerCase();
+                  final facilities = (snapshot.data ?? []).where((e) {
+                    if (k.isEmpty) return true;
+                    return e.tenCoSo.toLowerCase().contains(k) ||
+                        e.diaChi.toLowerCase().contains(k);
+                  }).toList();
 
-                    elevation: 3,
+                  if (facilities.isEmpty) {
+                    return const Center(
+                      child: Text('Không tìm thấy cơ sở y tế nào.'),
+                    );
+                  }
 
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                  return ListView.builder(
+                    itemCount: facilities.length,
+                    itemBuilder: (context, index) {
+                      final coSo = facilities[index];
 
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-
-                        children: [
-                          /// TÊN
-                          Text(
-                            coSo.tenCoSo,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          /// ĐỊA CHỈ
-                          Row(
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(Icons.location_on, size: 18),
-
-                              const SizedBox(width: 6),
-
-                              Expanded(child: Text(coSo.diaChi)),
-                            ],
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          /// ĐIỆN THOẠI
-                          Row(
-                            children: [
-                              const Icon(Icons.phone, size: 18),
-
-                              const SizedBox(width: 6),
-
-                              Text(coSo.soDienThoai ?? "Chưa cập nhật "),
-                            ],
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          /// TRẠNG THÁI
-                          Row(
-                            children: [
-                              Icon(
-                                coSo.trangThai
-                                    ? Icons.check_circle
-                                    : Icons.cancel,
-
-                                color: coSo.trangThai
-                                    ? Colors.green
-                                    : Colors.red,
-                              ),
-
-                              const SizedBox(width: 6),
-
-                              Text(coSo.trangThai ? 'Hoạt động' : 'Tạm khóa'),
-                            ],
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          /// BUTTON
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: () => _moForm(coSo),
-
-                                  child: const Text('SỬA'),
+                              /// TÊN
+                              Text(
+                                coSo.tenCoSo,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
 
-                              const SizedBox(width: 12),
+                              const SizedBox(height: 8),
 
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    showDialog(
-                                      context: context,
+                              /// ĐỊA CHỈ
+                              Row(
+                                children: [
+                                  const Icon(Icons.location_on, size: 18),
+                                  const SizedBox(width: 6),
+                                  Expanded(child: Text(coSo.diaChi)),
+                                ],
+                              ),
 
-                                      builder: (_) {
-                                        return AlertDialog(
-                                          title: const Text('XÁC NHẬN'),
+                              const SizedBox(height: 8),
 
-                                          content: Text(
-                                            coSo.trangThai
-                                                ? 'Bạn muốn ẩn cơ sở này?'
-                                                : 'Bạn muốn mở lại cơ sở này?',
-                                          ),
+                              /// ĐIỆN THOẠI
+                              Row(
+                                children: [
+                                  const Icon(Icons.phone, size: 18),
+                                  const SizedBox(width: 6),
+                                  Text(coSo.soDienThoai ?? 'Chưa cập nhật'),
+                                ],
+                              ),
 
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.pop(context);
-                                              },
+                              const SizedBox(height: 8),
 
-                                              child: const Text('HỦY'),
-                                            ),
+                              /// TRẠNG THÁI
+                              Row(
+                                children: [
+                                  Icon(
+                                    coSo.trangThai
+                                        ? Icons.check_circle
+                                        : Icons.cancel,
+                                    color: coSo.trangThai
+                                        ? Colors.green
+                                        : Colors.red,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    coSo.trangThai ? 'Hoạt động' : 'Tạm khóa',
+                                  ),
+                                ],
+                              ),
 
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  _doiTrangThai(coSo);
-                                                });
+                              const SizedBox(height: 16),
 
-                                                Navigator.pop(context);
-                                              },
+                              /// BUTTON
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () => _moForm(coSo),
+                                      child: const Text('SỬA'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (_) {
+                                            return AlertDialog(
+                                              title: const Text('XÁC NHẬN'),
+                                              content: Text(
+                                                coSo.trangThai
+                                                    ? 'Bạn muốn ẩn cơ sở này?'
+                                                    : 'Bạn muốn mở lại cơ sở này?',
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: const Text('HỦY'),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () async {
+                                                    try {
+                                                      await CoSoRepository
+                                                          .doiTrangThai(coSo);
 
-                                              child: const Text('XÁC NHẬN'),
-                                            ),
-                                          ],
+                                                      if (!context.mounted) {
+                                                        return;
+                                                      }
+
+                                                      Navigator.pop(context);
+
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            coSo.trangThai
+                                                                ? 'Đã ẩn cơ sở'
+                                                                : 'Đã mở lại cơ sở',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    } catch (e) {
+                                                      if (!context.mounted) {
+                                                        return;
+                                                      }
+
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            'Lỗi cập nhật dữ liệu: $e',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }
+                                                  },
+                                                  child: const Text('XÁC NHẬN'),
+                                                ),
+                                              ],
+                                            );
+                                          },
                                         );
                                       },
-                                    );
-                                  },
-
-                                  child: Text(coSo.trangThai ? 'ẨN' : 'MỞ'),
-                                ),
+                                      child: Text(coSo.trangThai ? 'ẨN' : 'MỞ'),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),

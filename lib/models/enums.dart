@@ -86,6 +86,11 @@ enum KenhGui {
   final String label;
   static KenhGui fromLabel(String v) => values.firstWhere((e) => e.label == v);
 }
+enum KieuBaoCao {
+  ngay,
+  thang,
+  nam,
+}
 
 /// Giá trị hợp lệ của BenhNhan.MoiQuanHe
 const List<String> kMoiQuanHe = [
