@@ -4,6 +4,7 @@ import '../../core/mock/mock_data.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
+import 'ho_so_repo.dart';
 import 'widgets/guardian_app_bar.dart';
 
 class ProfileFormScreen extends StatefulWidget {
@@ -16,15 +17,21 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _hoTenController = TextEditingController();
   final TextEditingController _ngaySinhController = TextEditingController();
-  final TextEditingController _soDienThoaiController = TextEditingController();
   final TextEditingController _soCccdController = TextEditingController();
 
   BenhNhan? _hoSoDangSua;
   DateTime? _ngaySinh;
   String _gioiTinh = kGioiTinh.first;
-  String _moiQuanHe = 'Con';
+  String _moiQuanHe = _quanHeNguoiThan.first;
   bool _daNapDuLieu = false;
+  bool _dangLuu = false;
+  bool _dangXoa = false;
   bool get _laSua => _hoSoDangSua != null;
+  bool get _laBanThan => _hoSoDangSua?.laBanThan ?? false;
+  bool get _dangXuLy => _dangLuu || _dangXoa;
+
+  // Các quan hệ trừ "Bản thân" (phần tử đầu của kMoiQuanHe)
+  static List<String> get _quanHeNguoiThan => kMoiQuanHe.sublist(1);
 
   // Đọc arguments 1 lần
   @override
@@ -50,28 +57,26 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
   void dispose() {
     _hoTenController.dispose();
     _ngaySinhController.dispose();
-    _soDienThoaiController.dispose();
     _soCccdController.dispose();
     super.dispose();
   }
 
-  // Danh sách quan hệ cho
-  List<String> get _danhSachQuanHe {
-    if (_moiQuanHe == 'Bản thân') return const ['Bản thân'];
-    return kMoiQuanHe.where((q) => q != 'Bản thân').toList();
-  }
+  // Danh sách quan hệ được chọn (hồ sơ bản thân không đổi được quan hệ)
+  List<String> get _danhSachQuanHe =>
+      _laBanThan ? [_moiQuanHe] : _quanHeNguoiThan;
 
   // Mở lịch chọn ngày sinh
   Future<void> _chonNgaySinh() async {
-    final DateTime homNay = DateTime.now();
+    final DateTime homNay = MockData.homNay;
+    final DateTime banDau = _ngaySinh ?? DateTime(homNay.year - 20);
     final DateTime? ngayDaChon = await showDatePicker(
       context: context,
-      initialDate: _ngaySinh ?? DateTime(homNay.year - 20),
+      initialDate: banDau.isAfter(homNay) ? homNay : banDau,
       firstDate: DateTime(1900),
       lastDate: homNay,
       helpText: 'Chọn ngày sinh',
     );
-    if (ngayDaChon == null) return;
+    if (ngayDaChon == null || !mounted) return;
     setState(() {
       _ngaySinh = ngayDaChon;
       _ngaySinhController.text = Fmt.ngay(ngayDaChon);
@@ -85,15 +90,10 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
     return null;
   }
 
-  String? _kiemTraNgaySinh(String? _) =>
-      _ngaySinh == null ? 'Vui lòng chọn ngày sinh' : null;
-
-  String? _kiemTraSoDienThoai(String? giaTri) {
-    final String so = (giaTri ?? '').trim();
-    if (so.isEmpty) return null;
-    if (!RegExp(r'^0\d{9}$').hasMatch(so)) {
-      return 'Số điện thoại gồm 10 số, bắt đầu bằng 0';
-    }
+  String? _kiemTraNgaySinh(String? _) {
+    final DateTime? ngay = _ngaySinh;
+    if (ngay == null) return 'Vui lòng chọn ngày sinh';
+    if (ngay.isAfter(MockData.homNay)) return 'Ngày sinh không được sau hôm nay';
     return null;
   }
 
@@ -105,15 +105,16 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
   }
 
   // Button lưu thay đổi
-  void _luuHoSo() {
+  Future<void> _luuHoSo() async {
+    if (_dangXuLy) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final BenhNhan? hoSoCu = _hoSoDangSua;
     final String soCccd = _soCccdController.text.trim();
     final BenhNhan hoSoMoi = BenhNhan(
-      maBenhNhan: hoSoCu?.maBenhNhan ?? _taoMaBenhNhanMoi(),
+      maBenhNhan: hoSoCu?.maBenhNhan ?? 0, // thêm mới: Kho.themMoi tự sinh mã
       maTaiKhoanQuanLy:
-          hoSoCu?.maTaiKhoanQuanLy ?? MockData.taiKhoanGiamHo.maTaiKhoan,
+          hoSoCu?.maTaiKhoanQuanLy ?? MockData.taiKhoanDangNhap.maTaiKhoan,
       moiQuanHe: _moiQuanHe,
       hoTen: _hoTenController.text.trim(),
       ngaySinh: _ngaySinh!,
@@ -122,36 +123,51 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
       diaChi: hoSoCu?.diaChi,
     );
 
-    if (hoSoCu == null) {
-      MockData.benhNhan.add(hoSoMoi);
-    } else {
-      final int viTri = MockData.benhNhan.indexWhere(
-        (b) => b.maBenhNhan == hoSoCu.maBenhNhan,
-      );
-      if (viTri >= 0) MockData.benhNhan[viTri] = hoSoMoi;
+    setState(() => _dangLuu = true);
+    try {
+      if (hoSoCu == null) {
+        await HoSoRepo.themHoSo(hoSoMoi);
+      } else {
+        await HoSoRepo.suaHoSo(hoSoMoi);
+      }
+      if (!mounted) return;
+      _baoThanhCong(hoSoCu == null ? 'Đã thêm hồ sơ' : 'Đã lưu thay đổi');
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _dangLuu = false);
+      _baoLoi(e);
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(hoSoCu == null ? 'Đã thêm hồ sơ' : 'Đã lưu thay đổi'),
-      ),
-    );
-    Navigator.pop(context, true);
   }
 
-  // Thêm bệnh nhân mới
-  int _taoMaBenhNhanMoi() {
-    int maLonNhat = 0;
-    for (final BenhNhan b in MockData.benhNhan) {
-      if (b.maBenhNhan > maLonNhat) maLonNhat = b.maBenhNhan;
-    }
-    return maLonNhat + 1;
+  // Thông báo
+  void _baoThanhCong(String noiDung) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(noiDung), backgroundColor: AppColors.success),
+    );
+  }
+
+  void _baoLoi(Object loi) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(loi.toString().replaceFirst('Exception: ', '')),
+        backgroundColor: AppColors.danger,
+      ),
+    );
   }
 
   // Xóa hồ sơ bệnh nhân
   Future<void> _xoaHoSo() async {
     final BenhNhan? hoSo = _hoSoDangSua;
-    if (hoSo == null) return;
+    if (hoSo == null || _dangXuLy) return;
+
+    // Không được xóa thì báo ngay, khỏi hỏi xác nhận
+    final String? lyDo = HoSoRepo.kiemTraXoa(hoSo);
+    if (lyDo != null) {
+      _baoLoi(lyDo);
+      return;
+    }
+
     final bool? dongY = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -173,16 +189,22 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
       ),
     );
     if (dongY != true || !mounted) return;
-    MockData.benhNhan.removeWhere((b) => b.maBenhNhan == hoSo.maBenhNhan);
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Đã xóa hồ sơ')));
-    Navigator.pop(context, true);
+    setState(() => _dangXoa = true);
+    try {
+      await HoSoRepo.xoaHoSo(hoSo);
+      if (!mounted) return;
+      _baoThanhCong('Đã xóa hồ sơ');
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _dangXoa = false);
+      _baoLoi(e);
+    }
   }
 
   // Giao diện
   @override
   Widget build(BuildContext context) {
-    final bool laBanThan = _moiQuanHe == 'Bản thân';
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: GuardianAppBar(tieuDe: _laSua ? 'SỬA HỒ SƠ' : 'THÊM HỒ SƠ'),
@@ -221,17 +243,17 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
               nhan: 'Quan hệ với người giám hộ',
               giaTri: _moiQuanHe,
               danhSach: _danhSachQuanHe,
-              onChanged: laBanThan
+              onChanged: _laBanThan
                   ? null
                   : (v) => setState(() => _moiQuanHe = v),
             ),
             const SizedBox(height: 14),
+            // Bảng BenhNhan chưa có cột số điện thoại → chỉ hiển thị số của
+            // tài khoản quản lý, không cho nhập để tránh mất dữ liệu.
             AppTextField(
-              label: 'Số điện thoại',
-              hint: 'VD: 0988455332',
-              controller: _soDienThoaiController,
-              keyboardType: TextInputType.phone,
-              validator: _kiemTraSoDienThoai,
+              label: 'Số điện thoại liên hệ (tài khoản quản lý)',
+              initialValue: MockData.taiKhoanDangNhap.soDienThoai,
+              readOnly: true,
             ),
             const SizedBox(height: 14),
             AppTextField(
@@ -244,29 +266,40 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
             const SizedBox(height: 28),
             Center(
               child: ElevatedButton(
-                onPressed: _luuHoSo,
+                onPressed: _dangXuLy ? null : _luuHoSo,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(160, 44),
                 ),
-                child: Text(_laSua ? 'Lưu thay đổi' : 'LƯU HỒ SƠ'),
+                child: _dangLuu
+                    ? _buildVongXoay()
+                    : Text(_laSua ? 'Lưu thay đổi' : 'LƯU HỒ SƠ'),
               ),
             ),
-            if (_laSua && !laBanThan) ...[
+            if (_laSua) ...[
               const SizedBox(height: 12),
               Center(
                 child: ElevatedButton(
-                  onPressed: _xoaHoSo,
+                  onPressed: _dangXuLy ? null : _xoaHoSo,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.warning,
                     minimumSize: const Size(160, 44),
                   ),
-                  child: const Text('Xóa hồ sơ'),
+                  child: _dangXoa ? _buildVongXoay() : const Text('Xóa hồ sơ'),
                 ),
               ),
             ],
           ],
         ),
       ),
+    );
+  }
+
+  // Vòng xoay nhỏ trong nút khi đang xử lý
+  Widget _buildVongXoay() {
+    return const SizedBox(
+      width: 20,
+      height: 20,
+      child: CircularProgressIndicator(strokeWidth: 2),
     );
   }
 
