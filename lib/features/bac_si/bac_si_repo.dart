@@ -178,7 +178,7 @@ class BacSiRepo {
         }
         tx.update(ref, {
           'trangThai': den.label,
-          if (ghiChu != null) 'ghiChu': ghiChu,
+          'ghiChu': ?ghiChu,
         });
       });
     } on Exception catch (e) {

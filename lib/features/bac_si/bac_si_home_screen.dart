@@ -1,41 +1,86 @@
 import 'package:flutter/material.dart';
 
 import '../../core/mock/mock_data.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
-import 'bac_si_routes.dart';
+import '../lich_su/lich_su_repo.dart';
 import '../thong_bao/thong_bao_routes.dart';
+import 'bac_si_repo.dart';
+import 'bac_si_routes.dart';
 import 'danh_gia/danh_gia_routes.dart';
 import 'doctor_profile_screen.dart';
-import 'bac_si_repo.dart';
 import 'khong_co_ho_so.dart';
+import 'patient_list_screen.dart';
+import 'work_schedule_screen.dart';
 
-/// Trang chủ Bác sĩ
+/// Trang chủ Bác sĩ – khung tab GHIM CỐ ĐỊNH (#27).
 /// Figma: Bác sĩ › trang home bác sĩ
 /// Phụ trách: Thương
-class BacSiHomeScreen extends StatefulWidget {
+///
+/// Tab: Trang chủ · Lịch làm việc · Bệnh nhân · Cá nhân.
+class BacSiHomeScreen extends StatelessWidget {
   const BacSiHomeScreen({super.key});
 
+  static const int tabTrangChu = 0;
+  static const int tabLichLamViec = 1;
+  static const int tabBenhNhan = 2;
+  static const int tabCaNhan = 3;
+
   @override
-  State<BacSiHomeScreen> createState() => _BacSiHomeScreenState();
+  Widget build(BuildContext context) {
+    return const KhungTab(
+      tabs: [
+        MucTab(
+          icon: Icons.home_outlined,
+          iconChon: Icons.home_rounded,
+          nhan: 'Trang chủ',
+          man: _TrangChuBacSi(),
+        ),
+        MucTab(
+          icon: Icons.calendar_month_outlined,
+          iconChon: Icons.calendar_month,
+          nhan: 'Lịch làm việc',
+          man: WorkScheduleScreen(),
+        ),
+        MucTab(
+          icon: Icons.people_outline,
+          iconChon: Icons.people,
+          nhan: 'Bệnh nhân',
+          man: PatientListScreen(),
+        ),
+        MucTab(
+          icon: Icons.person_outline,
+          iconChon: Icons.person,
+          nhan: 'Cá nhân',
+          man: DoctorProfileScreen(),
+        ),
+      ],
+    );
+  }
 }
 
-class _BacSiHomeScreenState extends State<BacSiHomeScreen> {
+class _TrangChuBacSi extends StatefulWidget {
+  const _TrangChuBacSi();
 
-  /// Tên bệnh nhân đầu tiên của ca (chưa ai đặt thì ghi rõ).
-  String _tenBenhNhanDauTien(int maLich) {
-    for (final d in MockData.datLich) {
-      if (d.maLich == maLich && d.trangThai != TrangThaiDatLich.daHuy) {
-        return MockData.benhNhanById(d.maBenhNhan).hoTen;
-      }
-    }
-    return 'Chưa có người đặt';
+  @override
+  State<_TrangChuBacSi> createState() => _TrangChuBacSiState();
+}
+
+class _TrangChuBacSiState extends State<_TrangChuBacSi> {
+  void _chuyenTab(int viTri) => KhungTab.chuyenTab(context, viTri);
+
+  Future<void> _mo(String route, {Object? arguments}) async {
+    await Navigator.pushNamed(context, route, arguments: arguments);
+    if (mounted) setState(() {});
   }
 
-  /// Mở danh sách bệnh nhân rồi làm mới số liệu khi quay lại.
-  Future<void> _moDanhSachBenhNhan() async {
-    await Navigator.pushNamed(context, BacSiRoutes.patientList);
-    if (mounted) setState(() {});
+  static String _loiChao() {
+    final int gio = DateTime.now().hour;
+    if (gio < 11) return 'Chào buổi sáng';
+    if (gio < 14) return 'Chào buổi trưa';
+    if (gio < 18) return 'Chào buổi chiều';
+    return 'Chào buổi tối';
   }
 
   @override
@@ -43,266 +88,288 @@ class _BacSiHomeScreenState extends State<BacSiHomeScreen> {
     final BacSi? bacSi = BacSiRepo.bacSiDangNhap;
     if (bacSi == null) return const KhongCoHoSoBacSi();
     final chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
+    final DateTime bayGio = DateTime.now();
 
-    // Ca còn hiệu lực hôm nay (bỏ ca đã hủy: soLuongCho = 0)
     final lichHomNay = MockData.lichCuaBacSi(bacSi.maBacSi)
         .where((l) => l.soLuongCho > 0 && l.ngay == MockData.homNay)
         .toList();
     final datLichHomNay = BacSiRepo.luotTrongNgay(bacSi, MockData.homNay);
-
     final daKham = datLichHomNay
         .where((d) => d.trangThai == TrangThaiDatLich.daKham)
         .length;
-    // Bệnh nhân đã check-in (Đã đến) đang chờ bác sĩ khám
+    // #41: bệnh nhân đã check-in, đang chờ khám (theo giờ ca, đến trước lên trước)
     final dangCho = datLichHomNay
         .where((d) => d.trangThai == TrangThaiDatLich.daDen)
-        .length;
+        .toList();
 
-    // Các ca sắp tới (còn hiệu lực) để hiển thị
+    // #39: ca sắp tới còn hiệu lực, BỎ ca hôm nay đã qua giờ bắt đầu.
     final lichSapToi = MockData.lichCuaBacSi(bacSi.maBacSi)
-        .where((l) => l.soLuongCho > 0 && !l.ngay.isBefore(MockData.homNay))
+        .where((l) =>
+            l.soLuongCho > 0 &&
+            !l.ngay.isBefore(MockData.homNay) &&
+            LichSuRepo.gioKham(l).isAfter(bayGio))
         .toList()
       ..sort((a, b) {
         final c = a.ngay.compareTo(b.ngay);
         return c != 0 ? c : a.gioBatDau.compareTo(b.gioBatDau);
       });
 
+    final int? maTk = bacSi.maTaiKhoan;
+    final bool coThongBaoChuaDoc = maTk != null &&
+        MockData.thongBaoCuaTaiKhoan(maTk).any((t) => !t.daDoc);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Column(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
           children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Xin chào
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    'XIN CHÀO, ${bacSi.hoTen.toUpperCase()}',
-                                    style: AppTextStyles.title,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Icon(
-                                    Icons.waving_hand,
-                                    color: Color(0xFFE69A1C),
-                                    size: 18,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Bác sĩ ${chuyenKhoa.tenChuyenKhoa}',
-                                style: AppTextStyles.caption,
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: 'Thông báo',
-                          icon: const Icon(
-                            Icons.notifications_outlined,
-                            size: 26,
-                          ),
-                          onPressed: () => Navigator.pushNamed(
-                            context,
-                            ThongBaoRoutes.notification,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Card gradient LỊCH HÔM NAY
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColors.secondary, Color(0xFF7BE5D9)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
+            // #42: header đồng bộ – ảnh đại diện + lời chào theo giờ
+            Row(
+              children: [
+                if (maTk != null)
+                  AnhDaiDien(
+                    maTaiKhoan: maTk,
+                    hoTen: bacSi.hoTen,
+                    kichThuoc: 48,
+                    onTap: () => _chuyenTab(BacSiHomeScreen.tabCaNhan),
+                  ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_loiChao(), style: AppTextStyles.bodySecondary),
+                      Text(
+                        'BS. ${bacSi.hoTen}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.h2
+                            .copyWith(fontWeight: FontWeight.w700),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Center(
-                            child: Text(
-                              'LỊCH HÔM NAY',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.calendar_today,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '${MockData.homNay.day.toString().padLeft(2, '0')}/${MockData.homNay.month.toString().padLeft(2, '0')}/${MockData.homNay.year}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.people,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '${lichHomNay.length} ca · ${datLichHomNay.length} bệnh nhân',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.check_circle_outline,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '$daKham đã khám',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.access_time,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '$dangCho đã đến, đang chờ khám',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+                      Text('Chuyên khoa ${chuyenKhoa.tenChuyenKhoa}',
+                          style: AppTextStyles.caption),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Thông báo',
+                  onPressed: () => _mo(ThongBaoRoutes.notification),
+                  icon: Badge(
+                    isLabelVisible: coThongBaoChuaDoc,
+                    backgroundColor: AppColors.danger,
+                    smallSize: 8,
+                    child: const Icon(Icons.notifications_outlined, size: 28),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _theHomNay(lichHomNay.length, datLichHomNay.length, daKham,
+                dangCho.length),
+            const SizedBox(height: 20),
 
-                    // CHỨC NĂNG
-                    const SectionTitle('CHỨC NĂNG'),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _ChucNangCard(
-                            icon: Icons.calendar_month_outlined,
-                            label: 'Lịch làm việc',
-                            onTap: () => Navigator.pushNamed(
-                              context,
-                              BacSiRoutes.workSchedule,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _ChucNangCard(
-                            icon: Icons.people_outline,
-                            label: 'Bệnh nhân',
-                            onTap: _moDanhSachBenhNhan,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _ChucNangCard(
-                            icon: Icons.star_outline,
-                            label: 'Đánh giá',
-                            onTap: () => Navigator.pushNamed(
-                              context,
-                              DanhGiaBacSiRoutes.doctorReviews,
-                              arguments: bacSi.maBacSi,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
+            // #41: bệnh nhân đang chờ – lễ tân tiếp nhận là hiện ngay
+            SectionTitle('BỆNH NHÂN ĐANG CHỜ (${dangCho.length})'),
+            if (dangCho.isEmpty)
+              const AppCard(
+                child: Text(
+                  'Chưa có bệnh nhân nào check-in. Khi lễ tân tiếp nhận, '
+                  'bệnh nhân sẽ hiện ở đây.',
+                  style: AppTextStyles.bodySecondary,
+                ),
+              )
+            else
+              for (int i = 0; i < dangCho.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _BenhNhanCho(
+                    soThuTu: i + 1,
+                    datLich: dangCho[i],
+                    onKham: () => _mo(BacSiRoutes.patientDetail,
+                        arguments: dangCho[i]),
+                  ),
+                ),
+            const SizedBox(height: 12),
 
-                    // LỊCH SẮP TỚI
-                    const SectionTitle('LỊCH SẮP TỚI'),
-                    if (lichSapToi.isEmpty)
-                      AppCard(
-                        child: Text(
-                          'Không có lịch nào',
-                          style: AppTextStyles.bodySecondary,
-                        ),
-                      )
-                    else
-                      SizedBox(
-                        height: 150,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: lichSapToi.length,
-                          separatorBuilder: (_, _) => const SizedBox(width: 10),
-                          itemBuilder: (_, i) {
-                            final l = lichSapToi[i];
-                            return _LichSapToiCard(
-                              gio: l.gioBatDau,
-                              tenBn: _tenBenhNhanDauTien(l.maLich),
-                              chuyenKhoa: chuyenKhoa.tenChuyenKhoa,
-                              onXem: _moDanhSachBenhNhan,
-                            );
-                          },
-                        ),
-                      ),
-                  ],
+            const SectionTitle('CHỨC NĂNG'),
+            Row(
+              children: [
+                Expanded(
+                  child: _ChucNangCard(
+                    icon: Icons.calendar_month_outlined,
+                    label: 'Lịch làm việc',
+                    onTap: () => _chuyenTab(BacSiHomeScreen.tabLichLamViec),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ChucNangCard(
+                    icon: Icons.people_outline,
+                    label: 'Bệnh nhân',
+                    onTap: () => _chuyenTab(BacSiHomeScreen.tabBenhNhan),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ChucNangCard(
+                    icon: Icons.star_outline,
+                    label: 'Đánh giá',
+                    onTap: () => _mo(DanhGiaBacSiRoutes.doctorReviews,
+                        arguments: bacSi.maBacSi),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            const SectionTitle('LỊCH SẮP TỚI'),
+            if (lichSapToi.isEmpty)
+              const AppCard(
+                child: Text('Không có ca nào sắp tới',
+                    style: AppTextStyles.bodySecondary),
+              )
+            else
+              SizedBox(
+                height: 158,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: lichSapToi.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 10),
+                  itemBuilder: (_, i) => _LichSapToiCard(
+                    lich: lichSapToi[i],
+                    onXem: () => _chuyenTab(BacSiHomeScreen.tabBenhNhan),
+                  ),
                 ),
               ),
-            ),
-
-            // Bottom nav (giả – chỉ để giống Figma)
-            _BottomNav(
-              onProfile: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const DoctorProfileScreen()),
-              ),
-            ),
           ],
         ),
+      ),
+    );
+  }
+
+  // #40: thẻ Lịch hôm nay bấm được → tab Bệnh nhân; 0 ca thì nói rõ.
+  Widget _theHomNay(int soCa, int soBn, int daKham, int dangCho) {
+    const chu = TextStyle(color: Colors.white, fontSize: 13);
+    Widget dong(IconData icon, String noiDung) => Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.white, size: 16),
+              const SizedBox(width: 6),
+              Text(noiDung, style: chu),
+            ],
+          ),
+        );
+    return Material(
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: Ink(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.secondary, Color(0xFF7BE5D9)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: InkWell(
+          onTap: () => _chuyenTab(BacSiHomeScreen.tabBenhNhan),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'LỊCH HÔM NAY',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '${Fmt.thu(MockData.homNay)}, ${Fmt.ngay(MockData.homNay)}',
+                      style: chu,
+                    ),
+                  ],
+                ),
+                if (soCa == 0)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 12),
+                    child: Text(
+                      'Hôm nay bạn không có ca khám. Chúc bạn một ngày tốt lành!',
+                      style: chu,
+                    ),
+                  )
+                else ...[
+                  dong(Icons.people, '$soCa ca · $soBn bệnh nhân đã đặt'),
+                  dong(Icons.check_circle_outline, '$daKham đã khám'),
+                  dong(Icons.access_time, '$dangCho đã đến, đang chờ khám'),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: Text('Chạm để xem danh sách bệnh nhân →',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BenhNhanCho extends StatelessWidget {
+  const _BenhNhanCho({
+    required this.soThuTu,
+    required this.datLich,
+    required this.onKham,
+  });
+
+  final int soThuTu;
+  final DatLich datLich;
+  final VoidCallback onKham;
+
+  @override
+  Widget build(BuildContext context) {
+    final bn = MockData.benhNhanById(datLich.maBenhNhan);
+    final lich = MockData.lichById(datLich.maLich);
+    return AppCard(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: AppColors.successLight,
+            child: Text('$soThuTu',
+                style: AppTextStyles.title.copyWith(color: AppColors.success)),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(bn.hoTen,
+                    style: AppTextStyles.body
+                        .copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  '${bn.gioiTinh} · ${bn.tuoi} tuổi · ca ${lich.khungGio}',
+                  style: AppTextStyles.caption,
+                ),
+              ],
+            ),
+          ),
+          FilledButton(onPressed: onKham, child: const Text('Khám')),
+        ],
       ),
     );
   }
@@ -347,37 +414,41 @@ class _ChucNangCard extends StatelessWidget {
 }
 
 class _LichSapToiCard extends StatelessWidget {
-  const _LichSapToiCard({
-    required this.gio,
-    required this.tenBn,
-    required this.chuyenKhoa,
-    required this.onXem,
-  });
+  const _LichSapToiCard({required this.lich, required this.onXem});
 
-  final String gio;
-  final String tenBn;
-  final String chuyenKhoa;
+  final LichLamViec lich;
   final VoidCallback onXem;
 
   @override
   Widget build(BuildContext context) {
+    final bool homNay = lich.ngay == MockData.homNay;
     return SizedBox(
-      width: 150,
+      width: 156,
       child: AppCard(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(gio, style: AppTextStyles.title),
-            const SizedBox(height: 4),
+            // #39: luôn ghi rõ ngày để không nhầm với hôm nay
             Text(
-              tenBn,
+              homNay ? 'Hôm nay' : '${Fmt.thu(lich.ngay)}, ${Fmt.ngay(lich.ngay)}',
               style: AppTextStyles.caption.copyWith(
-                fontWeight: FontWeight.w600,
+                color: homNay ? AppColors.success : AppColors.secondary,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 4),
-            Text('Khám $chuyenKhoa', style: AppTextStyles.caption),
+            const SizedBox(height: 2),
+            Text(lich.khungGio, style: AppTextStyles.title),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.event_seat_outlined,
+                    size: 16, color: AppColors.textSecondary),
+                const SizedBox(width: 4),
+                Text('Đã đặt ${lich.soLuongDaDat}/${lich.soLuongCho}',
+                    style: AppTextStyles.caption),
+              ],
+            ),
             const Spacer(),
             OutlinedButton(
               onPressed: onXem,
@@ -394,46 +465,6 @@ class _LichSapToiCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _BottomNav extends StatelessWidget {
-  const _BottomNav({required this.onProfile});
-
-  final VoidCallback onProfile;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: const BoxDecoration(color: AppColors.primary),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          const Icon(Icons.home, color: Colors.white, size: 26),
-          GestureDetector(
-            onTap: () => Navigator.pushNamed(context, BacSiRoutes.workSchedule),
-            child: const Icon(
-              Icons.calendar_today,
-              color: Colors.white54,
-              size: 22,
-            ),
-          ),
-          GestureDetector(
-            onTap: () => Navigator.pushNamed(context, BacSiRoutes.patientList),
-            child: const Icon(
-              Icons.people_outline,
-              color: Colors.white54,
-              size: 24,
-            ),
-          ),
-          GestureDetector(
-            onTap: onProfile,
-            child: Icon(Icons.person_outline, color: Colors.white54, size: 24),
-          ),
-        ],
       ),
     );
   }

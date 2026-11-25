@@ -26,23 +26,24 @@ class DoctorProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Avatar
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                width: 110,
-                height: 110,
-                color: AppColors.infoLight,
-                alignment: Alignment.center,
-                child: Text(
-                  bacSi.hoTen.isNotEmpty
-                      ? bacSi.hoTen[0].toUpperCase()
-                      : '?',
-                  style: AppTextStyles.h1
-                      .copyWith(color: AppColors.primary, fontSize: 42),
-                ),
+            // #28: ảnh đại diện đổi được (widget chung #5)
+            if (bacSi.maTaiKhoan != null) ...[
+              AnhDaiDien(
+                maTaiKhoan: bacSi.maTaiKhoan!,
+                hoTen: bacSi.hoTen,
+                kichThuoc: 110,
+                choDoi: true,
               ),
-            ),
+              const SizedBox(height: 4),
+              const Text('Chạm vào ảnh để đổi', style: AppTextStyles.caption),
+            ] else
+              CircleAvatar(
+                radius: 55,
+                backgroundColor: AppColors.infoLight,
+                child: Text(AnhDaiDien.chuCaiDau(bacSi.hoTen),
+                    style: AppTextStyles.h1
+                        .copyWith(color: AppColors.primary, fontSize: 42)),
+              ),
             const SizedBox(height: 12),
             Text(
               'BS. ${bacSi.hoTen}',
