@@ -50,7 +50,7 @@ class _GuardianHomeScreenState extends State<GuardianHomeScreen> {
   // Giao diện
   @override
   Widget build(BuildContext context) {
-    final TaiKhoan taiKhoan = MockData.taiKhoanGiamHo;
+    final TaiKhoan taiKhoan = MockData.taiKhoanDangNhap;
     final List<DatLich> danhSachLichSapToi = _layDanhSachLichSapToi(
       taiKhoan.maTaiKhoan,
     );
@@ -78,10 +78,7 @@ class _GuardianHomeScreenState extends State<GuardianHomeScreen> {
                   child: GuardianPillButton(
                     icon: Icons.groups,
                     nhan: 'HỒ SƠ GIA ĐÌNH',
-                    onTap: () => _moTrang(
-                      HoSoNguoiThanRoutes.familyProfiles,
-                      arguments: taiKhoan.maTaiKhoan,
-                    ),
+                    onTap: () => _moTrang(HoSoNguoiThanRoutes.familyProfiles),
                   ),
                 ),
                 const SizedBox(height: 28),

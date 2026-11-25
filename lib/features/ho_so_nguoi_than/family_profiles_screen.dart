@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/phien_dat_lich.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
@@ -27,12 +28,6 @@ class _FamilyProfilesScreenState extends State<FamilyProfilesScreen> {
     AppColors.dangerLight,
   ];
 
-  // Lấy mã tài khoản
-  int _layMaTaiKhoan() {
-    final Object? thamSo = ModalRoute.of(context)?.settings.arguments;
-    return thamSo is int ? thamSo : MockData.taiKhoanGiamHo.maTaiKhoan;
-  }
-
   // Danh sách các hồ sơ
   List<BenhNhan> _layDanhSachHoSo(int maTaiKhoan) {
     final List<BenhNhan> danhSach = MockData.hoSoCuaTaiKhoan(maTaiKhoan);
@@ -49,11 +44,18 @@ class _FamilyProfilesScreenState extends State<FamilyProfilesScreen> {
     if (mounted) setState(() {});
   }
 
+  // Chọn hồ sơ để đặt lịch
+  void _chonHoSo(BenhNhan hoSo) {
+    PhienDatLich.batDau(benhNhan: hoSo);
+    _moTrang(HinhThucKhamRoutes.chooseExamType, arguments: hoSo);
+  }
+
   // Giao diện
   @override
   Widget build(BuildContext context) {
-    final int maTaiKhoan = _layMaTaiKhoan();
-    final List<BenhNhan> danhSachHoSo = _layDanhSachHoSo(maTaiKhoan);
+    final List<BenhNhan> danhSachHoSo = _layDanhSachHoSo(
+      MockData.taiKhoanDangNhap.maTaiKhoan,
+    );
     final bool coTheQuayLai = Navigator.canPop(context);
 
     return Scaffold(
@@ -82,10 +84,7 @@ class _FamilyProfilesScreenState extends State<FamilyProfilesScreen> {
                       HoSoNguoiThanRoutes.profileForm,
                       arguments: danhSachHoSo[i],
                     ),
-                    onChon: () => _moTrang(
-                      HinhThucKhamRoutes.chooseExamType,
-                      arguments: danhSachHoSo[i],
-                    ),
+                    onChon: () => _chonHoSo(danhSachHoSo[i]),
                   ),
                   const SizedBox(height: 14),
                 ],

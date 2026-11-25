@@ -13,15 +13,64 @@ import 'widgets/booking_step_indicator.dart';
 class BookingQrScreen extends StatelessWidget {
   const BookingQrScreen({super.key});
 
-  // Lấy lại thông tin bệnh nhân đã đặt lịch
-  DatLich _layDatLich(BuildContext context) {
+  // Luôn đọc lại lịch từ MockData theo mã để trạng thái tự đổi (VD thu ngân
+  // vừa thu tiền tại quầy). null = Firestore chưa kịp đồng bộ về máy.
+  DatLich? _layDatLich(BuildContext context) {
     final Object? thamSo = ModalRoute.of(context)?.settings.arguments;
-    if (thamSo is DatLich) return thamSo;
-    return MockData.datLich.firstWhere(
-      (d) => d.trangThai == TrangThaiDatLich.daThanhToan,
-      orElse: () => MockData.datLich.first,
-    );
+    final int? maDatLich = thamSo is DatLich
+        ? thamSo.maDatLich
+        : (thamSo is int ? thamSo : null);
+    if (maDatLich != null) {
+      return MockData.datLich
+          .where((d) => d.maDatLich == maDatLich)
+          .firstOrNull;
+    }
+    // Mở thử từ menu Dev
+    return MockData.datLich
+            .where((d) => d.trangThai == TrangThaiDatLich.daThanhToan)
+            .firstOrNull ??
+        MockData.datLich.firstOrNull;
   }
+
+  // Tiêu đề, icon, màu theo trạng thái lịch
+  (String, IconData, Color) _tinhTrang(TrangThaiDatLich trangThai) =>
+      switch (trangThai) {
+        TrangThaiDatLich.choThanhToan => (
+          'Đã giữ chỗ – chờ thanh toán',
+          Icons.schedule,
+          AppColors.warning,
+        ),
+        TrangThaiDatLich.daThanhToan => (
+          'Đặt lịch thành công!',
+          Icons.check_circle,
+          AppColors.success,
+        ),
+        TrangThaiDatLich.daDen => (
+          'Đã đến – chờ khám',
+          Icons.how_to_reg,
+          AppColors.success,
+        ),
+        TrangThaiDatLich.daKham => (
+          'Đã khám xong',
+          Icons.task_alt,
+          AppColors.success,
+        ),
+        TrangThaiDatLich.khongDen => (
+          'Đã bỏ lỡ lịch khám',
+          Icons.event_busy,
+          AppColors.textSecondary,
+        ),
+        TrangThaiDatLich.hoan => (
+          'Lịch khám bị hoãn',
+          Icons.pause_circle,
+          AppColors.warning,
+        ),
+        TrangThaiDatLich.daHuy => (
+          'Lịch khám đã bị hủy',
+          Icons.cancel,
+          AppColors.danger,
+        ),
+      };
 
   // Về màn đầu tiên trong chồng
   void _veTrangChu(BuildContext context) {
@@ -31,13 +80,27 @@ class BookingQrScreen extends StatelessWidget {
   // Giao diện
   @override
   Widget build(BuildContext context) {
-    final DatLich datLich = _layDatLich(context);
+    final DatLich? datLich = _layDatLich(context);
+    if (datLich == null) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppHeader(title: 'Mã QR đặt lịch'),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     final LichLamViec lich = MockData.lichById(datLich.maLich);
     final BacSi bacSi = MockData.bacSiById(lich.maBacSi);
     final ChuyenKhoa chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
     final CoSoYTe coSo = MockData.coSoById(chuyenKhoa.maCoSo);
     final BenhNhan benhNhan = MockData.benhNhanById(datLich.maBenhNhan);
-    final bool daThanhToan = datLich.trangThai == TrangThaiDatLich.daThanhToan;
+    final ThanhToan? thanhToan = MockData.thanhToanCuaDatLich(
+      datLich.maDatLich,
+    );
+    final bool choThanhToan =
+        datLich.trangThai == TrangThaiDatLich.choThanhToan;
+    // Lịch hủy / hoãn / bỏ lỡ / đã khám thì không cần nhắc đến khám
+    final bool conDenKham =
+        choThanhToan || datLich.trangThai == TrangThaiDatLich.daThanhToan;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -57,7 +120,7 @@ class BookingQrScreen extends StatelessWidget {
         children: [
           const BookingStepIndicator(buocHienTai: 4),
           const SizedBox(height: 20),
-          _buildTheQr(datLich, daThanhToan),
+          _buildTheQr(datLich),
           const SizedBox(height: 16),
           const SectionTitle('THÔNG TIN LỊCH KHÁM'),
           AppCard(
@@ -97,14 +160,21 @@ class BookingQrScreen extends StatelessWidget {
                 ),
                 InfoRow(
                   icon: Icons.payments_outlined,
-                  label: daThanhToan ? 'Đã thanh toán' : 'Cần thanh toán',
-                  value: Fmt.tien(ThongTinDatLich.tienPhaiTraCua(datLich)),
+                  label:
+                      thanhToan?.trangThai.label ??
+                      (choThanhToan ? 'Cần thanh toán' : 'Phí khám'),
+                  value: Fmt.tien(
+                    thanhToan?.soTien ??
+                        ThongTinDatLich.tienPhaiTraCua(datLich),
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          _buildLuuY(daThanhToan),
+          if (conDenKham) ...[
+            const SizedBox(height: 16),
+            _buildLuuY(choThanhToan),
+          ],
         ],
       ),
       bottomNavigationBar: SafeArea(
@@ -136,7 +206,10 @@ class BookingQrScreen extends StatelessWidget {
   }
 
   // Thẻ trắng chứa mã QR + mã xác nhận + trạng thái
-  Widget _buildTheQr(DatLich datLich, bool daThanhToan) {
+  Widget _buildTheQr(DatLich datLich) {
+    final (String tieuDe, IconData icon, Color mau) = _tinhTrang(
+      datLich.trangThai,
+    );
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
       decoration: BoxDecoration(
@@ -146,24 +219,15 @@ class BookingQrScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(
-            daThanhToan ? Icons.check_circle : Icons.schedule,
-            size: 40,
-            color: daThanhToan ? AppColors.success : AppColors.warning,
-          ),
+          Icon(icon, size: 40, color: mau),
           const SizedBox(height: 6),
-          Text(
-            daThanhToan
-                ? 'Đặt lịch thành công!'
-                : 'Đã giữ chỗ – chờ thanh toán',
-            style: AppTextStyles.h2,
-            textAlign: TextAlign.center,
-          ),
+          Text(tieuDe, style: AppTextStyles.h2, textAlign: TextAlign.center),
           const SizedBox(height: 14),
+          // QR chỉ chứa mã xác nhận để lễ tân quét
           QrImageView(
             data: datLich.maXacNhan,
             version: QrVersions.auto,
-            size: 200,
+            size: 220,
             backgroundColor: AppColors.surface,
           ),
           const SizedBox(height: 8),
@@ -181,10 +245,10 @@ class BookingQrScreen extends StatelessWidget {
   }
 
   // Giao diện lưu ý
-  Widget _buildLuuY(bool daThanhToan) {
+  Widget _buildLuuY(bool choThanhToan) {
     final List<String> danhSachLuuY = [
       'Đến trước giờ hẹn 15 phút và đưa mã QR này cho quầy Lễ tân.',
-      if (!daThanhToan) 'Thanh toán phí khám tại quầy Thu ngân trước khi khám.',
+      if (choThanhToan) 'Thanh toán phí khám tại quầy Thu ngân trước khi khám.',
       'Mang theo CCCD và thẻ BHYT (nếu khám BHYT).',
       'Có thể xem lại mã này trong mục Lịch hẹn.',
     ];

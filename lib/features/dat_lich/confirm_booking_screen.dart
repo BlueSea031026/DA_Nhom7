@@ -4,6 +4,7 @@ import '../../core/mock/mock_data.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
+import 'dat_lich_repo.dart';
 import 'dat_lich_routes.dart';
 import 'thong_tin_dat_lich.dart';
 import 'widgets/booking_step_indicator.dart';
@@ -17,27 +18,19 @@ class ConfirmBookingScreen extends StatefulWidget {
 
 class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   final TextEditingController _lyDoKhamController = TextEditingController();
-  ThongTinDatLich? _thongTin;
   bool _dongYDieuKhoan = false;
+  bool _dangLuu = false;
 
-  // Lấy các thông tin người khám, bác sĩ, khung giờ, hình thức khám
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_thongTin != null) return;
-    ThongTinDatLich thongTin = ThongTinDatLich.tuArguments(
-      ModalRoute.of(context)?.settings.arguments,
-    );
-    if (thongTin.lich == null) {
-      final List<LichLamViec> lichSapToi = MockData.lichCuaBacSi(
-        thongTin.bacSi.maBacSi,
-      ).where((l) => !l.ngay.isBefore(MockData.homNay) && l.conTrong).toList();
-      if (lichSapToi.isNotEmpty) {
-        thongTin = thongTin.copyWith(lich: lichSapToi.last);
-      }
+  // Ca khám đọc lại từ MockData mỗi lần build để luôn là bản mới nhất.
+  // Mở thử từ menu Dev (chưa chọn ca) → lấy ca đầu tiên còn đặt được.
+  LichLamViec? _layLich(ThongTinDatLich thongTin) {
+    final int? maLich = thongTin.lich?.maLich;
+    if (maLich != null) {
+      return MockData.lichLamViec.where((l) => l.maLich == maLich).firstOrNull;
     }
-    _thongTin = thongTin;
-    _lyDoKhamController.text = thongTin.lyDoKham ?? '';
+    return MockData.lichCuaBacSi(
+      thongTin.bacSi.maBacSi,
+    ).where(DatLichRepo.datDuoc).firstOrNull;
   }
 
   // Hàm giải phóng ô nhập
@@ -48,50 +41,64 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   }
 
   // Tạo lượt đặt lịch mới
-  void _xacNhanDatLich() {
-    final ThongTinDatLich thongTin = _thongTin!;
-    final LichLamViec? lich = thongTin.lich;
-    if (lich == null) return;
-
-    int maLonNhat = 0;
-    for (final DatLich d in MockData.datLich) {
-      if (d.maDatLich > maLonNhat) maLonNhat = d.maDatLich;
-    }
-    final int maDatLichMoi = maLonNhat + 1;
-    final TheBhyt? theBhyt = thongTin.theBhyt;
+  Future<void> _xacNhanDatLich(
+    ThongTinDatLich thongTin,
+    LichLamViec lich,
+  ) async {
+    if (_dangLuu) return;
     final String lyDoKham = _lyDoKhamController.text.trim();
 
-    final DatLich datLichMoi = DatLich(
-      maDatLich: maDatLichMoi,
-      maBenhNhan: thongTin.benhNhan.maBenhNhan,
-      datBoi: thongTin.benhNhan.maTaiKhoanQuanLy,
-      maLich: lich.maLich,
-      hinhThucKham: theBhyt == null
-          ? HinhThucKham.khongBhyt
-          : HinhThucKham.bhyt,
-      maBhyt: theBhyt?.maBhyt,
-      lyDoKham: lyDoKham.isEmpty ? null : lyDoKham,
-      maXacNhan:
-          'DL${MockData.homNay.year % 100}${maDatLichMoi.toString().padLeft(4, '0')}',
-      ngayDat: DateTime.now(),
-    );
-    MockData.datLich.add(datLichMoi);
-    Navigator.pushNamed(
-      context,
-      DatLichRoutes.onlinePayment,
-      arguments: datLichMoi,
-    );
+    setState(() => _dangLuu = true);
+    try {
+      final int maDatLich = await DatLichRepo.datLich(
+        benhNhan: thongTin.benhNhan,
+        lich: lich,
+        theBhyt: thongTin.theBhyt,
+        lyDoKham: lyDoKham.isEmpty ? null : lyDoKham,
+      );
+      if (!mounted) return;
+      setState(() => _dangLuu = false);
+      Navigator.pushNamed(
+        context,
+        DatLichRoutes.onlinePayment,
+        arguments: maDatLich,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _dangLuu = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
   }
 
   // Giao diện
   @override
   Widget build(BuildContext context) {
-    final ThongTinDatLich thongTin = _thongTin!;
-    final LichLamViec? lich = thongTin.lich;
+    final ThongTinDatLich thongTin = ThongTinDatLich.tuArguments(
+      ModalRoute.of(context)?.settings.arguments,
+    );
+    final LichLamViec? lich = _layLich(thongTin);
     final TheBhyt? theBhyt = thongTin.theBhyt;
     final bool chonBhytNhungKhongCoThe =
         thongTin.hinhThucKham == HinhThucKham.bhyt && theBhyt == null;
 
+    // Đang lưu thì không cho quay lại, tránh đặt xong mà không biết
+    return PopScope(
+      canPop: !_dangLuu,
+      child: _buildTrang(thongTin, lich, theBhyt, chonBhytNhungKhongCoThe),
+    );
+  }
+
+  Widget _buildTrang(
+    ThongTinDatLich thongTin,
+    LichLamViec? lich,
+    TheBhyt? theBhyt,
+    bool chonBhytNhungKhongCoThe,
+  ) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AppHeader(title: 'Xác nhận thông tin'),
@@ -196,15 +203,14 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
           AppCard(
             child: Column(
               children: [
-                InfoRow(label: 'Giá khám', value: Fmt.tien(thongTin.giaKham)),
-                if (theBhyt != null)
-                  InfoRow(
-                    label: 'BHYT chi trả (${theBhyt.mucHuongBhyt}%)',
-                    value: '- ${Fmt.tien(thongTin.tienBhytChiTra)}',
-                  ),
+                InfoRow(label: 'Phí khám', value: Fmt.tien(thongTin.giaKham)),
+                InfoRow(
+                  label: 'BHYT trả (${theBhyt?.mucHuongBhyt ?? 0}%)',
+                  value: Fmt.tien(thongTin.tienBhytChiTra),
+                ),
                 const Divider(height: 16),
                 InfoRow(
-                  label: 'Tổng thanh toán',
+                  label: 'Bệnh nhân trả',
                   value: Fmt.tien(thongTin.tienPhaiTra),
                   bold: true,
                 ),
@@ -228,11 +234,18 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
       ),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-        child: AppButton(
-          label: 'Xác nhận đặt lịch',
-          icon: Icons.check_circle_outline,
-          onPressed: (_dongYDieuKhoan && lich != null) ? _xacNhanDatLich : null,
-        ),
+        child: _dangLuu
+            ? const SizedBox(
+                height: 48,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : AppButton(
+                label: 'Xác nhận đặt lịch',
+                icon: Icons.check_circle_outline,
+                onPressed: (_dongYDieuKhoan && lich != null)
+                    ? () => _xacNhanDatLich(thongTin, lich)
+                    : null,
+              ),
       ),
     );
   }

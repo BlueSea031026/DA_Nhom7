@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/phien_dat_lich.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
@@ -17,12 +18,7 @@ class ChooseProfileScreen extends StatefulWidget {
 // Danh sách chọn thành viên
 class _ChooseProfileScreenState extends State<ChooseProfileScreen> {
   int? _maBenhNhanDaChon;
-
-  // Xác định tài khoản
-  int _layMaTaiKhoan() {
-    final Object? thamSo = ModalRoute.of(context)?.settings.arguments;
-    return thamSo is int ? thamSo : MockData.taiKhoanGiamHo.maTaiKhoan;
-  }
+  bool _daTuChuyen = false;
 
   // Danh sách thành viên
   List<BenhNhan> _layDanhSachHoSo(int maTaiKhoan) {
@@ -34,39 +30,62 @@ class _ChooseProfileScreenState extends State<ChooseProfileScreen> {
     return danhSach;
   }
 
+  // Hồ sơ đang được chọn (mặc định là hồ sơ đầu tiên)
+  BenhNhan? _layHoSoDangChon(List<BenhNhan> danhSachHoSo) =>
+      danhSachHoSo
+          .where((b) => b.maBenhNhan == _maBenhNhanDaChon)
+          .firstOrNull ??
+      danhSachHoSo.firstOrNull;
+
   // Button tiếp tục
-  void _tiepTuc(List<BenhNhan> danhSachHoSo) {
-    final BenhNhan? hoSoDaChon = danhSachHoSo
-        .where((b) => b.maBenhNhan == _maBenhNhanDaChon)
-        .firstOrNull;
-    if (hoSoDaChon == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng chọn hồ sơ cần đặt lịch')),
-      );
-      return;
-    }
+  void _tiepTuc(BenhNhan hoSo) {
+    PhienDatLich.batDau(benhNhan: hoSo);
+    // Vẫn truyền arguments vì màn Chọn hình thức khám đọc hồ sơ từ đây
     Navigator.pushNamed(
       context,
       HinhThucKhamRoutes.chooseExamType,
-      arguments: hoSoDaChon,
+      arguments: hoSo,
     );
   }
 
-  // Thêm hồ sơ bệnh nhân mới
-  Future<void> _themHoSo() async {
-    await Navigator.pushNamed(context, HoSoNguoiThanRoutes.profileForm);
-    if (mounted) setState(() {});
+  // Tài khoản chỉ có 1 hồ sơ: tự chọn và thay màn này bằng màn kế tiếp,
+  // nên bấm Back sẽ về thẳng trang trước đó
+  void _tuChonHoSoDuyNhat(BenhNhan hoSo) {
+    if (_daTuChuyen) return;
+    _daTuChuyen = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      PhienDatLich.batDau(benhNhan: hoSo);
+      Navigator.pushReplacementNamed(
+        context,
+        HinhThucKhamRoutes.chooseExamType,
+        arguments: hoSo,
+      );
+    });
   }
+
+  // Thêm hồ sơ bệnh nhân mới
+  void _themHoSo() =>
+      Navigator.pushNamed(context, HoSoNguoiThanRoutes.profileForm);
 
   // Giao diện
   @override
   Widget build(BuildContext context) {
-    final List<BenhNhan> danhSachHoSo = _layDanhSachHoSo(_layMaTaiKhoan());
+    final List<BenhNhan> danhSachHoSo = _layDanhSachHoSo(
+      MockData.taiKhoanDangNhap.maTaiKhoan,
+    );
+    final BenhNhan? hoSoDangChon = _layHoSoDangChon(danhSachHoSo);
 
-    // Mặc định chọn hồ sơ đầu tiên
-    if (_maBenhNhanDaChon == null && danhSachHoSo.isNotEmpty) {
-      _maBenhNhanDaChon = danhSachHoSo.first.maBenhNhan;
+    // Chỉ tự chuyển khi màn này đang ở trên cùng (không phải đang mở form thêm)
+    final bool dangHien = ModalRoute.of(context)?.isCurrent ?? false;
+    if (danhSachHoSo.length == 1) {
+      if (dangHien) _tuChonHoSoDuyNhat(danhSachHoSo.first);
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const GuardianAppBar(tieuDe: 'CHỌN HỒ SƠ KHÁM'),
@@ -84,7 +103,7 @@ class _ChooseProfileScreenState extends State<ChooseProfileScreen> {
               message: 'Chưa có hồ sơ nào. Hãy thêm hồ sơ trước khi đặt lịch.',
             ),
           for (final BenhNhan benhNhan in danhSachHoSo) ...[
-            _buildTheHoSo(benhNhan),
+            _buildTheHoSo(benhNhan, dangChon: benhNhan == hoSoDangChon),
             const SizedBox(height: 12),
           ],
           Align(
@@ -92,15 +111,15 @@ class _ChooseProfileScreenState extends State<ChooseProfileScreen> {
             child: TextButton.icon(
               onPressed: _themHoSo,
               icon: const Icon(Icons.person_add_alt_1, size: 18),
-              label: const Text('Thêm hồ sơ người thân'),
+              label: const Text('Thêm hồ sơ mới'),
             ),
           ),
           const SizedBox(height: 20),
           Center(
             child: ElevatedButton(
-              onPressed: danhSachHoSo.isEmpty
+              onPressed: hoSoDangChon == null
                   ? null
-                  : () => _tiepTuc(danhSachHoSo),
+                  : () => _tiepTuc(hoSoDangChon),
               style: ElevatedButton.styleFrom(minimumSize: const Size(150, 44)),
               child: const Text('Tiếp tục'),
             ),
@@ -111,8 +130,7 @@ class _ChooseProfileScreenState extends State<ChooseProfileScreen> {
   }
 
   // Item 1 dòng hồ sơ
-  Widget _buildTheHoSo(BenhNhan benhNhan) {
-    final bool dangChon = benhNhan.maBenhNhan == _maBenhNhanDaChon;
+  Widget _buildTheHoSo(BenhNhan benhNhan, {required bool dangChon}) {
     final BorderRadius boGoc = BorderRadius.circular(12);
 
     return Material(
