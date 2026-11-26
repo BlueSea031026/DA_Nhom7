@@ -76,7 +76,7 @@ class LeTanRepo {
     if (!laHomNay(d)) {
       final lich = MockData.lichById(d.maLich);
       return 'Không đúng ngày khám. Lịch hẹn ngày ${Fmt.ngay(lich.ngay)}, '
-          'lúc ${lich.gioBatDau}.';
+          'lúc ${d.gioKham ?? lich.gioBatDau}.';
     }
     if (d.trangThai == TrangThaiDatLich.choThanhToan) {
       return 'Bệnh nhân chưa thanh toán. Mời bệnh nhân sang quầy thu ngân.';
@@ -143,8 +143,8 @@ class LeTanRepo {
             .toList()
           ..sort(
             (a, b) =>
-                MockData.lichById(a.maLich).gioBatDau
-                    .compareTo(MockData.lichById(b.maLich).gioBatDau),
+                (a.gioKham ?? MockData.lichById(a.maLich).gioBatDau)
+                    .compareTo(b.gioKham ?? MockData.lichById(b.maLich).gioBatDau),
           );
     return list;
   }

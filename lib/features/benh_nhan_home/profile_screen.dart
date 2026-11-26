@@ -8,7 +8,7 @@ import '../../models/models.dart';
 import '../auth/auth_routes.dart';
 import '../ho_so_nguoi_than/ho_so_nguoi_than_routes.dart';
 import 'widgets/logout_dialog.dart';
-import 'widgets/profile_menu_item.dart';
+import '../lich_su/lich_su_repo.dart';
 
 /// Trang cá nhân
 class ProfileScreen extends StatelessWidget {
@@ -220,83 +220,392 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final TaiKhoan taiKhoan = MockData.taiKhoanDangNhap;
     final BenhNhan? hoSoBanThan = _layHoSoBanThan(taiKhoan.maTaiKhoan);
+    final List<DatLich> cacLich = MockData.datLichCuaTaiKhoan(
+      taiKhoan.maTaiKhoan,
+    );
+    final int sapToi = cacLich
+        .where((d) =>
+            (d.trangThai == TrangThaiDatLich.choThanhToan ||
+                d.trangThai == TrangThaiDatLich.daThanhToan) &&
+            LichSuRepo.gioKhamCua(d).isAfter(DateTime.now()))
+        .length;
+    final int daKham =
+        cacLich.where((d) => d.trangThai == TrangThaiDatLich.daKham).length;
+    final int soHoSo = MockData.hoSoCuaTaiKhoan(taiKhoan.maTaiKhoan).length;
+    final TheBhyt? the = hoSoBanThan == null
+        ? null
+        : MockData.theBhytCuaBenhNhan(hoSoBanThan.maBenhNhan);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        centerTitle: false,
-        titleSpacing: 0,
-        title: Text(
-          'CÁ NHÂN',
-          style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w700),
-        ),
-      ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+        padding: EdgeInsets.zero,
         children: [
-          _buildThongTinTaiKhoan(taiKhoan),
-          const SizedBox(height: 28),
-          ProfileMenuItem(
-            icon: Icons.person,
-            tieuDe: 'Chỉnh sửa trang cá nhân',
-            onTap: () => _hienThongTinCaNhan(context, taiKhoan, hoSoBanThan),
+          _buildDauTrang(context, taiKhoan),
+          Transform.translate(
+            offset: const Offset(0, -28),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _buildThongKe(sapToi, daKham, soHoSo),
+            ),
           ),
-          const SizedBox(height: 10),
-          ProfileMenuItem(
-            icon: Icons.verified_user,
-            tieuDe: 'Bảo mật',
-            onTap: () =>
-                Navigator.pushNamed(context, AuthRoutes.changePassword),
-          ),
-          const SizedBox(height: 10),
-          ProfileMenuItem(
-            icon: Icons.description,
-            tieuDe: 'Thông tin bảo hiểm y tế',
-            onTap: () => _hienThongTinBhyt(context, hoSoBanThan),
-          ),
-          const SizedBox(height: 10),
-          ProfileMenuItem(
-            icon: Icons.layers,
-            tieuDe: 'Điều khoản sử dụng',
-            onTap: () => _hienDieuKhoan(context),
-          ),
-          const SizedBox(height: 10),
-          ProfileMenuItem(
-            icon: Icons.logout,
-            tieuDe: 'Đăng xuất',
-            onTap: () => _dangXuat(context),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTheBhyt(context, hoSoBanThan, the),
+                const SizedBox(height: 20),
+                const _TieuDeNhom('TÀI KHOẢN'),
+                _NhomMenu(
+                  muc: [
+                    _MucMenu(
+                      icon: Icons.person_outline,
+                      mau: AppColors.secondary,
+                      tieuDe: 'Thông tin cá nhân',
+                      moTa: 'Họ tên, ngày sinh, CCCD, địa chỉ',
+                      onTap: () =>
+                          _hienThongTinCaNhan(context, taiKhoan, hoSoBanThan),
+                    ),
+                    _MucMenu(
+                      icon: Icons.groups_outlined,
+                      mau: AppColors.success,
+                      tieuDe: 'Hồ sơ người thân',
+                      moTa: '$soHoSo hồ sơ',
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        HoSoNguoiThanRoutes.familyProfiles,
+                      ),
+                    ),
+                    _MucMenu(
+                      icon: Icons.lock_outline,
+                      mau: AppColors.warning,
+                      tieuDe: 'Bảo mật',
+                      moTa: 'Đổi mật khẩu',
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        AuthRoutes.changePassword,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const _TieuDeNhom('KHÁC'),
+                _NhomMenu(
+                  muc: [
+                    _MucMenu(
+                      icon: Icons.description_outlined,
+                      mau: AppColors.primary,
+                      tieuDe: 'Điều khoản sử dụng',
+                      onTap: () => _hienDieuKhoan(context),
+                    ),
+                    _MucMenu(
+                      icon: Icons.logout,
+                      mau: AppColors.danger,
+                      tieuDe: 'Đăng xuất',
+                      laNguyHiem: true,
+                      onTap: () => _dangXuat(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: Text(
+                    'Thành viên từ ${Fmt.ngay(taiKhoan.ngayTao)}',
+                    style: AppTextStyles.caption,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  // Ảnh đại diện / họ tên / số điện thoại
-  Widget _buildThongTinTaiKhoan(TaiKhoan taiKhoan) {
-    return Column(
-      children: [
-        // #5: bấm vào ảnh để đổi ảnh đại diện (lưu trên Firestore).
-        AnhDaiDien(
-          maTaiKhoan: taiKhoan.maTaiKhoan,
-          hoTen: taiKhoan.hoTen,
-          kichThuoc: 104,
-          choDoi: true,
+  // Đầu trang nền gradient: ảnh, tên, SĐT, vai trò
+  Widget _buildDauTrang(BuildContext context, TaiKhoan taiKhoan) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 16,
+        20,
+        48,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primary, AppColors.secondary],
         ),
-        const SizedBox(height: 4),
-        const Text('Chạm vào ảnh để đổi', style: AppTextStyles.caption),
-        const SizedBox(height: 10),
-        Text(
-          taiKhoan.hoTen,
-          textAlign: TextAlign.center,
-          style: AppTextStyles.h2.copyWith(fontWeight: FontWeight.w700),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Cá nhân',
+            style: AppTextStyles.h2.copyWith(
+              color: AppColors.surface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  shape: BoxShape.circle,
+                ),
+                // Bấm vào ảnh để đổi ảnh đại diện (lưu trên Firestore).
+                child: AnhDaiDien(
+                  maTaiKhoan: taiKhoan.maTaiKhoan,
+                  hoTen: taiKhoan.hoTen,
+                  kichThuoc: 76,
+                  choDoi: true,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      taiKhoan.hoTen,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.h2.copyWith(
+                        color: AppColors.surface,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.phone_outlined,
+                            size: 14, color: Colors.white70),
+                        const SizedBox(width: 4),
+                        Text(
+                          _anSoDienThoai(taiKhoan.soDienThoai),
+                          style: AppTextStyles.caption
+                              .copyWith(color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        taiKhoan.vaiTro.label,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.surface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Chạm vào ảnh để đổi ảnh đại diện',
+            style: TextStyle(color: Colors.white60, fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 3 ô thống kê nổi trên đầu trang
+  Widget _buildThongKe(int sapToi, int daKham, int soHoSo) {
+    Widget o(String so, String nhan, Color mau) => Expanded(
+      child: Column(
+        children: [
+          Text(
+            so,
+            style: AppTextStyles.h2.copyWith(
+              color: mau,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(nhan, style: AppTextStyles.caption),
+        ],
+      ),
+    );
+    Widget gach() => Container(width: 1, height: 32, color: AppColors.border);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          o('$sapToi', 'Lịch sắp tới', AppColors.secondary),
+          gach(),
+          o('$daKham', 'Đã khám', AppColors.success),
+          gach(),
+          o('$soHoSo', 'Hồ sơ', AppColors.warning),
+        ],
+      ),
+    );
+  }
+
+  // Thẻ BHYT dạng card
+  Widget _buildTheBhyt(BuildContext context, BenhNhan? hoSo, TheBhyt? the) {
+    final bool con = the?.conHieuLuc ?? false;
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => _hienThongTinBhyt(context, hoSo),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
         ),
-        const SizedBox(height: 2),
-        Text(
-          _anSoDienThoai(taiKhoan.soDienThoai),
-          style: AppTextStyles.caption,
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.successLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.health_and_safety_outlined,
+                  color: AppColors.success),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Thẻ bảo hiểm y tế', style: AppTextStyles.title),
+                  const SizedBox(height: 2),
+                  Text(
+                    the == null
+                        ? 'Chưa khai báo – chạm để xem'
+                        : '${the.soTheBhyt} · hưởng ${the.mucHuongBhyt}%',
+                    style: AppTextStyles.caption,
+                  ),
+                ],
+              ),
+            ),
+            if (the != null)
+              StatusChip(
+                label: con ? 'Còn hạn' : 'Hết hạn',
+                color: con ? AppColors.success : AppColors.danger,
+                background:
+                    con ? AppColors.successLight : AppColors.dangerLight,
+              ),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+}
+
+class _TieuDeNhom extends StatelessWidget {
+  const _TieuDeNhom(this.chu);
+  final String chu;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(left: 4, bottom: 8),
+    child: Text(
+      chu,
+      style: AppTextStyles.caption.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.8,
+      ),
+    ),
+  );
+}
+
+class _MucMenu {
+  const _MucMenu({
+    required this.icon,
+    required this.mau,
+    required this.tieuDe,
+    required this.onTap,
+    this.moTa,
+    this.laNguyHiem = false,
+  });
+  final IconData icon;
+  final Color mau;
+  final String tieuDe;
+  final String? moTa;
+  final VoidCallback onTap;
+  final bool laNguyHiem;
+}
+
+// Nhóm menu trong 1 thẻ trắng, có gạch ngăn
+class _NhomMenu extends StatelessWidget {
+  const _NhomMenu({required this.muc});
+  final List<_MucMenu> muc;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (int i = 0; i < muc.length; i++) ...[
+            if (i > 0) const Divider(height: 1, indent: 64),
+            ListTile(
+              onTap: muc[i].onTap,
+              leading: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: muc[i].mau.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(muc[i].icon, size: 20, color: muc[i].mau),
+              ),
+              title: Text(
+                muc[i].tieuDe,
+                style: AppTextStyles.title.copyWith(
+                  color: muc[i].laNguyHiem ? AppColors.danger : null,
+                ),
+              ),
+              subtitle: muc[i].moTa == null
+                  ? null
+                  : Text(muc[i].moTa!, style: AppTextStyles.caption),
+              trailing: muc[i].laNguyHiem
+                  ? null
+                  : const Icon(Icons.chevron_right,
+                      color: AppColors.textSecondary),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

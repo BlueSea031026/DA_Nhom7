@@ -46,7 +46,7 @@ class DatLichInfoCard extends StatelessWidget {
             InfoRow(label: 'Chuyên khoa', value: chuyenKhoa.tenChuyenKhoa),
             InfoRow(label: 'Ngày', value: Fmt.ngay(lich.ngay)),
           ],
-          InfoRow(label: 'Giờ', value: lich.khungGio),
+          InfoRow(label: 'Giờ', value: datLich.gioKham ?? lich.gioBatDau),
           if (chiTiet) ...[
             InfoRow(label: 'Cơ sở', value: coSo.tenCoSo),
             InfoRow(

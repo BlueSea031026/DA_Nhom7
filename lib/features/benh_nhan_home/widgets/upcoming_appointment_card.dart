@@ -96,7 +96,7 @@ class _UpcomingAppointmentCardState extends State<UpcomingAppointmentCard> {
     final ChuyenKhoa chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
     final BenhNhan benhNhan = MockData.benhNhanById(d.maBenhNhan);
     final String dem =
-        UpcomingAppointmentCard.demNguoc(LichSuRepo.gioKham(lich), DateTime.now());
+        UpcomingAppointmentCard.demNguoc(LichSuRepo.gioKhamCua(d), DateTime.now());
     final bool daThanhToan = d.trangThai != TrangThaiDatLich.choThanhToan;
     final Color mauChu = AppColors.surface;
 
@@ -181,7 +181,7 @@ class _UpcomingAppointmentCardState extends State<UpcomingAppointmentCard> {
               Icon(Icons.alarm, size: 18, color: mauChu),
               const SizedBox(width: 6),
               Text(
-                lich.khungGio,
+                LichSuRepo.gioHienThi(d),
                 style: AppTextStyles.caption.copyWith(color: mauChu),
               ),
             ],

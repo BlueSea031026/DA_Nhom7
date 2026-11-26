@@ -255,7 +255,7 @@ class _BenhNhanCho extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  lich.gioBatDau,
+                  datLich.gioKham ?? lich.gioBatDau,
                   style: AppTextStyles.title.copyWith(color: AppColors.primary),
                 ),
                 Text('đến ${lich.gioKetThuc}', style: AppTextStyles.caption),

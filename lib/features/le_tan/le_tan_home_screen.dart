@@ -115,7 +115,7 @@ class _TrangChuTabState extends State<_TrangChuTab> {
                           color: AppColors.warning),
                       title: Text(MockData.benhNhanById(d.maBenhNhan).hoTen),
                       subtitle: Text(
-                          '${MockData.lichById(d.maLich).khungGio} · ${d.maXacNhan}'),
+                          '${LichSuRepo.gioHienThi(d)} · ${d.maXacNhan}'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
                         Navigator.pop(ctx);
@@ -145,7 +145,7 @@ class _TrangChuTabState extends State<_TrangChuTab> {
     final bayGio = DateTime.now();
     final sapDen = homNay.where((d) {
       if (d.trangThai != TrangThaiDatLich.daThanhToan) return false;
-      final g = LichSuRepo.gioKham(MockData.lichById(d.maLich));
+      final g = LichSuRepo.gioKhamCua(d);
       final phut = g.difference(bayGio).inMinutes;
       return phut >= -15 && phut <= 60;
     }).toList();
@@ -265,7 +265,7 @@ class _TrangChuTabState extends State<_TrangChuTab> {
                   leading: const Icon(Icons.schedule, color: AppColors.secondary),
                   title: Text(MockData.benhNhanById(d.maBenhNhan).hoTen),
                   subtitle: Text(
-                    '${MockData.lichById(d.maLich).khungGio} · '
+                    '${LichSuRepo.gioHienThi(d)} · '
                     '${MockData.bacSiById(MockData.lichById(d.maLich).maBacSi).tenHienThi}',
                   ),
                   trailing: Text(d.maXacNhan, style: AppTextStyles.caption),

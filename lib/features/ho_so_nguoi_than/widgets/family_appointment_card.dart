@@ -73,7 +73,7 @@ class FamilyAppointmentCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     Text(
-                      lich.gioBatDau,
+                      datLich.gioKham ?? lich.gioBatDau,
                       style: AppTextStyles.label.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
