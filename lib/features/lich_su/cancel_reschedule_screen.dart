@@ -139,7 +139,7 @@ class _CancelRescheduleScreenState extends State<CancelRescheduleScreen> {
                 InfoRow(
                   icon: Icons.schedule_outlined,
                   label: 'Thời gian',
-                  value: '${lich.khungGio} · ${Fmt.ngay(lich.ngay)}',
+                  value: '${datLich.gioKham ?? lich.gioBatDau} · ${Fmt.ngay(lich.ngay)}',
                 ),
                 InfoRow(
                   icon: Icons.qr_code_2_outlined,

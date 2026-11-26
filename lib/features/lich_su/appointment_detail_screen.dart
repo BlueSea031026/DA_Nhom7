@@ -56,7 +56,7 @@ class AppointmentDetailScreen extends StatelessWidget {
                 InfoRow(label: 'Cơ sở', value: coSo.tenCoSo),
                 InfoRow(
                   label: 'Thời gian',
-                  value: '${lich.khungGio} · ${Fmt.ngay(lich.ngay)}',
+                  value: '${datLich.gioKham ?? lich.gioBatDau} · ${Fmt.ngay(lich.ngay)} (ca ${lich.khungGio})',
                 ),
                 InfoRow(label: 'Hình thức', value: datLich.hinhThucKham.label),
                 if (lyDo != null) InfoRow(label: 'Lý do khám', value: lyDo),

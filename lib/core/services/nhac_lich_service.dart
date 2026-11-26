@@ -26,7 +26,7 @@ class NhacLichService {
   /// Thời điểm bắt đầu khám của 1 lượt đặt lịch.
   static DateTime gioKham(DatLich d) {
     final lich = MockData.lichById(d.maLich);
-    final p = lich.gioBatDau.split(':');
+    final p = (d.gioKham ?? lich.gioBatDau).split(':');
     return DateTime(lich.ngay.year, lich.ngay.month, lich.ngay.day,
         int.parse(p[0]), int.parse(p[1]));
   }
@@ -74,7 +74,7 @@ class NhacLichService {
             id: d.maDatLich * 10 + i,
             title: 'Nhắc lịch khám',
             body: 'Bạn có lịch khám với ${bacSi.tenHienThi} lúc '
-                '${lich.gioBatDau} ngày ${lich.ngay.day}/${lich.ngay.month}. '
+                '${d.gioKham ?? lich.gioBatDau} ngày ${lich.ngay.day}/${lich.ngay.month}. '
                 'Mã xác nhận: ${d.maXacNhan}',
             scheduledDate: tz.TZDateTime.from(luc, tz.local),
             notificationDetails: ThongBaoService.chiTiet,
@@ -99,7 +99,7 @@ class NhacLichService {
       await ThongBaoService.gui(
         maDatLich: d.maDatLich,
         loai: LoaiThongBao.nhacLich,
-        noiDung: 'Nhắc lịch: bạn có lịch khám lúc ${lich.gioBatDau} ngày '
+        noiDung: 'Nhắc lịch: bạn có lịch khám lúc ${d.gioKham ?? lich.gioBatDau} ngày '
             '${lich.ngay.day}/${lich.ngay.month}. Vui lòng đến trước 15 phút '
             'và mang mã QR ${d.maXacNhan}.',
       );

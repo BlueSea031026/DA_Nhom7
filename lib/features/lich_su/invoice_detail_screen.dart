@@ -94,7 +94,7 @@ class _InvoiceBody extends StatelessWidget {
               InfoRow(label: 'Chuyên khoa', value: chuyenKhoa.tenChuyenKhoa),
               InfoRow(
                 label: 'Ngày khám',
-                value: '${lich.gioBatDau} · ${Fmt.ngay(lich.ngay)}',
+                value: '${datLich.gioKham ?? lich.gioBatDau} · ${Fmt.ngay(lich.ngay)}',
               ),
               InfoRow(label: 'Mã xác nhận', value: datLich.maXacNhan),
             ],

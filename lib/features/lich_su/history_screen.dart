@@ -131,7 +131,7 @@ class _LichKhamCard extends StatelessWidget {
           InfoRow(
             icon: Icons.schedule_outlined,
             label: 'Thời gian',
-            value: '${lich.gioBatDau} · ${Fmt.ngay(lich.ngay)}',
+            value: '${datLich.gioKham ?? lich.gioBatDau} · ${Fmt.ngay(lich.ngay)}',
           ),
           InfoRow(
             icon: Icons.person_outline,

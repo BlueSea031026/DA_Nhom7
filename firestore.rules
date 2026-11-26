@@ -44,7 +44,7 @@ service cloud.firestore {
     match /lichLamViec/{id} {
       allow read: if daDangNhap();
       allow write: if laAdmin() ||
-        (daDangNhap() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['soLuongDaDat', 'trangThai']));
+        (daDangNhap() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['soLuongDaDat', 'trangThai', 'gioDaDat']));
     }
 
     // Nghiệp vụ hằng ngày: mọi người dùng đã đăng nhập.
