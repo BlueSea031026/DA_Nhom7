@@ -31,6 +31,7 @@ class _ChooseDatetimeScreenState extends State<ChooseDatetimeScreen> {
   // Chỉ lưu lựa chọn, còn ca khám luôn đọc lại từ MockData khi build
   DateTime? _ngayDaChon;
   int? _maLichDaChon;
+  String? _gioDaChon;
 
   // Ngày đang xem: ngày người dùng chọn, hoặc ngày đầu tiên còn đặt được
   DateTime? _layNgayDangXem(Map<DateTime, List<LichLamViec>> caTheoNgay) {
@@ -48,11 +49,11 @@ class _ChooseDatetimeScreenState extends State<ChooseDatetimeScreen> {
   }
 
   // Button tiếp tục
-  void _tiepTuc(ThongTinDatLich thongTin, LichLamViec lich) {
+  void _tiepTuc(ThongTinDatLich thongTin, LichLamViec lich, String gio) {
     Navigator.pushNamed(
       context,
       DatLichRoutes.confirmBooking,
-      arguments: thongTin.copyWith(lich: lich),
+      arguments: thongTin.copyWith(lich: lich, gioKham: gio),
     );
   }
 
@@ -69,13 +70,28 @@ class _ChooseDatetimeScreenState extends State<ChooseDatetimeScreen> {
     final DateTime? ngayDangXem = _layNgayDangXem(caTheoNgay);
     final List<LichLamViec> caCuaNgay = caTheoNgay[ngayDangXem] ?? const [];
 
-    // Ca đã chọn mà vừa hết chỗ / quá giờ / bị hủy thì tự bỏ chọn
-    // #30: chưa chọn gì → TỰ GỢI Ý ca sớm nhất còn đặt được của ngày đó.
-    final LichLamViec? lichDaChon = _maLichDaChon == null
-        ? caCuaNgay.where(DatLichRepo.datDuoc).firstOrNull
-        : caCuaNgay
-            .where((l) => l.maLich == _maLichDaChon && DatLichRepo.datDuoc(l))
-            .firstOrNull;
+    // Giờ đã chọn mà vừa có người đặt / quá giờ thì tự bỏ chọn.
+    // Chưa chọn gì → TỰ GỢI Ý giờ trống sớm nhất của ngày đó.
+    LichLamViec? lichDaChon;
+    String? gioDaChon;
+    final LichLamViec? caDangChon = caCuaNgay
+        .where((l) => l.maLich == _maLichDaChon)
+        .firstOrNull;
+    if (caDangChon != null &&
+        _gioDaChon != null &&
+        DatLichRepo.gioDatDuoc(caDangChon).contains(_gioDaChon)) {
+      lichDaChon = caDangChon;
+      gioDaChon = _gioDaChon;
+    } else {
+      for (final LichLamViec l in caCuaNgay) {
+        final String? g = DatLichRepo.gioDatDuoc(l).firstOrNull;
+        if (g != null) {
+          lichDaChon = l;
+          gioDaChon = g;
+          break;
+        }
+      }
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -106,27 +122,26 @@ class _ChooseDatetimeScreenState extends State<ChooseDatetimeScreen> {
             ),
             _buildDaiNgay(caTheoNgay, ngayDangXem),
             const SizedBox(height: 20),
-            SectionTitle('KHUNG GIỜ · ${Fmt.ngay(ngayDangXem)}'),
-            Wrap(
-              spacing: 10,
-              runSpacing: 6,
-              children: [
-                for (final LichLamViec l in caCuaNgay)
-                  _buildKhungGio(l, dangChon: l == lichDaChon),
-              ],
-            ),
+            SectionTitle('CHỌN GIỜ KHÁM · ${Fmt.ngay(ngayDangXem)}'),
+            const _ChuThich(),
+            const SizedBox(height: 12),
+            for (final LichLamViec l in caCuaNgay)
+              _buildCa(
+                l,
+                gioDangChon: l.maLich == lichDaChon?.maLich ? gioDaChon : null,
+              ),
           ],
         ],
       ),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(20, 8, 20, 12),
         child: AppButton(
-          label: lichDaChon == null
-              ? 'Chọn 1 khung giờ để tiếp tục'
-              : 'Tiếp tục · ${lichDaChon.khungGio} ${Fmt.ngay(lichDaChon.ngay)}',
-          onPressed: lichDaChon == null
+          label: lichDaChon == null || gioDaChon == null
+              ? 'Chọn 1 giờ khám để tiếp tục'
+              : 'Tiếp tục · $gioDaChon ${Fmt.ngay(lichDaChon.ngay)}',
+          onPressed: lichDaChon == null || gioDaChon == null
               ? null
-              : () => _tiepTuc(thongTin, lichDaChon),
+              : () => _tiepTuc(thongTin, lichDaChon!, gioDaChon!),
         ),
       ),
     );
@@ -173,6 +188,7 @@ class _ChooseDatetimeScreenState extends State<ChooseDatetimeScreen> {
             ? () => setState(() {
                 _ngayDaChon = ngay;
                 _maLichDaChon = null;
+                _gioDaChon = null;
               })
             : null,
         child: Container(
@@ -220,32 +236,162 @@ class _ChooseDatetimeScreenState extends State<ChooseDatetimeScreen> {
     );
   }
 
-  // 1 khung giờ: hết chỗ hoặc đã qua giờ thì không bấm được
-  Widget _buildKhungGio(LichLamViec lich, {required bool dangChon}) {
-    final bool chonDuoc = DatLichRepo.datDuoc(lich);
-    final String tinhTrang = DatLichRepo.daQuaGio(lich)
-        ? 'đã qua giờ'
-        : DatLichRepo.hetCho(lich)
-        ? 'hết chỗ'
-        : 'còn ${lich.soChoTrong} chỗ';
+  // 1 ca: tiêu đề ca + lưới các mốc giờ riêng
+  Widget _buildCa(LichLamViec lich, {required String? gioDangChon}) {
+    final List<String> conDat = DatLichRepo.gioDatDuoc(lich);
+    final List<String> conTrong = lich.gioConTrong;
+    final int gioDau = int.parse(lich.gioBatDau.split(':')[0]);
+    final String tenCa = gioDau < 12
+        ? 'Ca sáng'
+        : gioDau < 18
+        ? 'Ca chiều'
+        : 'Ca tối';
+    final IconData icon = gioDau < 12
+        ? Icons.wb_sunny_outlined
+        : gioDau < 18
+        ? Icons.wb_twilight
+        : Icons.nightlight_outlined;
 
-    return ChoiceChip(
-      label: Text('${lich.gioBatDau} – ${lich.gioKetThuc} · $tinhTrang'),
-      labelStyle: AppTextStyles.label.copyWith(
-        color: dangChon
-            ? AppColors.surface
-            : chonDuoc
-            ? AppColors.textPrimary
-            : AppColors.textSecondary,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
       ),
-      selected: dangChon,
-      showCheckmark: false,
-      selectedColor: AppColors.secondary,
-      backgroundColor: AppColors.surface,
-      disabledColor: AppColors.border,
-      onSelected: chonDuoc
-          ? (_) => setState(() => _maLichDaChon = lich.maLich)
-          : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: AppColors.secondary),
+              const SizedBox(width: 6),
+              Text('$tenCa · ${lich.khungGio}', style: AppTextStyles.title),
+              const Spacer(),
+              Text(
+                conDat.isEmpty
+                    ? (DatLichRepo.daQuaGio(lich) ? 'Đã qua' : 'Hết giờ')
+                    : 'Còn ${conDat.length} giờ',
+                style: AppTextStyles.caption.copyWith(
+                  color: conDat.isEmpty
+                      ? AppColors.textSecondary
+                      : AppColors.success,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Mỗi lượt khoảng ${lich.phutMoiLuot} phút · đến đúng giờ, không phải chờ cả ca',
+            style: AppTextStyles.caption,
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final String g in lich.cacGio)
+                _buildOGio(
+                  g,
+                  dangChon: g == gioDangChon,
+                  chonDuoc: conDat.contains(g),
+                  daCoNguoi: !conTrong.contains(g),
+                  onTap: () => setState(() {
+                    _maLichDaChon = lich.maLich;
+                    _gioDaChon = g;
+                  }),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 1 ô giờ: xanh = đang chọn, viền = trống, xám gạch = đã có người / đã qua
+  Widget _buildOGio(
+    String gio, {
+    required bool dangChon,
+    required bool chonDuoc,
+    required bool daCoNguoi,
+    required VoidCallback onTap,
+  }) {
+    final Color nen = dangChon
+        ? AppColors.secondary
+        : chonDuoc
+        ? AppColors.surface
+        : AppColors.background;
+    final Color chu = dangChon
+        ? AppColors.surface
+        : chonDuoc
+        ? AppColors.textPrimary
+        : AppColors.textSecondary;
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: chonDuoc ? onTap : null,
+      child: Container(
+        width: 68,
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: nen,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: dangChon
+                ? AppColors.secondary
+                : chonDuoc
+                ? AppColors.secondary.withValues(alpha: 0.45)
+                : AppColors.border,
+          ),
+        ),
+        child: Text(
+          gio,
+          style: AppTextStyles.label.copyWith(
+            color: chu,
+            fontWeight: FontWeight.w700,
+            decoration: daCoNguoi && !dangChon
+                ? TextDecoration.lineThrough
+                : null,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Chú thích màu các ô giờ
+class _ChuThich extends StatelessWidget {
+  const _ChuThich();
+
+  Widget _o(Color nen, Color vien, String chu) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 14,
+        height: 14,
+        decoration: BoxDecoration(
+          color: nen,
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: vien),
+        ),
+      ),
+      const SizedBox(width: 4),
+      Text(chu, style: AppTextStyles.caption),
+    ],
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 14,
+      runSpacing: 4,
+      children: [
+        _o(AppColors.secondary, AppColors.secondary, 'Đang chọn'),
+        _o(AppColors.surface, AppColors.secondary, 'Còn trống'),
+        _o(AppColors.background, AppColors.border, 'Đã có người / đã qua'),
+      ],
     );
   }
 }

@@ -50,12 +50,22 @@ class DatLichRepo {
 
   static bool hetCho(LichLamViec l) => l.soLuongDaDat >= l.soLuongCho;
 
-  /// Giờ bắt đầu ≤ giờ hiện tại.
-  static bool daQuaGio(LichLamViec l) =>
-      !LichSuRepo.gioKham(l).isAfter(DateTime.now());
+  /// 1 mốc giờ trong ca đã qua chưa.
+  static bool gioDaQua(LichLamViec l, String gio) =>
+      !LichSuRepo.gioKham(l, gio).isAfter(DateTime.now());
 
-  static bool datDuoc(LichLamViec l) =>
-      l.trangThai == 1 && !hetCho(l) && !daQuaGio(l);
+  /// Các mốc giờ còn đặt được: chưa ai đặt và chưa qua giờ.
+  static List<String> gioDatDuoc(LichLamViec l) => l.trangThai == 1
+      ? l.gioConTrong.where((g) => !gioDaQua(l, g)).toList()
+      : const [];
+
+  /// Cả ca đã qua (mốc giờ cuối cùng ≤ giờ hiện tại).
+  static bool daQuaGio(LichLamViec l) {
+    final List<String> c = l.cacGio;
+    return c.isEmpty || gioDaQua(l, c.last);
+  }
+
+  static bool datDuoc(LichLamViec l) => !hetCho(l) && gioDatDuoc(l).isNotEmpty;
 
   // ---------------- FR-10: ĐẶT LỊCH ----------------
 
@@ -64,6 +74,7 @@ class DatLichRepo {
   static Future<int> datLich({
     required BenhNhan benhNhan,
     required LichLamViec lich,
+    required String gioKham,
     TheBhyt? theBhyt,
     String? lyDoKham,
   }) async {
@@ -77,8 +88,8 @@ class DatLichRepo {
       throw const _LoiDatLich(
           'Tài khoản chưa có hồ sơ bệnh nhân này, vui lòng thêm hồ sơ trước');
     }
-    if (daQuaGio(lich)) {
-      throw const _LoiDatLich('Ca này đã qua giờ khám, vui lòng chọn ca khác');
+    if (gioDaQua(lich, gioKham)) {
+      throw const _LoiDatLich('Giờ này đã qua, vui lòng chọn giờ khác');
     }
     final bool trung = MockData.datLich.any((d) =>
         d.maBenhNhan == benhNhan.maBenhNhan &&
@@ -110,6 +121,11 @@ class DatLichRepo {
         if (cho <= 0 || trangThai != 1) {
           throw const _LoiDatLich('Ca này đã đóng, vui lòng chọn ca khác');
         }
+        // Kiểm tra giờ riêng còn trống (2 người không thể cùng 1 giờ).
+        if (!LichLamViec.fromMap(ca).gioConTrong.contains(gioKham)) {
+          throw const _LoiDatLich(
+              'Giờ này vừa có người đặt, vui lòng chọn giờ khác');
+        }
 
         // ---- GHI ----
         final DatLich d = DatLich(
@@ -124,10 +140,12 @@ class DatLichRepo {
           maXacNhan: _taoMaXacNhan(ma.giaTri),
           trangThai: TrangThaiDatLich.choThanhToan,
           ngayDat: DateTime.now(),
+          gioKham: gioKham,
         );
         ma.ghiVao(tx);
         tx.update(refLich, {
           'soLuongDaDat': daDat + 1,
+          'gioDaDat': FieldValue.arrayUnion([gioKham]),
           'trangThai': daDat + 1 >= cho ? 0 : 1,
         });
         tx.set(Kho.doc(Bang.datLich, ma.giaTri), d.toMap());
@@ -143,7 +161,8 @@ class DatLichRepo {
     await ThongBaoService.gui(
       maDatLich: datLichMoi.maDatLich,
       loai: LoaiThongBao.xacNhan,
-      noiDung: 'Đặt lịch thành công. Mã xác nhận: ${datLichMoi.maXacNhan}',
+      noiDung: 'Đặt lịch thành công lúc $gioKham ngày ${Fmt.ngay(lich.ngay)}. '
+          'Mã xác nhận: ${datLichMoi.maXacNhan}',
     );
     return datLichMoi.maDatLich;
   }
