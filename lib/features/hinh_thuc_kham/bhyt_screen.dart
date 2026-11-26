@@ -116,10 +116,20 @@ class _BhytScreen extends State<BhytScreen> {
                       child: TextFormField(
                         controller: _soTheController,
                         textCapitalization: TextCapitalization.characters,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Số thẻ BHYT',
                           hintText: 'VD: GD4791234567890',
+                          // #31: tự hiện mức hưởng đọc từ ký tự thứ 3 của mã
+                          helperText: _soTheController.text.trim().length >= 3
+                              ? 'Mức hưởng BHYT: '
+                                  '${BhytRepo.mucHuongTheoMaThe(_soTheController.text)}%'
+                              : null,
+                          helperStyle: const TextStyle(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
+                        onChanged: (_) => setState(() {}),
                         validator: (value) {
                           final v = value?.trim().toUpperCase() ?? '';
                           if (v.isEmpty) {
@@ -266,7 +276,9 @@ class _BhytScreen extends State<BhytScreen> {
                     child: Padding(
                       padding: const EdgeInsets.all(18),
                       child: DropdownButtonFormField<String>(
-                        value: noiDangKy,
+                        // key đổi theo giá trị → ô chọn cập nhật khi tự điền
+                        key: ValueKey(noiDangKy),
+                        initialValue: noiDangKy,
                         decoration: const InputDecoration(
                           labelText: 'Chọn nơi đăng ký ban đầu',
                         ),

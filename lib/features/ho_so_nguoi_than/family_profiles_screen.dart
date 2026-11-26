@@ -4,13 +4,9 @@ import '../../app/phien_dat_lich.dart';
 import '../../core/mock/mock_data.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
-import '../benh_nhan_home/benh_nhan_home_routes.dart';
 import '../hinh_thuc_kham/hinh_thuc_kham_routes.dart';
-import '../lich_su/lich_su_routes.dart';
-import '../thong_bao/thong_bao_routes.dart';
 import 'ho_so_nguoi_than_routes.dart';
 import 'widgets/family_profile_card.dart';
-import 'widgets/guardian_bottom_nav.dart';
 import 'widgets/guardian_header.dart';
 
 // Giao diện hồ sơ gia đình
@@ -102,26 +98,6 @@ class _FamilyProfilesScreenState extends State<FamilyProfilesScreen> {
             ),
           ),
         ],
-      ),
-      bottomNavigationBar: GuardianBottomNav(
-        viTriDangChon: -1,
-        onChon: (viTri) {
-          switch (viTri) {
-            case 0:
-              Navigator.popUntil(
-                context,
-                (route) =>
-                    route.settings.name == HoSoNguoiThanRoutes.guardianHome ||
-                    route.isFirst,
-              );
-            case 1:
-              _moTrang(LichSuRoutes.history);
-            case 2:
-              _moTrang(ThongBaoRoutes.notification);
-            case 3:
-              _moTrang(BenhNhanHomeRoutes.profile);
-          }
-        },
       ),
     );
   }

@@ -127,7 +127,7 @@ class _SoThuTu extends StatelessWidget {
           Expanded(
             child: Text(
               'Mời bệnh nhân đến khu chờ khoa ${chuyenKhoa.tenChuyenKhoa}, '
-              'khung giờ ${lich.khungGio}.',
+              'giờ khám ${datLich.gioKham ?? lich.gioBatDau}.',
               style: AppTextStyles.body,
             ),
           ),

@@ -155,7 +155,7 @@ class BookingQrScreen extends StatelessWidget {
                 InfoRow(
                   icon: Icons.calendar_month,
                   label: 'Ngày giờ',
-                  value: '${lich.khungGio} · ${Fmt.ngay(lich.ngay)}',
+                  value: '${datLich.gioKham ?? lich.gioBatDau} · ${Fmt.ngay(lich.ngay)}',
                   bold: true,
                 ),
                 InfoRow(

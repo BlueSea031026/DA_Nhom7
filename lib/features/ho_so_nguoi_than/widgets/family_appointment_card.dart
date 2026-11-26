@@ -73,14 +73,28 @@ class FamilyAppointmentCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     Text(
-                      lich.gioBatDau,
+                      datLich.gioKham ?? lich.gioBatDau,
                       style: AppTextStyles.label.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
+                // #23: nhãn Hôm nay / Ngày mai + trạng thái thanh toán
+                Row(
+                  children: [
+                    _nhan(_nhanNgay(lich.ngay), AppColors.secondary),
+                    const SizedBox(width: 4),
+                    _nhan(
+                      datLich.trangThai.label,
+                      datLich.trangThai == TrangThaiDatLich.choThanhToan
+                          ? AppColors.warning
+                          : AppColors.success,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
                 _buildDong('Bệnh viện: ${coSo.tenCoSo}'),
                 _buildDong('Khoa: ${chuyenKhoa.tenChuyenKhoa}'),
                 _buildDong('Bác sĩ: ${bacSi.tenHienThi}'),
@@ -107,6 +121,29 @@ class FamilyAppointmentCard extends StatelessWidget {
       ),
     );
   }
+
+  static String _nhanNgay(DateTime ngay) {
+    final int cach = ngay.difference(MockData.homNay).inDays;
+    if (cach <= 0) return 'Hôm nay';
+    if (cach == 1) return 'Ngày mai';
+    return 'Còn $cach ngày';
+  }
+
+  Widget _nhan(String chu, Color mau) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: mau.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          chu,
+          style: AppTextStyles.caption.copyWith(
+            fontSize: 10,
+            color: mau,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
 
   Widget _buildDong(String noiDung) {
     return Padding(

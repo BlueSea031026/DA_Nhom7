@@ -53,6 +53,9 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
       final int maDatLich = await DatLichRepo.datLich(
         benhNhan: thongTin.benhNhan,
         lich: lich,
+        gioKham: thongTin.gioKham ??
+            DatLichRepo.gioDatDuoc(lich).firstOrNull ??
+            lich.gioBatDau,
         theBhyt: thongTin.theBhyt,
         lyDoKham: lyDoKham.isEmpty ? null : lyDoKham,
       );
@@ -171,7 +174,9 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                 InfoRow(
                   icon: Icons.alarm,
                   label: 'Giờ khám',
-                  value: lich == null ? 'Chưa chọn' : lich.khungGio,
+                  value: lich == null
+                      ? 'Chưa chọn'
+                      : '${thongTin.gioKham ?? DatLichRepo.gioDatDuoc(lich).firstOrNull ?? lich.gioBatDau} (ca ${lich.khungGio})',
                   bold: true,
                 ),
                 InfoRow(

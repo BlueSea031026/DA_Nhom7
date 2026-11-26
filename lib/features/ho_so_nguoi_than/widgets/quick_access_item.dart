@@ -27,19 +27,19 @@ class QuickAccessItem extends StatelessWidget {
         onTap: onTap,
         borderRadius: boGoc,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Row(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 24, color: AppColors.primary),
+              Icon(icon, size: 26, color: AppColors.secondary),
               if (nhanHienThi != null) ...[
-                const SizedBox(width: 8),
+                const SizedBox(height: 6),
                 Text(
                   nhanHienThi,
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.label.copyWith(
+                  style: AppTextStyles.caption.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],

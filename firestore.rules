@@ -44,7 +44,7 @@ service cloud.firestore {
     match /lichLamViec/{id} {
       allow read: if daDangNhap();
       allow write: if laAdmin() ||
-        (daDangNhap() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['soLuongDaDat', 'trangThai']));
+        (daDangNhap() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['soLuongDaDat', 'trangThai', 'gioDaDat']));
     }
 
     // Nghiệp vụ hằng ngày: mọi người dùng đã đăng nhập.
@@ -56,6 +56,10 @@ service cloud.firestore {
     match /danhGia/{id}   { allow read: if daDangNhap(); allow create: if daDangNhap(); }
     match /thongBao/{id}  { allow read, write: if daDangNhap(); }
     match /boDem/{id}     { allow read, write: if daDangNhap(); }
+
+    // Ảnh đại diện (base64) và bác sĩ yêu thích – id = maTaiKhoan.
+    match /anhDaiDien/{id} { allow read, write: if daDangNhap(); }
+    match /yeuThich/{id}   { allow read, write: if daDangNhap(); }
 
     // Bảng phụ cho rules: vaiTro/{uid} = { vaiTro: '...' } (xem mục 9 hướng dẫn).
     match /vaiTro/{uid} {

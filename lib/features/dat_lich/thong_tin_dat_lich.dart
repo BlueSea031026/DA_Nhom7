@@ -9,6 +9,7 @@ class ThongTinDatLich {
     required this.bacSi,
     this.hinhThucKham = HinhThucKham.khongBhyt,
     this.lich,
+    this.gioKham,
     this.lyDoKham,
   });
 
@@ -19,6 +20,9 @@ class ThongTinDatLich {
 
   // Khung giờ đã chọn
   final LichLamViec? lich;
+
+  /// Giờ khám riêng trong ca, VD "08:12"
+  final String? gioKham;
   final String? lyDoKham;
 
   ChuyenKhoa get chuyenKhoa => MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
@@ -38,12 +42,17 @@ class ThongTinDatLich {
 
   int get tienBhytChiTra => giaKham - tienPhaiTra;
 
-  ThongTinDatLich copyWith({LichLamViec? lich, String? lyDoKham}) {
+  ThongTinDatLich copyWith({
+    LichLamViec? lich,
+    String? gioKham,
+    String? lyDoKham,
+  }) {
     return ThongTinDatLich(
       benhNhan: benhNhan,
       bacSi: bacSi,
       hinhThucKham: hinhThucKham,
       lich: lich ?? this.lich,
+      gioKham: gioKham ?? this.gioKham,
       lyDoKham: lyDoKham ?? this.lyDoKham,
     );
   }
@@ -84,6 +93,7 @@ class ThongTinDatLich {
       maXacNhan: d.maXacNhan,
       trangThai: trangThaiMoi,
       ngayDat: d.ngayDat,
+      gioKham: d.gioKham,
     );
   }
 

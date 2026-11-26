@@ -6,6 +6,7 @@ import 'refund_screen.dart';
 import 'refund_success_screen.dart';
 import 'invoice_screen.dart';
 import 'revenue_report_screen.dart';
+import 'quet_ma_thu_tien_screen.dart';
 
 /// Route của module "Thu ngân" – phụ trách: Lân.
 /// Chỉ Lân sửa file này. Thêm màn mới: thêm 1 hằng route + 1 dòng AppPage.
@@ -20,6 +21,7 @@ class ThuNganRoutes {
   static const String refundSuccess = '/thu-ngan/hoan-tien-thanh-cong';
   static const String invoice = '/thu-ngan/hoa-don';
   static const String revenueReport = '/thu-ngan/doanh-thu';
+  static const String quetMa = '/thu-ngan/quet-ma';
 
   static final List<AppPage> pages = [
     AppPage(title: 'Trang chủ Thu ngân', route: thuNganHome, fr: 'FR-31', builder: (_) => const ThuNganHomeScreen()),
@@ -29,5 +31,6 @@ class ThuNganRoutes {
     AppPage(title: 'Hoàn tiền thành công', route: refundSuccess, fr: 'FR-33', builder: (_) => const RefundSuccessScreen()),
     AppPage(title: 'Xuất hóa đơn', route: invoice, fr: 'FR-32', builder: (_) => const InvoiceScreen()),
     AppPage(title: 'Báo cáo doanh thu', route: revenueReport, fr: 'FR-34', builder: (_) => const RevenueReportScreen()),
+    AppPage(title: 'Quét QR thu tiền', route: quetMa, fr: 'FR-31', builder: (_) => const QuetMaThuTienScreen()),
   ];
 }

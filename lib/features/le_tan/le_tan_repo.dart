@@ -30,6 +30,26 @@ class LeTanRepo {
   static bool laHomNay(DatLich d) =>
       MockData.lichById(d.maLich).ngay == MockData.homNay;
 
+  // ---------------- #46: CHỈ CƠ SỞ MÌNH LÀM VIỆC ----------------
+
+  /// Cơ sở của lượt đặt: lịch → bác sĩ → chuyên khoa → cơ sở.
+  static int maCoSoCua(DatLich d) => MockData.chuyenKhoaById(
+        MockData.bacSiById(MockData.lichById(d.maLich).maBacSi).maChuyenKhoa,
+      ).maCoSo;
+
+  /// Cơ sở của lễ tân đang đăng nhập (null = chưa gán cơ sở → thấy tất cả,
+  /// VD mở thử từ menu Dev).
+  static int? get maCoSoDangLam {
+    final tk = MockData.phienDangNhap;
+    if (tk == null) return null;
+    return coSoCuaNhanVien(tk.maTaiKhoan)?.maCoSo;
+  }
+
+  static bool laCoSoMinh(DatLich d) {
+    final int? ma = maCoSoDangLam;
+    return ma == null || maCoSoCua(d) == ma;
+  }
+
   static bool coTheTiepNhan(DatLich d) => lyDoKhongTiepNhan(d) == null;
 
   /// null = tiếp nhận được; ngược lại là lý do hiện cho lễ tân.
@@ -49,10 +69,14 @@ class LeTanRepo {
       case TrangThaiDatLich.daThanhToan:
         break;
     }
+    if (!laCoSoMinh(d)) {
+      return 'Lịch hẹn thuộc ${MockData.coSoById(maCoSoCua(d)).tenCoSo}, '
+          'không phải cơ sở bạn làm việc.';
+    }
     if (!laHomNay(d)) {
       final lich = MockData.lichById(d.maLich);
       return 'Không đúng ngày khám. Lịch hẹn ngày ${Fmt.ngay(lich.ngay)}, '
-          'lúc ${lich.gioBatDau}.';
+          'lúc ${d.gioKham ?? lich.gioBatDau}.';
     }
     if (d.trangThai == TrangThaiDatLich.choThanhToan) {
       return 'Bệnh nhân chưa thanh toán. Mời bệnh nhân sang quầy thu ngân.';
@@ -115,12 +139,12 @@ class LeTanRepo {
   static List<DatLich> danhSachHomNay() {
     final list =
         MockData.datLichHomNay()
-            .where((d) => d.trangThai != TrangThaiDatLich.daHuy)
+            .where((d) => d.trangThai != TrangThaiDatLich.daHuy && laCoSoMinh(d))
             .toList()
           ..sort(
             (a, b) =>
-                MockData.lichById(a.maLich).gioBatDau
-                    .compareTo(MockData.lichById(b.maLich).gioBatDau),
+                (a.gioKham ?? MockData.lichById(a.maLich).gioBatDau)
+                    .compareTo(b.gioKham ?? MockData.lichById(b.maLich).gioBatDau),
           );
     return list;
   }

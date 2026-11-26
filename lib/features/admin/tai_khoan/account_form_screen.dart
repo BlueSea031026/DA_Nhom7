@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/mock/mock_data.dart';
@@ -181,12 +183,33 @@ class _AccountFormScreenState extends State<AccountFormScreen> {
               controller: _matKhau,
               obscureText: _anMatKhau,
               prefixIcon: Icons.lock_outline,
-              suffixIcon: IconButton(
-                tooltip: _anMatKhau ? 'Hiện mật khẩu' : 'Ẩn mật khẩu',
-                icon: Icon(_anMatKhau
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined),
-                onPressed: () => setState(() => _anMatKhau = !_anMatKhau),
+              suffixIcon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // #37: tự sinh mật khẩu tạm 8 ký tự
+                  IconButton(
+                    tooltip: 'Tự tạo mật khẩu',
+                    icon: const Icon(Icons.auto_fix_high),
+                    onPressed: () {
+                      const kyTu =
+                          'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                      final r = Random.secure();
+                      final mk = List.generate(
+                          8, (_) => kyTu[r.nextInt(kyTu.length)]).join();
+                      setState(() {
+                        _matKhau.text = mk;
+                        _anMatKhau = false; // hiện ra để admin chép đưa người dùng
+                      });
+                    },
+                  ),
+                  IconButton(
+                    tooltip: _anMatKhau ? 'Hiện mật khẩu' : 'Ẩn mật khẩu',
+                    icon: Icon(_anMatKhau
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined),
+                    onPressed: () => setState(() => _anMatKhau = !_anMatKhau),
+                  ),
+                ],
               ),
               validator: (v) => (v == null || v.length < 6)
                   ? 'Mật khẩu phải có ít nhất 6 ký tự'

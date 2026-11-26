@@ -45,7 +45,7 @@ class _UpdateStatusScreenState extends State<UpdateStatusScreen> {
                 children: [
                   Text(benhNhan.hoTen, style: AppTextStyles.title),
                   const SizedBox(height: 4),
-                  Text('${lich.khungGio} · ${Fmt.ngay(lich.ngay)}',
+                  Text('${datLich.gioKham ?? lich.gioBatDau} · ${Fmt.ngay(lich.ngay)}',
                       style: AppTextStyles.caption),
                 ],
               ),

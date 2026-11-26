@@ -6,6 +6,7 @@ import '../../app/phien_dat_lich.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/enums.dart';
 import '../chon_bac_si/chon_bac_si_routes.dart';
+import 'widgets/lien_he_co_so.dart';
 
 /// Chọn cơ sở y tế · FR-05
 /// Figma: Bệnh Nhân › Chọn cơ sở y tế
@@ -117,8 +118,17 @@ class _ChooseFacilityScreenState extends State<ChooseFacilityScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(coSo.tenCoSo, style: AppTextStyles.title),
-                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(coSo.tenCoSo,
+                                        style: AppTextStyles.title),
+                                  ),
+                                  // #7: gọi điện / chỉ đường
+                                  LienHeCoSo(coSo: coSo, gon: true),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
 
                               Row(
                                 children: [

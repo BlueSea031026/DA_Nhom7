@@ -27,6 +27,13 @@ class Bang {
   /// Quản trị viên (rules không tìm được tài khoản theo trường uid).
   static const vaiTro = 'vaiTro';
 
+  /// anhDaiDien/{maTaiKhoan} = {anh: base64 JPEG ≤ ~60KB, capNhat} – ảnh đại
+  /// diện mọi vai trò (Firebase Storage không dùng được với gói Spark).
+  static const anhDaiDien = 'anhDaiDien';
+
+  /// yeuThich/{maTaiKhoan} = {bacSi: [maBacSi, ...]} – bác sĩ yêu thích.
+  static const yeuThich = 'yeuThich';
+
   static const tatCa = [
     taiKhoan, coSoYTe, chuyenKhoa, bacSi, nhanVien, benhNhan, theBhyt,
     lichLamViec, datLich, thanhToan, hoaDon, danhGia, thongBao, nhatKyQuanTri,

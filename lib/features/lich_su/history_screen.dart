@@ -28,6 +28,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
         .where((d) => _tab == 0 ? d.trangThai.sapToi : !d.trangThai.sapToi)
         .toList();
 
+    // #15: tổng tiền đã khám (các khoản đã thanh toán, trừ đã hoàn)
+    final int tongDaTra = MockData.thanhToan
+        .where((t) =>
+            t.trangThai == TrangThaiThanhToan.daThanhToan &&
+            tatCa.any((d) => d.maDatLich == t.maDatLich))
+        .fold<int>(0, (s, t) => s + t.soTien);
+    final int soDaKham =
+        tatCa.where((d) => d.trangThai == TrangThaiDatLich.daKham).length;
+
     return Scaffold(
       appBar: const AppHeader(title: 'Lịch sử đặt lịch'),
       body: Column(
@@ -47,6 +56,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
             ),
           ),
+          if (_tab == 1)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              child: AppCard(
+                child: Row(
+                  children: [
+                    const Icon(Icons.insights, color: AppColors.secondary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text('$soDaKham lượt đã khám',
+                          style: AppTextStyles.body),
+                    ),
+                    Text('Đã chi ${Fmt.tien(tongDaTra)}',
+                        style: AppTextStyles.title
+                            .copyWith(color: AppColors.success)),
+                  ],
+                ),
+              ),
+            ),
           Expanded(
             child: danhSach.isEmpty
                 ? const EmptyState(
@@ -103,7 +131,7 @@ class _LichKhamCard extends StatelessWidget {
           InfoRow(
             icon: Icons.schedule_outlined,
             label: 'Thời gian',
-            value: '${lich.gioBatDau} · ${Fmt.ngay(lich.ngay)}',
+            value: '${datLich.gioKham ?? lich.gioBatDau} · ${Fmt.ngay(lich.ngay)}',
           ),
           InfoRow(
             icon: Icons.person_outline,

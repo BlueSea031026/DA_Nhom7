@@ -1,4 +1,5 @@
 import '../../app/app_page.dart';
+import 'chatbot_screen.dart';
 import 'patient_home_screen.dart';
 import 'profile_screen.dart';
 
@@ -9,6 +10,7 @@ class BenhNhanHomeRoutes {
   // Khai báo tên đường dẫn giao diện
   static const String patientHome = '/benh-nhan';
   static const String profile = '/benh-nhan/ca-nhan';
+  static const String chatbot = '/benh-nhan/tro-ly-suc-khoe';
 
   static final List<AppPage> pages = [
     AppPage(
@@ -22,6 +24,12 @@ class BenhNhanHomeRoutes {
       route: profile,
       fr: '',
       builder: (_) => const ProfileScreen(),
+    ),
+    AppPage(
+      title: 'Trợ lý sức khỏe (chatbot)',
+      route: chatbot,
+      fr: '',
+      builder: (_) => const ChatbotScreen(),
     ),
   ];
 }

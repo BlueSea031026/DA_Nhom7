@@ -26,6 +26,35 @@ class _NoteScreenState extends State<NoteScreen> {
     super.dispose();
   }
 
+  /// #43: mục có cấu trúc – bấm để chèn tiêu đề mục vào ghi chú.
+  static const List<String> _mucCauTruc = [
+    'Chẩn đoán: ',
+    'Chỉ định: ',
+    'Đơn thuốc: ',
+    'Lời dặn: ',
+    'Hẹn tái khám: ',
+  ];
+
+  /// #35: câu hay dùng – bấm để chèn nhanh.
+  static const List<String> _cauMau = [
+    'Sinh hiệu ổn định.',
+    'Uống thuốc theo toa, tái khám nếu không đỡ.',
+    'Nghỉ ngơi, uống nhiều nước.',
+    'Tái khám sau 7 ngày.',
+    'Chuyển xét nghiệm máu.',
+  ];
+
+  void _chen(String chu, {bool dongMoi = true}) {
+    final cu = _ghiChuCtrl.text;
+    final bool canCach = cu.isNotEmpty && !cu.endsWith('\n') && !cu.endsWith(' ');
+    final them = !canCach ? chu : (dongMoi ? '\n$chu' : ' $chu');
+    final moi = cu + them;
+    _ghiChuCtrl.value = TextEditingValue(
+      text: moi,
+      selection: TextSelection.collapsed(offset: moi.length),
+    );
+  }
+
   Future<void> _luu(DatLich datLich) async {
     if (_ghiChuCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -91,7 +120,7 @@ class _NoteScreenState extends State<NoteScreen> {
                 children: [
                   Text(bn.hoTen, style: AppTextStyles.title),
                   const SizedBox(height: 4),
-                  Text(lich.gioBatDau, style: AppTextStyles.caption),
+                  Text(datLich.gioKham ?? lich.gioBatDau, style: AppTextStyles.caption),
                 ],
               ),
             ),
@@ -106,6 +135,32 @@ class _NoteScreenState extends State<NoteScreen> {
                 color: AppColors.textPrimary,
                 letterSpacing: 0.3,
               ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (final m in _mucCauTruc)
+                  ActionChip(
+                    avatar: const Icon(Icons.add, size: 16),
+                    label: Text(m.replaceAll(': ', '')),
+                    onPressed: () => _chen(m),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (final c in _cauMau)
+                  ActionChip(
+                    backgroundColor: AppColors.infoLight,
+                    label: Text(c, style: AppTextStyles.caption),
+                    onPressed: () => _chen(c, dongMoi: false),
+                  ),
+              ],
             ),
             const SizedBox(height: 12),
 

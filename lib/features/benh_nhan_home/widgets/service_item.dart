@@ -21,7 +21,7 @@ class ServiceItem extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: SizedBox(
-        width: 96,
+        width: double.infinity,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(

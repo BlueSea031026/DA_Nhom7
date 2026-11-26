@@ -52,11 +52,40 @@ class _ScanQrScreenState extends State<ScanQrScreen> {
 
     await _controller.stop();
     if (!mounted) return;
-    await Navigator.pushNamed(
-      context,
-      LeTanRoutes.appointmentInfo,
-      arguments: datLich.maDatLich,
-    );
+
+    // #33: mã hợp lệ (đã thanh toán, đúng ngày, đúng cơ sở) → TỰ TIẾP NHẬN
+    // luôn, khỏi bấm thêm nút; không hợp lệ → mở thông tin để xem lý do.
+    if (LeTanRepo.coTheTiepNhan(datLich)) {
+      try {
+        final soThuTu = await LeTanRepo.tiepNhan(datLich);
+        if (!mounted) return;
+        await Navigator.pushNamed(
+          context,
+          LeTanRoutes.checkinSuccess,
+          arguments: KetQuaTiepNhan(
+            maDatLich: datLich.maDatLich,
+            soThuTu: soThuTu,
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: AppColors.danger,
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+        ));
+        await Navigator.pushNamed(
+          context,
+          LeTanRoutes.appointmentInfo,
+          arguments: datLich.maDatLich,
+        );
+      }
+    } else {
+      await Navigator.pushNamed(
+        context,
+        LeTanRoutes.appointmentInfo,
+        arguments: datLich.maDatLich,
+      );
+    }
     // Quay lại đúng màn quét
     if (!mounted) return;
     _dangXuLy = false;

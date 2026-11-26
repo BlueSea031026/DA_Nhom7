@@ -2,6 +2,7 @@ import 'package:da_nhom7/core/firebase/phien_firebase.dart';
 import 'package:da_nhom7/core/services/thong_bao_service.dart';
 
 import '../../core/firebase/kho.dart';
+import '../../core/mock/mock_data.dart';
 import '../../models/models.dart';
 
 /// Gom dữ liệu hiển thị cho 1 khoản chờ hoàn tiền
@@ -228,13 +229,73 @@ class ThuNganRePo {
     throw Exception('Không tìm thấy tài khoản thu ngân.');
   }
 
+  // ---------------- #54: CHỈ CƠ SỞ MÌNH, ƯU TIÊN HÔM NAY ----------------
+
+  /// Ngày khám của lượt đặt (null nếu MockData chưa có ca).
+  static DateTime? ngayKham(DatLich d) {
+    for (final l in MockData.lichLamViec) {
+      if (l.maLich == d.maLich) return l.ngay;
+    }
+    return null;
+  }
+
+  /// Cơ sở của lượt đặt: lịch → bác sĩ → chuyên khoa → cơ sở.
+  static int? maCoSoCua(DatLich d) {
+    try {
+      final l = MockData.lichById(d.maLich);
+      return MockData.chuyenKhoaById(MockData.bacSiById(l.maBacSi).maChuyenKhoa)
+          .maCoSo;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Cơ sở thu ngân đang đăng nhập làm việc (null = chưa gán → thấy tất cả).
+  static int? get maCoSoDangLam {
+    final tk = MockData.phienDangNhap;
+    if (tk == null) return null;
+    for (final nv in MockData.nhanVien) {
+      if (nv.maTaiKhoan == tk.maTaiKhoan) return nv.maCoSo;
+    }
+    return null;
+  }
+
+  /// Lọc đúng cơ sở + sắp xếp: hôm nay trước, rồi các ngày tới, lượt đã quá
+  /// ngày khám xuống cuối.
+  static List<T> locVaSap<T>(List<T> ds, DatLich Function(T) layDatLich) {
+    final int? coSo = maCoSoDangLam;
+    final homNay = MockData.homNay;
+    int nhom(DateTime? n) =>
+        n == null ? 3 : (n == homNay ? 0 : (n.isAfter(homNay) ? 1 : 2));
+    final kq = ds
+        .where((x) => coSo == null || maCoSoCua(layDatLich(x)) == coSo)
+        .toList();
+    kq.sort((a, b) {
+      final na = ngayKham(layDatLich(a));
+      final nb = ngayKham(layDatLich(b));
+      final c = nhom(na).compareTo(nhom(nb));
+      if (c != 0) return c;
+      if (na == null || nb == null) return 0;
+      return na.compareTo(nb);
+    });
+    return kq;
+  }
+
+  static bool quaNgay(DatLich d) {
+    final n = ngayKham(d);
+    return n != null && n.isBefore(MockData.homNay);
+  }
+
   /// Stream danh sách lịch khám đang ở trạng thái "Chờ thanh toán"
   static Stream<List<DatLich>> streamChoThanhToan() {
     return Kho.bang(Bang.datLich)
         .where('trangThai', isEqualTo: TrangThaiDatLich.choThanhToan.label)
         .snapshots()
         .map(
-          (snap) => snap.docs.map((d) => DatLich.fromMap(d.data())).toList(),
+          (snap) => locVaSap(
+            snap.docs.map((d) => DatLich.fromMap(d.data())).toList(),
+            (d) => d,
+          ).where((d) => !quaNgay(d)).toList(),
         );
   }
 
@@ -398,7 +459,7 @@ class ThuNganRePo {
             final info = await layThongTinThanhToan(dl);
             ketQua.add(info);
           }
-          return ketQua;
+          return locVaSap(ketQua, (x) => x.datLich);
         });
   }
 }

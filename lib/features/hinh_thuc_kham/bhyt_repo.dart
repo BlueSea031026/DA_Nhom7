@@ -3,6 +3,20 @@ import '../../core/firebase/kho.dart';
 import '../../models/the_bhyt.dart';
 
 class BhytRepo {
+  /// #31: TỰ ĐỌC mức hưởng từ mã thẻ BHYT (15 ký tự, VD "DN4790123456789").
+  /// Ký tự thứ 3 là mã mức hưởng theo quy định:
+  ///   1, 2, 5 → 100% · 3 → 95% · 4 → 80%. Mã lạ → 80%.
+  static int mucHuongTheoMaThe(String soThe) {
+    final s = soThe.trim().toUpperCase();
+    if (s.length < 3) return 80;
+    return switch (s[2]) {
+      '1' || '2' || '5' => 100,
+      '3' => 95,
+      '4' => 80,
+      _ => 80,
+    };
+  }
+
   /// Trả về (bhytChiTra, benhNhanTra) theo đơn vị đồng, đã làm tròn (Mục 6.1.5)
   static (int, int) tinhTien({required int phiKham, int? mucHuongBhyt}) {
     if (mucHuongBhyt == null) return (0, phiKham);
@@ -36,7 +50,7 @@ class BhytRepo {
         noiDangKyKcbBanDau: noiDangKyKcbBanDau,
         ngayHieuLuc: DateTime.now(),
         ngayHetHan: ngayHetHan,
-        mucHuongBhyt: 80,
+        mucHuongBhyt: mucHuongTheoMaThe(soTheBhyt),
       );
       final maMoi = await Kho.themMoi(Bang.theBhyt, 'maBhyt', theMoi.toMap());
       return TheBhyt(
@@ -56,7 +70,7 @@ class BhytRepo {
         noiDangKyKcbBanDau: noiDangKyKcbBanDau,
         ngayHieuLuc: theCu.ngayHieuLuc,
         ngayHetHan: ngayHetHan,
-        mucHuongBhyt: theCu.mucHuongBhyt,
+        mucHuongBhyt: mucHuongTheoMaThe(soTheBhyt),
       );
       await Kho.capNhat(Bang.theBhyt, theCu.maBhyt, theCapNhat.toMap());
       return theCapNhat;

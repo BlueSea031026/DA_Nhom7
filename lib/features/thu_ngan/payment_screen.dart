@@ -128,9 +128,19 @@ class PendingPaymentCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text('Bệnh nhân: ${info.tenBenhNhan}'),
             const SizedBox(height: 8),
-            Text(
-              'Ngày đặt: ${datLich.ngayDat.day}/${datLich.ngayDat.month}/${datLich.ngayDat.year}',
-            ),
+            Builder(builder: (_) {
+              final n = ThuNganRePo.ngayKham(datLich);
+              final qua = ThuNganRePo.quaNgay(datLich);
+              return Text(
+                n == null
+                    ? 'Ngày khám: —'
+                    : 'Ngày khám: ${Fmt.ngay(n)}${qua ? '  (ĐÃ QUA NGÀY KHÁM)' : ''}',
+                style: TextStyle(
+                  color: qua ? Colors.red : null,
+                  fontWeight: qua ? FontWeight.bold : null,
+                ),
+              );
+            }),
             const SizedBox(height: 8),
             Text('Hình thức khám: ${datLich.hinhThucKham.label}'),
             const SizedBox(height: 8),

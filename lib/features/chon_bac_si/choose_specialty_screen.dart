@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/phien_dat_lich.dart';
 import '../../core/mock/mock_data.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import 'chon_bac_si_routes.dart';
@@ -34,13 +35,13 @@ class _ChooseSpecialtyScreenState extends State<ChooseSpecialtyScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const AppHeader(title: 'CHỌN CHUYÊN KHOA'),
+      appBar: const AppHeader(title: 'Chọn chuyên khoa'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('BẠN CẦN CHUYÊN KHOA NÀO?', style: AppTextStyles.h2),
+            const Text('Bạn cần khám chuyên khoa nào?', style: AppTextStyles.h2),
             const SizedBox(height: 12),
 
             // Thông tin cơ sở
@@ -69,10 +70,9 @@ class _ChooseSpecialtyScreenState extends State<ChooseSpecialtyScreen> {
             ),
             const SizedBox(height: 20),
 
-            Center(child: Text('CHUYÊN KHOA', style: AppTextStyles.h2)),
-            const SizedBox(height: 12),
+            Text('${specialties.length} chuyên khoa', style: AppTextStyles.caption),
+            const SizedBox(height: 8),
 
-            // Khung xanh đậm chứa lưới
             if (specialties.isEmpty)
               EmptyState(
                 icon: Icons.medical_services_outlined,
@@ -81,12 +81,8 @@ class _ChooseSpecialtyScreenState extends State<ChooseSpecialtyScreen> {
                     : 'Không tìm thấy chuyên khoa phù hợp',
               )
             else
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(24),
-              ),
+            SizedBox(
+              width: double.infinity,
               child: GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -95,7 +91,7 @@ class _ChooseSpecialtyScreenState extends State<ChooseSpecialtyScreen> {
                   crossAxisCount: 2,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  childAspectRatio: 1.1,
+                  childAspectRatio: 0.95,
                 ),
                 itemCount: specialties.length,
                 itemBuilder: (context, index) {
@@ -120,37 +116,75 @@ class _ChooseSpecialtyScreenState extends State<ChooseSpecialtyScreen> {
   }
 }
 
+/// Thẻ chuyên khoa (#17): icon + màu riêng từng khoa, số bác sĩ, giá khám.
 class _SpecialtyCard extends StatelessWidget {
   const _SpecialtyCard({required this.specialty, required this.onTap});
 
   final ChuyenKhoa specialty;
   final VoidCallback onTap;
 
+  /// Icon/màu theo tên khoa (so khớp không dấu), khoa lạ dùng mặc định.
+  static (IconData, Color) _kieu(String ten) {
+    final t = boDau(ten);
+    if (t.contains('nhi')) return (Icons.child_care, const Color(0xFFFF8A65));
+    if (t.contains('mat')) return (Icons.visibility, const Color(0xFF26A69A));
+    if (t.contains('rang')) return (Icons.mood, const Color(0xFF5C6BC0));
+    if (t.contains('tai') || t.contains('hong')) {
+      return (Icons.hearing, const Color(0xFFAB47BC));
+    }
+    if (t.contains('da lieu') || t.contains('da ')) {
+      return (Icons.spa_outlined, const Color(0xFFEC407A));
+    }
+    if (t.contains('tim')) return (Icons.favorite, const Color(0xFFE53935));
+    if (t.contains('san') || t.contains('phu')) {
+      return (Icons.pregnant_woman, const Color(0xFFF06292));
+    }
+    if (t.contains('xuong') || t.contains('khop')) {
+      return (Icons.accessibility_new, const Color(0xFF8D6E63));
+    }
+    return (Icons.medical_services_outlined, AppColors.secondary);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.favorite, color: AppColors.warning, size: 32),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Text(
-                specialty.tenChuyenKhoa.toUpperCase(),
-                style: AppTextStyles.title,
-                textAlign: TextAlign.center,
+    final (icon, mau) = _kieu(specialty.tenChuyenKhoa);
+    final soBacSi = MockData.bacSiCuaChuyenKhoa(specialty.maChuyenKhoa).length;
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: mau.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: mau, size: 28),
+              ),
+              const Spacer(),
+              Text(
+                specialty.tenChuyenKhoa,
+                style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w700),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+              const SizedBox(height: 2),
+              Text('$soBacSi bác sĩ', style: AppTextStyles.caption),
+              const SizedBox(height: 4),
+              Text(
+                Fmt.tien(specialty.giaKhamCoBan),
+                style: AppTextStyles.label
+                    .copyWith(color: mau, fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
         ),
       ),
     );

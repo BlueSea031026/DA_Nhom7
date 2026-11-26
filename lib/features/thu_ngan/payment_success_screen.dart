@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/utils/formatters.dart';
 import '../../models/enums.dart';
@@ -17,6 +19,106 @@ class PaymentSuccessScreen extends StatefulWidget {
 
 class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
   String selectedMethod = 'Tiền mặt';
+
+  /// #32: tiền khách đưa (tiền mặt) → tự tính tiền thối.
+  final TextEditingController _tienKhachCtrl = TextEditingController();
+  int _tienKhach = 0;
+
+  @override
+  void dispose() {
+    _tienKhachCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Gợi ý mệnh giá khách hay đưa: đúng số tiền và làm tròn lên 50k/100k/500k.
+  static List<int> _goiYMenhGia(int soTien) {
+    final s = <int>{soTien};
+    for (final buoc in [50000, 100000, 200000, 500000]) {
+      s.add(((soTien + buoc - 1) ~/ buoc) * buoc);
+    }
+    return s.toList()..sort();
+  }
+
+  Widget _khoiTienMat(int soTien) {
+    final int thoi = _tienKhach - soTien;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _tienKhachCtrl,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(
+                labelText: 'Tiền khách đưa',
+                suffixText: 'đ',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (v) =>
+                  setState(() => _tienKhach = int.tryParse(v) ?? 0),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final m in _goiYMenhGia(soTien))
+                  ActionChip(
+                    label: Text(Fmt.tien(m)),
+                    onPressed: () => setState(() {
+                      _tienKhach = m;
+                      _tienKhachCtrl.text = '$m';
+                    }),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text('Tiền thối lại',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                Text(
+                  _tienKhach == 0
+                      ? '—'
+                      : thoi < 0
+                          ? 'Còn thiếu ${Fmt.tien(-thoi)}'
+                          : Fmt.tien(thoi),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: thoi < 0 ? Colors.red : Colors.green.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// #58: chuyển khoản / ví → hiện mã QR nội dung chuyển tiền.
+  Widget _khoiMaQr(int soTien, String maXacNhan) {
+    final noiDung = 'TTYT NHOM7|STK 0123456789|SO TIEN $soTien|ND $maXacNhan';
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            QrImageView(data: noiDung, size: 180),
+            const SizedBox(height: 8),
+            Text('Nội dung chuyển khoản: $maXacNhan',
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Khách quét mã để chuyển, thu ngân kiểm tra rồi xác nhận.',
+                textAlign: TextAlign.center),
+          ],
+        ),
+      ),
+    );
+  }
 
   /// Chặn bấm 2 lần → thu tiền 2 lần.
   bool _daThu = false;
@@ -140,7 +242,13 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 12),
+                if (selectedMethod == 'Tiền mặt')
+                  _khoiTienMat(soTien)
+                else
+                  _khoiMaQr(soTien, datLich.maXacNhan),
+
+                const SizedBox(height: 24),
 
                 /// NÚT XÁC NHẬN
                 SizedBox(
@@ -149,6 +257,16 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                     onPressed: _daThu
                         ? null
                         : () async {
+                            if (selectedMethod == 'Tiền mặt' &&
+                                _tienKhach > 0 &&
+                                _tienKhach < soTien) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Tiền khách đưa chưa đủ'),
+                                ),
+                              );
+                              return;
+                            }
                             if (datLich.trangThai !=
                                 TrangThaiDatLich.choThanhToan) {
                               ScaffoldMessenger.of(context).showSnackBar(
