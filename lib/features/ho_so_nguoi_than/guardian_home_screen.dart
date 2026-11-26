@@ -141,7 +141,7 @@ class _TrangChuGiamHoState extends State<_TrangChuGiamHo> {
         padding: EdgeInsets.zero,
         children: [
           GuardianHeader(
-            chieuCao: 150,
+            chieuCao: 176,
             child: _buildLoiChao(tk, coThongBaoChuaDoc),
           ),
           Padding(
@@ -259,7 +259,7 @@ class _TrangChuGiamHoState extends State<_TrangChuGiamHo> {
   // #22: dải thành viên cuộn ngang, ô cuối "+ Thêm".
   Widget _buildDaiThanhVien(List<BenhNhan> ds) {
     return SizedBox(
-      height: 92,
+      height: 108,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: ds.length + 1,
