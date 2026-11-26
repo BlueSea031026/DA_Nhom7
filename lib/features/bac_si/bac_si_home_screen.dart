@@ -362,7 +362,7 @@ class _BenhNhanCho extends StatelessWidget {
                     style: AppTextStyles.body
                         .copyWith(fontWeight: FontWeight.w700)),
                 Text(
-                  '${bn.gioiTinh} · ${bn.tuoi} tuổi · ca ${lich.khungGio}',
+                  '${bn.gioiTinh} · ${bn.tuoi} tuổi · hẹn ${datLich.gioKham ?? lich.gioBatDau}',
                   style: AppTextStyles.caption,
                 ),
               ],

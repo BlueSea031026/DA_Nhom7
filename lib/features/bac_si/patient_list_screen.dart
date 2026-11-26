@@ -204,7 +204,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
                   Text(stt.toString().padLeft(2, '0'),
                       style: AppTextStyles.title),
                   const SizedBox(height: 2),
-                  Text(lich.gioBatDau, style: AppTextStyles.caption),
+                  Text(dl.gioKham ?? lich.gioBatDau, style: AppTextStyles.caption),
                 ],
               ),
             ),

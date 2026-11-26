@@ -57,9 +57,8 @@ class BacSiRepo {
             d.trangThai != TrangThaiDatLich.daHuy)
         .toList();
     list.sort((a, b) {
-      final c = caCuaNgay[a.maLich]!
-          .gioBatDau
-          .compareTo(caCuaNgay[b.maLich]!.gioBatDau);
+      final c = (a.gioKham ?? caCuaNgay[a.maLich]!.gioBatDau)
+          .compareTo(b.gioKham ?? caCuaNgay[b.maLich]!.gioBatDau);
       if (c != 0) return c;
       final ua = a.trangThai == TrangThaiDatLich.daDen ? 0 : 1;
       final ub = b.trangThai == TrangThaiDatLich.daDen ? 0 : 1;

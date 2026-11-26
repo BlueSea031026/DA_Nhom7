@@ -120,7 +120,7 @@ class _NoteScreenState extends State<NoteScreen> {
                 children: [
                   Text(bn.hoTen, style: AppTextStyles.title),
                   const SizedBox(height: 4),
-                  Text(lich.gioBatDau, style: AppTextStyles.caption),
+                  Text(datLich.gioKham ?? lich.gioBatDau, style: AppTextStyles.caption),
                 ],
               ),
             ),
