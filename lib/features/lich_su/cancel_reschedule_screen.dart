@@ -4,6 +4,7 @@ import '../../core/mock/mock_data.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
+import '../dat_lich/dat_lich_repo.dart';
 import 'lich_su_repo.dart';
 import 'widgets/note_box.dart';
 
@@ -100,9 +101,10 @@ class _CancelRescheduleScreenState extends State<CancelRescheduleScreen> {
     final lichTrong = MockData.lichCuaBacSi(lich.maBacSi)
         .where((l) =>
             l.maLich != lich.maLich &&
-            l.conTrong &&
-            LichSuRepo.gioKham(l).isAfter(DateTime.now()))
-        .toList();
+            DatLichRepo.datDuoc(l)) // còn giờ trống chưa qua
+        .toList()
+      ..sort((a, b) => LichSuRepo.gioKham(a, DatLichRepo.gioDatDuoc(a).first)
+          .compareTo(LichSuRepo.gioKham(b, DatLichRepo.gioDatDuoc(b).first)));
 
     // Số tiền đã trả (0 nếu chưa thanh toán) – dùng để báo hoàn tiền.
     final soTienDaTra = (thanhToan != null &&
@@ -191,7 +193,8 @@ class _CancelRescheduleScreenState extends State<CancelRescheduleScreen> {
                 children: [
                   for (final l in lichTrong)
                     ChoiceChip(
-                      label: Text('${l.gioBatDau} · ${Fmt.ngay(l.ngay)}'),
+                      label: Text(
+                          '${DatLichRepo.gioDatDuoc(l).first} · ${Fmt.ngay(l.ngay)}'),
                       selected: _maLichMoi == l.maLich,
                       onSelected: (_) => setState(() => _maLichMoi = l.maLich),
                     ),

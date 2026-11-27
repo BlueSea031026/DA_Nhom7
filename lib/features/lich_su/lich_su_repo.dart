@@ -26,18 +26,15 @@ class LichSuRepo {
   static DateTime gioKhamCua(DatLich d) =>
       gioKham(MockData.lichById(d.maLich), d.gioKham);
 
-  /// Lượt đặt còn hiện ở mục "Lịch khám sắp tới": chưa khám xong và chưa quá
-  /// giờ hẹn 60 phút (đã được lễ tân tiếp nhận thì giữ đến hết ngày).
+  /// Lượt đặt còn là "sắp tới": chưa khám xong và chưa quá giờ hẹn 60 phút
+  /// (đã được lễ tân tiếp nhận thì chờ bác sĩ thêm tối đa 3 tiếng).
+  /// Quá mốc đó thì chuyển sang mục "Đã qua".
   static bool laSapToi(DatLich d) {
     if (!d.trangThai.sapToi) return false;
-    final DateTime gio = gioKhamCua(d);
-    final DateTime bayGio = DateTime.now();
-    if (d.trangThai == TrangThaiDatLich.daDen) {
-      return gio.year == bayGio.year &&
-          gio.month == bayGio.month &&
-          gio.day == bayGio.day;
-    }
-    return gio.add(const Duration(minutes: 60)).isAfter(bayGio);
+    final Duration choThem = d.trangThai == TrangThaiDatLich.daDen
+        ? const Duration(hours: 3)
+        : const Duration(minutes: 60);
+    return gioKhamCua(d).add(choThem).isAfter(DateTime.now());
   }
 
   /// Chuỗi giờ hiển thị của 1 lượt đặt, VD "08:12".
