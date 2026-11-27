@@ -9,6 +9,7 @@ import '../benh_nhan_home/benh_nhan_home_routes.dart';
 import '../benh_nhan_home/profile_screen.dart';
 import '../hinh_thuc_kham/hinh_thuc_kham_routes.dart';
 import '../lich_su/history_screen.dart';
+import '../lich_su/lich_su_repo.dart';
 import '../lich_su/lich_su_routes.dart';
 import '../thong_bao/notification_screen.dart';
 import 'family_profiles_screen.dart';
@@ -85,17 +86,12 @@ class _TrangChuGiamHoState extends State<_TrangChuGiamHo> {
     final List<DatLich> ds = MockData.datLichCuaTaiKhoan(maTaiKhoan)
         .where(
           (d) =>
-              d.trangThai.sapToi &&
-              !MockData.lichById(d.maLich).ngay.isBefore(MockData.homNay) &&
+              LichSuRepo.laSapToi(d) && // bỏ lịch đã quá giờ khám
               (_locBenhNhan == null || d.maBenhNhan == _locBenhNhan),
         )
         .toList();
-    ds.sort((a, b) {
-      final LichLamViec la = MockData.lichById(a.maLich);
-      final LichLamViec lb = MockData.lichById(b.maLich);
-      final int c = la.ngay.compareTo(lb.ngay);
-      return c != 0 ? c : la.gioBatDau.compareTo(lb.gioBatDau);
-    });
+    ds.sort((a, b) =>
+        LichSuRepo.gioKhamCua(a).compareTo(LichSuRepo.gioKhamCua(b)));
     return ds;
   }
 
