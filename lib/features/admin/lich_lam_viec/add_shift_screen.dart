@@ -25,13 +25,37 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
   bool _lapHangTuan = false;
   int _soTuan = 4;
   bool _dangLuu = false;
+  bool _daDocThamSo = false;
+
+  // Mở từ màn Lịch làm việc: điền sẵn bác sĩ + ngày đang chọn ở đó.
+  // Tham số: {'maBacSi': int?, 'ngay': DateTime}
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_daDocThamSo) return;
+    _daDocThamSo = true;
+    final thamSo = ModalRoute.of(context)?.settings.arguments;
+    if (thamSo is! Map) return;
+    final maBacSi = thamSo['maBacSi'];
+    if (maBacSi is int &&
+        MockData.bacSi.any((b) => b.maBacSi == maBacSi && b.trangThai)) {
+      _maBacSi = maBacSi;
+    }
+    final ngay = thamSo['ngay'];
+    final now = DateTime.now();
+    final homNay = DateTime(now.year, now.month, now.day);
+    // Ngày đã qua thì không điền (không được thêm ca vào quá khứ)
+    if (ngay is DateTime && !ngay.isBefore(homNay)) {
+      _ngay = DateTime(ngay.year, ngay.month, ngay.day);
+    }
+  }
 
   Future<void> _chonNgay() async {
     final now = DateTime.now();
     final chon = await showDatePicker(
       context: context,
       initialDate: _ngay ?? now,
-      firstDate: now,
+      firstDate: DateTime(now.year, now.month, now.day),
       lastDate: now.add(const Duration(days: 90)),
     );
     if (chon != null) setState(() => _ngay = chon);

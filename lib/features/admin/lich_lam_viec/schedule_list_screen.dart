@@ -148,8 +148,12 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Thêm ca'),
-        onPressed: () =>
-            Navigator.pushNamed(context, AdminLichLamViecRoutes.addShift),
+        // Điền sẵn bác sĩ đang lọc + ngày đang chọn vào form Thêm ca
+        onPressed: () => Navigator.pushNamed(
+          context,
+          AdminLichLamViecRoutes.addShift,
+          arguments: {'maBacSi': _maBacSiLoc, 'ngay': _ngayChon},
+        ),
       ),
     );
   }
