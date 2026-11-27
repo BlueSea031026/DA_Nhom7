@@ -200,8 +200,22 @@ class MockData {
   static List<ChuyenKhoa> chuyenKhoaCuaCoSo(int maCoSo) =>
       chuyenKhoa.where((e) => e.maCoSo == maCoSo && e.trangThai).toList();
 
-  static List<BacSi> bacSiCuaChuyenKhoa(int maChuyenKhoa) =>
-      bacSi.where((e) => e.maChuyenKhoa == maChuyenKhoa && e.trangThai).toList();
+  /// Bác sĩ được dùng trong app (đặt lịch, xếp ca, tìm kiếm, trợ lý…):
+  /// hồ sơ đang làm VÀ có tài khoản vai trò Bác sĩ đang hoạt động.
+  /// Hồ sơ chưa cấp tài khoản chỉ hiện ở màn Quản lý bác sĩ để admin cấp.
+  static bool bacSiHopLe(BacSi b) {
+    final int? ma = b.maTaiKhoan;
+    if (!b.trangThai || ma == null) return false;
+    return taiKhoan.any((t) =>
+        t.maTaiKhoan == ma && t.vaiTro == VaiTro.bacSi && t.dangHoatDong);
+  }
+
+  /// Danh sách bác sĩ hợp lệ (xem [bacSiHopLe]).
+  static List<BacSi> get bacSiDangLam => bacSi.where(bacSiHopLe).toList();
+
+  static List<BacSi> bacSiCuaChuyenKhoa(int maChuyenKhoa) => bacSi
+      .where((e) => e.maChuyenKhoa == maChuyenKhoa && bacSiHopLe(e))
+      .toList();
 
   static List<LichLamViec> lichCuaBacSi(int maBacSi) =>
       lichLamViec.where((e) => e.maBacSi == maBacSi).toList();

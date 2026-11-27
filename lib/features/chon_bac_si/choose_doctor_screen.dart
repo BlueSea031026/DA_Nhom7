@@ -30,7 +30,7 @@ class _ChooseDoctorScreenState extends State<ChooseDoctorScreen> {
     final ChuyenKhoa? chuyenKhoa = args is ChuyenKhoa ? args : null;
 
     final List<BacSi> tatCa = chuyenKhoa == null
-        ? MockData.bacSi.where((b) => b.trangThai).toList()
+        ? MockData.bacSiDangLam
         : MockData.bacSiCuaChuyenKhoa(chuyenKhoa.maChuyenKhoa);
     final List<BacSi> doctors = (_tuKhoa.trim().isEmpty
             ? List<BacSi>.of(tatCa)

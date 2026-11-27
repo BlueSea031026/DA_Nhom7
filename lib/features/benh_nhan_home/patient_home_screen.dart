@@ -249,7 +249,7 @@ class _TrangChuBenhNhanState extends State<_TrangChuBenhNhan> {
   }
 
   List<BacSi> _timBacSi(String tuKhoa) => MockData.bacSi
-      .where((b) => b.trangThai && khop(b.tenHienThi, tuKhoa))
+      .where((b) => MockData.bacSiHopLe(b) && khop(b.tenHienThi, tuKhoa))
       .take(4)
       .toList();
 

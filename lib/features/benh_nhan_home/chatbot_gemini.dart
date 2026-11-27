@@ -154,8 +154,7 @@ class ChatbotGemini {
         b.writeln('  - Khoa "${ck.tenChuyenKhoa}": giá khám '
             '${Fmt.tien(ck.giaKhamCoBan)}'
             '${ck.moTa != null ? ' (${ck.moTa})' : ''}');
-        for (final BacSi bs in MockData.bacSi
-            .where((x) => x.trangThai && x.maChuyenKhoa == ck.maChuyenKhoa)) {
+        for (final BacSi bs in MockData.bacSiCuaChuyenKhoa(ck.maChuyenKhoa)) {
           b.writeln('      + ${bs.tenHienThi}, điểm đánh giá '
               '${bs.diemDanhGiaTb.toStringAsFixed(1)}/5. '
               '${_gioTrong(bs.maBacSi)}');

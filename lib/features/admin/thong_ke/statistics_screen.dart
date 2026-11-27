@@ -41,7 +41,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         .fold<int>(0, (tongTien, t) => tongTien + t.soTien);
 
     // Top 5 bác sĩ theo điểm đánh giá trung bình
-    final topBacSi = MockData.bacSi.where((b) => b.trangThai).toList()
+    final topBacSi = MockData.bacSiDangLam
       ..sort((a, b) => b.diemDanhGiaTb.compareTo(a.diemDanhGiaTb));
     if (topBacSi.length > 5) topBacSi.removeRange(5, topBacSi.length);
 
@@ -72,7 +72,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           AppColors.danger),
       ('Không đến · ${tyLe(khongDen)}', '$khongDen', Icons.person_off_outlined,
           AppColors.warning),
-      ('Bác sĩ đang làm', '${MockData.bacSi.where((b) => b.trangThai).length}',
+      ('Bác sĩ đang làm', '${MockData.bacSiDangLam.length}',
           Icons.medical_services_outlined, AppColors.info),
       ('Doanh thu', Fmt.tien(doanhThu), Icons.payments_outlined,
           AppColors.warning),

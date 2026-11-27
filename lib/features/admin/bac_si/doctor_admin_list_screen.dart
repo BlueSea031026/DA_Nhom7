@@ -5,6 +5,7 @@ import '../../../core/widgets/widgets.dart';
 import '../../../models/models.dart';
 import '../../chon_bac_si/tim_kiem.dart';
 import '../tai_khoan/tai_khoan_routes.dart';
+import '../tai_khoan/tai_khoan_repo.dart';
 import 'bac_si_repo.dart';
 import 'bac_si_routes.dart';
 
@@ -67,6 +68,57 @@ class _DoctorAdminListScreenState extends State<DoctorAdminListScreen> {
 
   void _lamMoi(Object? _) {
     if (mounted) setState(() {});
+  }
+
+  /// Cấp tài khoản cho hồ sơ bác sĩ có sẵn (giữ nguyên ca, lịch hẹn cũ).
+  Future<void> _capTaiKhoan(BacSi bs) async {
+    final sdtCtrl = TextEditingController(text: bs.soDienThoai ?? '');
+    final mkCtrl = TextEditingController(text: '123456');
+    final dongY = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Cấp tài khoản – ${bs.tenHienThi}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: sdtCtrl,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(labelText: 'Số điện thoại đăng nhập'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: mkCtrl,
+              decoration: const InputDecoration(labelText: 'Mật khẩu tạm'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Cấp tài khoản'),
+          ),
+        ],
+      ),
+    );
+    final sdt = sdtCtrl.text;
+    final mk = mkCtrl.text;
+    if (dongY != true || !mounted) return;
+    try {
+      await TaiKhoanRepo.capTaiKhoanChoBacSi(
+          bacSi: bs, soDienThoai: sdt, matKhau: mk);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Đã cấp tài khoản ${sdt.trim()} cho ${bs.tenHienThi}')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', ''))));
+    }
   }
 
   @override
@@ -161,10 +213,39 @@ class _DoctorAdminListScreenState extends State<DoctorAdminListScreen> {
                               '${bs.diemDanhGiaTb.toStringAsFixed(1)} ★',
                           icon: Icons.star_outline,
                         ),
+                        if (bs.trangThai && !MockData.bacSiHopLe(bs))
+                          Container(
+                            margin: const EdgeInsets.only(top: 6),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.warningLight,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.warning_amber_rounded,
+                                    size: 18, color: AppColors.warning),
+                                SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    'Chưa có tài khoản đăng nhập – bác sĩ chưa '
+                                    'hiện cho bệnh nhân và không xếp ca được.',
+                                    style: AppTextStyles.caption,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         const SizedBox(height: 6),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
+                            if (bs.trangThai && !MockData.bacSiHopLe(bs))
+                              TextButton.icon(
+                                icon: const Icon(Icons.key_outlined, size: 18),
+                                label: const Text('Cấp tài khoản'),
+                                onPressed: () => _capTaiKhoan(bs),
+                              ),
                             TextButton.icon(
                               icon: const Icon(Icons.edit_outlined, size: 18),
                               label: const Text('Sửa'),

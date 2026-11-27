@@ -91,6 +91,57 @@ class TaiKhoanRepo {
     return maTaiKhoan;
   }
 
+  /// Cấp tài khoản đăng nhập cho 1 hồ sơ bác sĩ CÓ SẴN nhưng chưa có tài khoản
+  /// (VD bác sĩ nạp từ dữ liệu mẫu). Giữ nguyên mã bác sĩ nên ca làm việc,
+  /// lịch hẹn, đánh giá cũ vẫn gắn đúng người.
+  static Future<int> capTaiKhoanChoBacSi({
+    required BacSi bacSi,
+    required String soDienThoai,
+    required String matKhau,
+  }) async {
+    final sdt = soDienThoai.trim();
+    if (!RegExp(r'^0\d{9}$').hasMatch(sdt)) {
+      throw Exception('Số điện thoại phải gồm 10 số, bắt đầu bằng 0');
+    }
+    if (matKhau.length < 6) {
+      throw Exception('Mật khẩu tối thiểu 6 ký tự');
+    }
+    if (MockData.taiKhoan.any((t) => t.soDienThoai == sdt)) {
+      throw Exception('Số điện thoại đã được sử dụng');
+    }
+    if (MockData.bacSiHopLe(bacSi)) {
+      throw Exception('Bác sĩ này đã có tài khoản');
+    }
+
+    final uid = await PhienFirebase.taoTaiKhoanAuth(sdt, matKhau);
+
+    final maTaiKhoan = await Kho.db.runTransaction((tx) async {
+      // ---- ĐỌC ----
+      final maTk = await Kho.docBoDem(tx, Bang.taiKhoan);
+      // ---- GHI ----
+      maTk.ghiVao(tx);
+      tx.set(Kho.doc(Bang.taiKhoan, maTk.giaTri), {
+        ...TaiKhoan(
+          maTaiKhoan: maTk.giaTri,
+          soDienThoai: sdt,
+          hoTen: bacSi.hoTen,
+          vaiTro: VaiTro.bacSi,
+          ngayTao: DateTime.now(),
+        ).toMap(),
+        'uid': uid,
+      });
+      tx.set(Kho.db.collection(Bang.vaiTro).doc(uid),
+          {'vaiTro': VaiTro.bacSi.label, 'maTaiKhoan': maTk.giaTri});
+      tx.update(Kho.doc(Bang.bacSi, bacSi.maBacSi),
+          {'maTaiKhoan': maTk.giaTri, 'soDienThoai': sdt});
+      return maTk.giaTri;
+    });
+
+    await NhatKyService.ghi('Cấp tài khoản Bác sĩ $sdt',
+        ghiChu: bacSi.tenHienThi);
+    return maTaiKhoan;
+  }
+
   /// Khóa (trangThai = 0) hoặc mở khóa (1). Duy chặn đăng nhập khi bị khóa.
   static Future<void> doiTrangThai(TaiKhoan tk, {String? lyDo}) async {
     final TaiKhoan? phien = MockData.phienDangNhap;

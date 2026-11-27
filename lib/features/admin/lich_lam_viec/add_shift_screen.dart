@@ -38,7 +38,7 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
     if (thamSo is! Map) return;
     final maBacSi = thamSo['maBacSi'];
     if (maBacSi is int &&
-        MockData.bacSi.any((b) => b.maBacSi == maBacSi && b.trangThai)) {
+        MockData.bacSiDangLam.any((b) => b.maBacSi == maBacSi)) {
       _maBacSi = maBacSi;
     }
     final ngay = thamSo['ngay'];
@@ -165,8 +165,7 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
                     borderSide: const BorderSide(color: AppColors.border),
                   ),
                 ),
-                items: MockData.bacSi
-                    .where((bs) => bs.trangThai)
+                items: MockData.bacSiDangLam
                     .map((bs) => DropdownMenuItem(
                           value: bs.maBacSi,
                           child: Text(bs.hoTen),
