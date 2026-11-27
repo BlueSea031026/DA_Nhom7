@@ -6,6 +6,8 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import '../dat_lich/dat_lich_routes.dart';
+import '../dat_lich/dat_lich_repo.dart';
+import '../lich_su/lich_su_repo.dart';
 
 /// Thông tin bác sĩ · FR-07
 /// Figma: Bệnh Nhân › Thông tin bác sĩ
@@ -23,15 +25,14 @@ class DoctorDetailScreen extends StatelessWidget {
     final danhGia = MockData.danhGiaCuaBacSi(bacSi.maBacSi)
       ..sort((a, b) => b.ngayDanhGia.compareTo(a.ngayDanhGia));
 
-    // Các ca sắp tới còn chỗ (tối đa 5)
+    // Các ca còn GIỜ TRỐNG chưa qua (bỏ ca đã qua giờ / hết chỗ), sắp theo
+    // giờ trống sớm nhất của từng ca.
     final lichSapToi = MockData.lichCuaBacSi(bacSi.maBacSi)
         .where((l) =>
-            !l.ngay.isBefore(MockData.homNay) && l.trangThai == 1 && l.conTrong)
+            !l.ngay.isBefore(MockData.homNay) && DatLichRepo.datDuoc(l))
         .toList()
-      ..sort((a, b) {
-        final c = a.ngay.compareTo(b.ngay);
-        return c != 0 ? c : a.gioBatDau.compareTo(b.gioBatDau);
-      });
+      ..sort((a, b) => LichSuRepo.gioKham(a, DatLichRepo.gioDatDuoc(a).first)
+          .compareTo(LichSuRepo.gioKham(b, DatLichRepo.gioDatDuoc(b).first)));
 
     final int? maTk = bacSi.maTaiKhoan;
     final int soLuotKham = MockData.datLich
@@ -182,7 +183,8 @@ class DoctorDetailScreen extends StatelessWidget {
                           avatar: const Icon(Icons.schedule, size: 16),
                           label: Text(
                               '${Fmt.thu(l.ngay)} ${l.ngay.day}/${l.ngay.month} · '
-                              '${l.gioBatDau} (còn ${l.soChoTrong})'),
+                              '${DatLichRepo.gioDatDuoc(l).first} '
+                              '(còn ${DatLichRepo.gioDatDuoc(l).length} giờ)'),
                           onPressed: datLich,
                         ),
                     ],
