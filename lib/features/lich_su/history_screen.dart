@@ -5,6 +5,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import 'lich_su_routes.dart';
+import 'lich_su_repo.dart';
 
 /// Lịch sử đặt lịch · FR-16
 /// Figma: Bệnh Nhân › Lịch sử khám
@@ -25,7 +26,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final tatCa =
         MockData.datLichCuaTaiKhoan(MockData.taiKhoanDangNhap.maTaiKhoan);
     final danhSach = tatCa
-        .where((d) => _tab == 0 ? d.trangThai.sapToi : !d.trangThai.sapToi)
+        // Lịch đã quá giờ khám chuyển sang tab "Đã qua" dù chưa đổi trạng thái
+        .where((d) =>
+            _tab == 0 ? LichSuRepo.laSapToi(d) : !LichSuRepo.laSapToi(d))
         .toList();
 
     // #15: tổng tiền đã khám (các khoản đã thanh toán, trừ đã hoàn)
