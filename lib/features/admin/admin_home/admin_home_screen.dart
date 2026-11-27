@@ -91,7 +91,7 @@ class _TrangChuAdmin extends StatelessWidget {
       ('Cơ sở y tế', '${MockData.coSoYTe.where((c) => c.trangThai).length}',
           Icons.local_hospital_outlined, AppColors.secondary,
           AdminCoSoRoutes.facilityList),
-      ('Bác sĩ', '${MockData.bacSi.where((b) => b.trangThai).length}',
+      ('Bác sĩ', '${MockData.bacSiDangLam.length}',
           Icons.medical_services_outlined, AppColors.success,
           AdminBacSiRoutes.doctorAdminList),
       ('Lượt khám hôm nay', '$luotHomNay', Icons.event_available_outlined,
@@ -127,8 +127,7 @@ class _TrangChuAdmin extends StatelessWidget {
       return l != null && LichSuRepo.gioKham(l).isBefore(bayGio);
     }).length;
     final tuanToi = MockData.homNay.add(const Duration(days: 7));
-    final bacSiChuaCoLich = MockData.bacSi.where((b) {
-      if (!b.trangThai) return false;
+    final bacSiChuaCoLich = MockData.bacSiDangLam.where((b) {
       return !MockData.lichCuaBacSi(b.maBacSi).any((l) =>
           !l.ngay.isBefore(MockData.homNay) &&
           !l.ngay.isAfter(tuanToi) &&

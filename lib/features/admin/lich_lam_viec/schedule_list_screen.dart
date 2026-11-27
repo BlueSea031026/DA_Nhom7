@@ -59,7 +59,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
                   value: null,
                   child: Text('Tất cả bác sĩ'),
                 ),
-                ...MockData.bacSi.where((b) => b.trangThai).map(
+                ...MockData.bacSiDangLam.map(
                       (b) => DropdownMenuItem<int?>(
                         value: b.maBacSi,
                         child: Text(b.tenHienThi,
