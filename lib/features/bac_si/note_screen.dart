@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/mock/mock_data.dart';
-import '../../core/utils/formatters.dart';
 import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import 'bac_si_repo.dart';
@@ -20,28 +19,6 @@ class _NoteScreenState extends State<NoteScreen> {
   final _ghiChuCtrl = TextEditingController();
   bool _daNap = false;
   bool _dangLuu = false;
-
-  // Danh sách dịch vụ cận lâm sàng (Mock data - có thể chuyển vào MockData sau)
-  final List<Map<String, dynamic>> _danhSachDichVu = [
-    {'ten': 'Xét nghiệm máu', 'gia': 150000},
-    {'ten': 'Xét nghiệm nước tiểu', 'gia': 100000},
-    {'ten': 'X-quang', 'gia': 200000},
-    {'ten': 'Siêu âm', 'gia': 250000},
-    {'ten': 'Điện tim', 'gia': 120000},
-  ];
-
-  // Lưu các dịch vụ đang được chọn
-  final Set<String> _dichVuDaChon = {};
-
-  int get _tongChiPhiPhatSinh {
-    int tong = 0;
-    for (final dv in _danhSachDichVu) {
-      if (_dichVuDaChon.contains(dv['ten'])) {
-        tong += dv['gia'] as int;
-      }
-    }
-    return tong;
-  }
 
   @override
   void dispose() {
@@ -78,25 +55,6 @@ class _NoteScreenState extends State<NoteScreen> {
     );
   }
 
-  // Xử lý khi tick chọn / bỏ chọn dịch vụ
-  void _toggleDichVu(String ten, int gia, bool chon) {
-    setState(() {
-      if (chon) {
-        _dichVuDaChon.add(ten);
-        // Tự động chèn dòng chỉ định vào ghi chú nếu chưa có
-        if (!_ghiChuCtrl.text.contains('Chỉ định:')) {
-          _chen('Chỉ định: ');
-        }
-        _chen('- $ten: ${Fmt.tien(gia)}', dongMoi: true);
-      } else {
-        _dichVuDaChon.remove(ten);
-        // Xóa dòng chỉ định tương ứng khỏi ghi chú
-        final regex = RegExp(r'\n?- ' + RegExp.escape(ten) + r': .*');
-        _ghiChuCtrl.text = _ghiChuCtrl.text.replaceAll(regex, '').trim();
-      }
-    });
-  }
-
   Future<void> _luu(DatLich datLich) async {
     if (_ghiChuCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -109,12 +67,7 @@ class _NoteScreenState extends State<NoteScreen> {
     }
     setState(() => _dangLuu = true);
     try {
-      // Truyền thêm chi phí phát sinh vào hàm lưu
-      await BacSiRepo.khamXong(
-        datLich,
-        _ghiChuCtrl.text,
-        chiPhiPhatSinh: _tongChiPhiPhatSinh,
-      );
+      await BacSiRepo.khamXong(datLich, _ghiChuCtrl.text);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -138,7 +91,8 @@ class _NoteScreenState extends State<NoteScreen> {
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
-    final DatLich? argsDatLich = args is DatLich ? args : null;
+    final DatLich? argsDatLich =
+        args is DatLich ? args : null;
     final DatLich datLich =
         BacSiRepo.moiNhat(argsDatLich ?? MockData.datLich.first);
 
@@ -172,44 +126,7 @@ class _NoteScreenState extends State<NoteScreen> {
             ),
             const SizedBox(height: 20),
 
-            // --- PHẦN MỚI: CHỈ ĐỊNH CẬN LÂM SÀNG ---
-            const SectionTitle('CHỈ ĐỊNH CẬN LÂM SÀNG'),
-            AppCard(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Column(
-                children: [
-                  for (final dv in _danhSachDichVu)
-                    CheckboxListTile(
-                      title: Text(dv['ten']),
-                      subtitle: Text(Fmt.tien(dv['gia']), style: AppTextStyles.caption),
-                      value: _dichVuDaChon.contains(dv['ten']),
-                      onChanged: (val) => _toggleDichVu(dv['ten'], dv['gia'], val ?? false),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                      dense: true,
-                      activeColor: AppColors.primary,
-                    ),
-                  const Divider(),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Tổng chi phí phát sinh:', style: AppTextStyles.label),
-                        Text(
-                          Fmt.tien(_tongChiPhiPhatSinh),
-                          style: AppTextStyles.h2.copyWith(color: AppColors.danger),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            // ----------------------------------------
-
-            // Heading ghi chú
+            // Heading
             const Text(
               'GHI CHÚ KHÁM / KẾT QUẢ',
               style: TextStyle(
