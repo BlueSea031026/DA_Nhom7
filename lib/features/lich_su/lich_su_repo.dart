@@ -26,6 +26,20 @@ class LichSuRepo {
   static DateTime gioKhamCua(DatLich d) =>
       gioKham(MockData.lichById(d.maLich), d.gioKham);
 
+  /// Lượt đặt còn hiện ở mục "Lịch khám sắp tới": chưa khám xong và chưa quá
+  /// giờ hẹn 60 phút (đã được lễ tân tiếp nhận thì giữ đến hết ngày).
+  static bool laSapToi(DatLich d) {
+    if (!d.trangThai.sapToi) return false;
+    final DateTime gio = gioKhamCua(d);
+    final DateTime bayGio = DateTime.now();
+    if (d.trangThai == TrangThaiDatLich.daDen) {
+      return gio.year == bayGio.year &&
+          gio.month == bayGio.month &&
+          gio.day == bayGio.day;
+    }
+    return gio.add(const Duration(minutes: 60)).isAfter(bayGio);
+  }
+
   /// Chuỗi giờ hiển thị của 1 lượt đặt, VD "08:12".
   static String gioHienThi(DatLich d) =>
       d.gioKham ?? MockData.lichById(d.maLich).gioBatDau;

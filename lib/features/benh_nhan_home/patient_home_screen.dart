@@ -8,6 +8,7 @@ import '../chon_bac_si/tim_kiem.dart';
 import '../chon_bac_si/widgets/bac_si_noi_bat.dart';
 import '../hinh_thuc_kham/hinh_thuc_kham_routes.dart';
 import '../lich_su/history_screen.dart';
+import '../lich_su/lich_su_repo.dart';
 import '../thong_bao/notification_screen.dart';
 import 'benh_nhan_home_routes.dart';
 import 'profile_screen.dart';
@@ -80,21 +81,11 @@ class _TrangChuBenhNhanState extends State<_TrangChuBenhNhan> {
 
   DatLich? _layLichKhamSapToi(int maTaiKhoan) {
     final List<DatLich> danhSach = MockData.datLichCuaTaiKhoan(maTaiKhoan)
-        .where(
-          (d) =>
-              d.trangThai.sapToi &&
-              !MockData.lichById(d.maLich).ngay.isBefore(MockData.homNay),
-        )
+        .where(LichSuRepo.laSapToi) // bỏ lịch đã quá giờ khám
         .toList();
     if (danhSach.isEmpty) return null;
-    danhSach.sort((a, b) {
-      final LichLamViec lichA = MockData.lichById(a.maLich);
-      final LichLamViec lichB = MockData.lichById(b.maLich);
-      final int soSanhNgay = lichA.ngay.compareTo(lichB.ngay);
-      return soSanhNgay != 0
-          ? soSanhNgay
-          : lichA.gioBatDau.compareTo(lichB.gioBatDau);
-    });
+    danhSach.sort((a, b) =>
+        LichSuRepo.gioKhamCua(a).compareTo(LichSuRepo.gioKhamCua(b)));
     return danhSach.first;
   }
 

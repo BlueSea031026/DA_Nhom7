@@ -6,10 +6,15 @@ import '../../core/widgets/widgets.dart';
 import '../../models/models.dart';
 import '../chon_bac_si/chon_bac_si_routes.dart';
 import '../chon_bac_si/tim_kiem.dart';
+import 'chatbot_gemini.dart';
 import 'chatbot_tu_khoa.dart';
 
 /// Trợ lý sức khỏe (#53): gõ triệu chứng → gợi ý chuyên khoa → đặt lịch.
-/// Phụ trách: Hiếu
+/// Phụ trách: Hải
+///
+/// 2 chế độ: có mạng → hỏi Gemini (chatbot_gemini.dart) với dữ liệu thật của
+/// app; mất mạng / Gemini lỗi → bảng từ khóa offline (chatbot_tu_khoa.dart).
+/// Dấu hiệu cấp cứu luôn trả lời ngay bằng luật offline, không chờ AI.
 ///
 /// Mở với câu hỏi sẵn: Navigator.pushNamed(context, route, arguments: 'đau họng')
 class ChatbotScreen extends StatefulWidget {
@@ -22,11 +27,16 @@ class ChatbotScreen extends StatefulWidget {
 class _TinNhan {
   _TinNhan.nguoiDung(this.noiDung)
       : laBot = false,
+        laAI = false,
         goiY = const [];
-  _TinNhan.bot(this.noiDung, {this.goiY = const []}) : laBot = true;
+  _TinNhan.bot(this.noiDung, {this.goiY = const [], this.laAI = false})
+      : laBot = true;
 
   final String noiDung;
   final bool laBot;
+
+  /// true = Gemini trả lời; false = luật từ khóa offline.
+  final bool laAI;
   final List<ChuyenKhoa> goiY;
 }
 
@@ -36,10 +46,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final List<_TinNhan> _tinNhan = [
     _TinNhan.bot(
       'Xin chào! Mình là Trợ lý sức khỏe. Bạn đang gặp triệu chứng gì? '
-      'Mình sẽ gợi ý chuyên khoa phù hợp để bạn đặt lịch.',
+      'Mình sẽ gợi ý chuyên khoa phù hợp để bạn đặt lịch. Bạn cũng có thể '
+      'hỏi giá khám, bác sĩ hay giờ còn trống.',
     ),
   ];
   bool _daHoiCauDau = false;
+  bool _dangTraLoi = false;
 
   static const List<String> _cauMau = [
     'Tôi bị sốt và ho 2 ngày',
@@ -47,6 +59,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     'Đau răng khôn',
     'Bé nhà tôi nổi mẩn ngứa',
     'Mắt đỏ, cay mắt',
+    'Khám răng giá bao nhiêu?',
+    'Bác sĩ nào còn giờ trống sớm nhất?',
   ];
 
   @override
@@ -71,14 +85,38 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       .where((c) => c.trangThai && boDau(c.tenChuyenKhoa) == boDau(ten))
       .toList();
 
-  void _gui(String cau) {
+  Future<void> _gui(String cau) async {
     final String c = cau.trim();
-    if (c.isEmpty) return;
+    if (c.isEmpty || _dangTraLoi) return;
     _nhapCtrl.clear();
+    // Lịch sử hội thoại trước câu này (bỏ lời chào đầu tiên).
+    final lichSu = [
+      for (final t in _tinNhan.skip(1)) (!t.laBot, t.noiDung),
+    ];
     setState(() {
       _tinNhan.add(_TinNhan.nguoiDung(c));
-      _tinNhan.add(_traLoi(c));
+      _dangTraLoi = true;
     });
+    _cuonXuong();
+
+    _TinNhan traLoi;
+    if (ChatbotTuKhoa.laCapCuu(c)) {
+      traLoi = _traLoi(c); // cấp cứu: trả lời ngay, không chờ AI
+    } else {
+      final TraLoiAI? ai = await ChatbotGemini.hoi(c, lichSu);
+      traLoi = ai == null
+          ? _traLoi(c)
+          : _TinNhan.bot(ai.noiDung, goiY: ai.khoa, laAI: true);
+    }
+    if (!mounted) return;
+    setState(() {
+      _tinNhan.add(traLoi);
+      _dangTraLoi = false;
+    });
+    _cuonXuong();
+  }
+
+  void _cuonXuong() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_cuonCtrl.hasClients) {
         _cuonCtrl.animateTo(
@@ -97,7 +135,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         'cơ sở y tế gần nhất ngay, không nên chờ đặt lịch.',
       );
     }
+    final TraLoiOffline? hoiDap = ChatbotTuKhoa.hoiDap(cau);
     final goiY = ChatbotTuKhoa.goiY(cau);
+    if (hoiDap != null && (goiY.isEmpty || hoiDap.khoa.isNotEmpty)) {
+      return _TinNhan.bot(hoiDap.noiDung, goiY: hoiDap.khoa);
+    }
     if (goiY.isEmpty) {
       return _TinNhan.bot(
         'Mình chưa nhận ra triệu chứng này. Bạn mô tả rõ hơn nhé (ví dụ: '
@@ -107,10 +149,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       );
     }
     final khoa = <ChuyenKhoa>[
-      for (final g in goiY) ..._timKhoa(g.luat.chuyenKhoa),
+      for (final g in goiY) ..._timKhoa(g.tenKhoa),
     ];
     final dau = goiY.first.luat;
-    final ten = goiY.map((g) => g.luat.chuyenKhoa).join(' hoặc ');
+    final ten = goiY.map((g) => g.tenKhoa).join(' hoặc ');
     return _TinNhan.bot(
       'Với triệu chứng này, bạn nên khám chuyên khoa $ten.\n'
       'Lưu ý: ${dau.loiKhuyen}',
@@ -135,9 +177,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             child: ListView.builder(
               controller: _cuonCtrl,
               padding: const EdgeInsets.all(16),
-              itemCount: _tinNhan.length + 1,
+              itemCount: _tinNhan.length + (_dangTraLoi ? 2 : 1),
               itemBuilder: (context, i) {
-                if (i == _tinNhan.length) return _canhBao();
+                if (_dangTraLoi && i == _tinNhan.length) return _dangGo();
+                if (i >= _tinNhan.length) return _canhBao();
                 return _bongBong(_tinNhan[i]);
               },
             ),
@@ -182,7 +225,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   const SizedBox(width: 8),
                   IconButton.filled(
                     tooltip: 'Gửi',
-                    onPressed: () => _gui(_nhapCtrl.text),
+                    onPressed: _dangTraLoi ? null : () => _gui(_nhapCtrl.text),
                     icon: const Icon(Icons.send),
                   ),
                 ],
@@ -193,6 +236,31 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       ),
     );
   }
+
+  Widget _dangGo() => Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 10),
+              Text('Trợ lý đang trả lời…', style: AppTextStyles.caption),
+            ],
+          ),
+        ),
+      );
 
   Widget _canhBao() => const Padding(
         padding: EdgeInsets.only(top: 8),
@@ -221,15 +289,21 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (t.laBot)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 4),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.smart_toy_outlined,
-                        size: 16, color: AppColors.secondary),
-                    SizedBox(width: 4),
-                    Text('Trợ lý', style: AppTextStyles.caption),
+                    Icon(
+                      t.laAI ? Icons.auto_awesome : Icons.smart_toy_outlined,
+                      size: 16,
+                      color: AppColors.secondary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      t.laAI ? 'Trợ lý · Gemini AI' : 'Trợ lý · gợi ý theo từ khóa',
+                      style: AppTextStyles.caption,
+                    ),
                   ],
                 ),
               ),

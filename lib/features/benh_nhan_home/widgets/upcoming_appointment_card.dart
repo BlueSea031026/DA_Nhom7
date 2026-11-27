@@ -26,9 +26,10 @@ class UpcomingAppointmentCard extends StatefulWidget {
   final DatLich? datLich;
   final VoidCallback? onDatLich;
 
-  /// "Còn 2 ngày 3 giờ" / "Còn 45 phút" / "Đã đến giờ khám".
+  /// "Còn 2 ngày 3 giờ" / "Còn 45 phút" / "Đã đến giờ khám" / "Đã qua giờ khám".
   static String demNguoc(DateTime gioKham, DateTime bayGio) {
     final Duration con = gioKham.difference(bayGio);
+    if (con.inMinutes <= -15) return 'Đã qua giờ khám';
     if (con.inMinutes <= 0) return 'Đã đến giờ khám';
     final int ngay = con.inDays;
     final int gio = con.inHours % 24;
