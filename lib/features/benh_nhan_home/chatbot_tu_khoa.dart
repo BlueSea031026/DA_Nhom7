@@ -1,7 +1,7 @@
 import '../chon_bac_si/tim_kiem.dart';
 
 /// Bảng luật của "Trợ lý sức khỏe" (#53) – gợi ý chuyên khoa theo triệu chứng.
-/// Phụ trách: Hiếu
+/// Phụ trách: Hải
 ///
 /// Chạy offline, không cần API trả phí: so khớp KHÔNG DẤU từ khóa trong câu
 /// người dùng với bảng dưới, khoa nào khớp nhiều từ nhất được gợi ý trước.
