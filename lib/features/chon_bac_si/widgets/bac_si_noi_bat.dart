@@ -28,7 +28,7 @@ class BacSiNoiBat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ds = MockData.bacSi.where((b) => b.trangThai).toList()
+    final ds = MockData.bacSiDangLam
       ..sort((a, b) => b.diemDanhGiaTb.compareTo(a.diemDanhGiaTb));
     if (ds.isEmpty) return const SizedBox.shrink();
 
