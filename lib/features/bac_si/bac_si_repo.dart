@@ -5,11 +5,17 @@ import '../../core/utils/formatters.dart';
 import '../../models/models.dart';
 
 /// Nghiệp vụ phía Bác sĩ (FR-20 đến FR-23). Phụ trách: Thương
+///
+/// Màn hình ĐỌC `MockData`; mọi thao tác GHI đi qua file này.
+/// Lỗi nghiệp vụ ném `Exception('thông báo tiếng Việt')`.
 class BacSiRepo {
   BacSiRepo._();
 
   static String _bo(Object e) => e.toString().replaceFirst('Exception: ', '');
 
+  /// Bác sĩ đang đăng nhập = bản ghi bacSi có maTaiKhoan trùng tài khoản đăng
+  /// nhập. Chưa đăng nhập hoặc không phải bác sĩ (mở thử từ menu Dev) thì lấy
+  /// tài khoản bác sĩ mẫu mã 3. Trả về null nếu tài khoản bác sĩ chưa có hồ sơ.
   static BacSi? get bacSiDangNhap {
     final TaiKhoan? tk = MockData.phienDangNhap;
     final int ma =
@@ -20,6 +26,8 @@ class BacSiRepo {
     return null;
   }
 
+  /// Bản mới nhất của lượt đặt (DatLich bất biến nên phải tra lại sau mỗi lần
+  /// Firestore đổi).
   static DatLich moiNhat(DatLich d) {
     for (final x in MockData.datLich) {
       if (x.maDatLich == d.maDatLich) return x;
@@ -27,11 +35,14 @@ class BacSiRepo {
     return d;
   }
 
+  /// Ghi chú / kết quả khám của lượt đặt (trường ghiChu của DatLich).
   static String? ghiChuCua(DatLich d) {
     final String? v = d.ghiChu?.trim();
     return (v == null || v.isEmpty) ? null : v;
   }
 
+  /// Các lượt đặt của bác sĩ trong 1 ngày, bỏ lượt đã hủy.
+  /// Sắp theo giờ ca; trong cùng giờ ca, "Đã đến" lên đầu.
   static List<DatLich> luotTrongNgay(BacSi bacSi, DateTime ngay) {
     final Map<int, LichLamViec> caCuaNgay = {
       for (final l in MockData.lichCuaBacSi(bacSi.maBacSi))
@@ -56,6 +67,7 @@ class BacSiRepo {
     return list;
   }
 
+  /// Các lần đã khám trước đó của cùng bệnh nhân với cùng bác sĩ (mới nhất trước).
   static List<DatLich> lanKhamTruoc(DatLich d) {
     final int maBacSi = MockData.lichById(d.maLich).maBacSi;
     final list = MockData.datLich
@@ -71,6 +83,7 @@ class BacSiRepo {
     return list;
   }
 
+  /// Đã quá giờ kết thúc ca khám chưa.
   static bool daQuaGio(DatLich d) {
     final LichLamViec l = MockData.lichById(d.maLich);
     final p = l.gioKetThuc.split(':');
@@ -79,6 +92,9 @@ class BacSiRepo {
     return DateTime.now().isAfter(ketThuc);
   }
 
+  /// Bước chuyển bác sĩ được phép làm (mục 5 file phân công):
+  /// Đã đến → Đã khám; Đã thanh toán và đã qua giờ → Không đến.
+  /// Bác sĩ không chọn Hoãn, không sửa lượt Đã khám / Không đến.
   static List<TrangThaiDatLich> cacBuocHopLe(DatLich d) {
     if (d.trangThai == TrangThaiDatLich.daDen) {
       return const [TrangThaiDatLich.daKham];
@@ -89,6 +105,7 @@ class BacSiRepo {
     return const [];
   }
 
+  /// Giải thích vì sao chưa cập nhật được (khi [cacBuocHopLe] rỗng).
   static String lyDoChuaCapNhat(DatLich d) {
     switch (d.trangThai) {
       case TrangThaiDatLich.choThanhToan:
@@ -108,27 +125,14 @@ class BacSiRepo {
     }
   }
 
-  /// Đã đến → Đã khám, lưu ghiChu (bắt buộc) + chi phí phát sinh (nếu có),
-  /// rồi mời bệnh nhân đánh giá.
-  static Future<void> khamXong(
-    DatLich d, 
-    String ghiChu, {
-    int chiPhiPhatSinh = 0,
-  }) async {
+  /// Đã đến → Đã khám, lưu ghiChu (bắt buộc) rồi mời bệnh nhân đánh giá.
+  static Future<void> khamXong(DatLich d, String ghiChu) async {
     final String ketQua = ghiChu.trim();
     if (ketQua.isEmpty) throw Exception('Vui lòng nhập kết quả khám');
-    
-    // Nếu có chi phí phát sinh, tự động nối thêm vào ghi chú để lưu trữ
-    String ghiChuFull = ketQua;
-    if (chiPhiPhatSinh > 0) {
-      ghiChuFull += '\n[Tổng chi phí cận lâm sàng: ${Fmt.tien(chiPhiPhatSinh)}]';
-    }
-
     await _doiTrangThai(d,
         tu: TrangThaiDatLich.daDen,
         den: TrangThaiDatLich.daKham,
-        ghiChu: ghiChuFull); // Truyền ghi chú đã nối chi phí vào
-    
+        ghiChu: ketQua);
     final BacSi? bs = bacSiDangNhap;
     final LichLamViec lich = MockData.lichById(d.maLich);
     await ThongBaoService.gui(
@@ -139,6 +143,7 @@ class BacSiRepo {
     );
   }
 
+  /// Đã thanh toán → Không đến (chỉ khi đã qua giờ khám, không hoàn tiền).
   static Future<void> khongDen(DatLich d) async {
     if (!daQuaGio(d)) {
       throw Exception('Chưa qua giờ kết thúc ca nên chưa đánh dấu Không đến');
@@ -147,6 +152,8 @@ class BacSiRepo {
         tu: TrangThaiDatLich.daThanhToan, den: TrangThaiDatLich.khongDen);
   }
 
+  /// Đổi trạng thái trong transaction: đọc lại trạng thái hiện tại, sai cột
+  /// "Từ" thì báo lỗi, không ghi. Chỉ cho bác sĩ sở hữu ca.
   static Future<void> _doiTrangThai(
     DatLich d, {
     required TrangThaiDatLich tu,
