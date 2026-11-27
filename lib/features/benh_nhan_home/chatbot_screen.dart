@@ -135,7 +135,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         'cơ sở y tế gần nhất ngay, không nên chờ đặt lịch.',
       );
     }
+    final TraLoiOffline? hoiDap = ChatbotTuKhoa.hoiDap(cau);
     final goiY = ChatbotTuKhoa.goiY(cau);
+    if (hoiDap != null && (goiY.isEmpty || hoiDap.khoa.isNotEmpty)) {
+      return _TinNhan.bot(hoiDap.noiDung, goiY: hoiDap.khoa);
+    }
     if (goiY.isEmpty) {
       return _TinNhan.bot(
         'Mình chưa nhận ra triệu chứng này. Bạn mô tả rõ hơn nhé (ví dụ: '
@@ -145,10 +149,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       );
     }
     final khoa = <ChuyenKhoa>[
-      for (final g in goiY) ..._timKhoa(g.luat.chuyenKhoa),
+      for (final g in goiY) ..._timKhoa(g.tenKhoa),
     ];
     final dau = goiY.first.luat;
-    final ten = goiY.map((g) => g.luat.chuyenKhoa).join(' hoặc ');
+    final ten = goiY.map((g) => g.tenKhoa).join(' hoặc ');
     return _TinNhan.bot(
       'Với triệu chứng này, bạn nên khám chuyên khoa $ten.\n'
       'Lưu ý: ${dau.loiKhuyen}',
