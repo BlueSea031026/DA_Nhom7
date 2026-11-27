@@ -282,7 +282,7 @@ class ChatbotTuKhoa {
   static TraLoiOffline _gioTrong(List<ChuyenKhoa> khoaNhac) {
     final Set<int> maKhoa = khoaNhac.map((k) => k.maChuyenKhoa).toSet();
     final List<(DateTime, String, BacSi)> ds = [];
-    for (final BacSi bs in MockData.bacSi.where((b) => b.trangThai)) {
+    for (final BacSi bs in MockData.bacSiDangLam) {
       if (maKhoa.isNotEmpty && !maKhoa.contains(bs.maChuyenKhoa)) continue;
       outer:
       for (final DateTime ngay in DatLichRepo.cacNgay()) {
