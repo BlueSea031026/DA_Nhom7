@@ -10,6 +10,7 @@ import 'le_tan_repo.dart';
 import 'le_tan_routes.dart';
 import 'waiting_list_screen.dart';
 import '../lich_su/lich_su_repo.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// Trang chủ Lễ tân – khung tab GHIM CỐ ĐỊNH (#48).
 /// Phụ trách: Duy
@@ -80,7 +81,7 @@ class _TrangChuTabState extends State<_TrangChuTab> {
   }
 
   static String _loiChao() {
-    final int gio = DateTime.now().hour;
+    final int gio = GioVN.bayGio().hour;
     if (gio < 11) return 'Chào buổi sáng';
     if (gio < 14) return 'Chào buổi trưa';
     if (gio < 18) return 'Chào buổi chiều';
@@ -142,7 +143,7 @@ class _TrangChuTabState extends State<_TrangChuTab> {
     final coSo = LeTanRepo.coSoCuaNhanVien(widget.taiKhoan.maTaiKhoan);
 
     // Sắp đến giờ: ca bắt đầu trong 60 phút tới, chưa check-in.
-    final bayGio = DateTime.now();
+    final bayGio = GioVN.bayGio();
     final sapDen = homNay.where((d) {
       if (d.trangThai != TrangThaiDatLich.daThanhToan) return false;
       final g = LichSuRepo.gioKhamCua(d);

@@ -14,6 +14,7 @@ import 'benh_nhan_home_routes.dart';
 import 'profile_screen.dart';
 import 'widgets/service_item.dart';
 import 'widgets/upcoming_appointment_card.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// Trang chủ Bệnh nhân – khung 4 tab GHIM CỐ ĐỊNH (#3).
 /// Phụ trách: Hiếu
@@ -90,7 +91,7 @@ class _TrangChuBenhNhanState extends State<_TrangChuBenhNhan> {
   }
 
   static String _loiChaoTheoGio() {
-    final int gio = DateTime.now().hour;
+    final int gio = GioVN.bayGio().hour;
     if (gio < 11) return 'Chào buổi sáng';
     if (gio < 14) return 'Chào buổi trưa';
     if (gio < 18) return 'Chào buổi chiều';

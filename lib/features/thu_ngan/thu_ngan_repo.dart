@@ -4,6 +4,7 @@ import 'package:da_nhom7/core/services/thong_bao_service.dart';
 import '../../core/firebase/kho.dart';
 import '../../core/mock/mock_data.dart';
 import '../../models/models.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// Gom dữ liệu hiển thị cho 1 khoản chờ hoàn tiền
 class ThongTinChoHoan {
@@ -61,7 +62,7 @@ class ThuNganRePo {
 
       final maHoaDonMoi = await Kho.docBoDem(tx, Bang.hoaDon);
       maThanhToanMoi.ghiVao(tx);
-      final now = DateTime.now();
+      final now = GioVN.bayGio();
 
       final soHoaDon =
           "HD"
@@ -81,7 +82,7 @@ class ThuNganRePo {
 
         "trangThai": "Đã thanh toán",
 
-        "ngayThanhToan": DateTime.now().toIso8601String(),
+        "ngayThanhToan": GioVN.bayGio().toIso8601String(),
 
         "xuLyBoi": maThuNgan,
       });
@@ -94,7 +95,7 @@ class ThuNganRePo {
 
         "soHoaDon": soHoaDon,
 
-        "ngayXuat": DateTime.now().toIso8601String(),
+        "ngayXuat": GioVN.bayGio().toIso8601String(),
 
         "xuatBoi": maThuNgan,
       });
@@ -180,7 +181,7 @@ class ThuNganRePo {
 
       tx.update(docRef, {
         'trangThai': TrangThaiThanhToan.daHoanTien.label,
-        'ngayHoanTien': DateTime.now().toIso8601String(),
+        'ngayHoanTien': GioVN.bayGio().toIso8601String(),
         'lyDoHoan': lyDo,
         'xuLyBoi': maThuNgan,
       });

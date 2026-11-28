@@ -184,7 +184,7 @@ class DoctorDetailScreen extends StatelessWidget {
                           label: Text(
                               '${Fmt.thu(l.ngay)} ${l.ngay.day}/${l.ngay.month} · '
                               '${DatLichRepo.gioDatDuoc(l).first} '
-                              '(còn ${DatLichRepo.gioDatDuoc(l).length} giờ)'),
+                              '(còn ${DatLichRepo.gioDatDuoc(l).length} chỗ)'),
                           onPressed: datLich,
                         ),
                     ],

@@ -9,6 +9,7 @@ import '../../../models/models.dart';
 import '../../dat_lich/dat_lich_routes.dart';
 import '../../lich_su/lich_su_repo.dart';
 import '../../lich_su/lich_su_routes.dart';
+import '../../../core/utils/gio_vn.dart';
 
 /// Thẻ "Lịch khám sắp tới" trên trang chủ bệnh nhân (#9).
 /// Phụ trách: Duy
@@ -97,7 +98,7 @@ class _UpcomingAppointmentCardState extends State<UpcomingAppointmentCard> {
     final ChuyenKhoa chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
     final BenhNhan benhNhan = MockData.benhNhanById(d.maBenhNhan);
     final String dem =
-        UpcomingAppointmentCard.demNguoc(LichSuRepo.gioKhamCua(d), DateTime.now());
+        UpcomingAppointmentCard.demNguoc(LichSuRepo.gioKhamCua(d), GioVN.bayGio());
     final bool daThanhToan = d.trangThai != TrangThaiDatLich.choThanhToan;
     final Color mauChu = AppColors.surface;
 

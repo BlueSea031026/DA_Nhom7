@@ -1,6 +1,7 @@
 // import 'package:da_nhom7/models/co_so_y_te.dart';
 import '../../core/firebase/kho.dart';
 import '../../models/the_bhyt.dart';
+import '../../core/utils/gio_vn.dart';
 
 class BhytRepo {
   /// #31: TỰ ĐỌC mức hưởng từ mã thẻ BHYT (15 ký tự, VD "DN4790123456789").
@@ -48,7 +49,7 @@ class BhytRepo {
         maBenhNhan: maBenhNhan,
         soTheBhyt: soTheBhyt.trim().toUpperCase(),
         noiDangKyKcbBanDau: noiDangKyKcbBanDau,
-        ngayHieuLuc: DateTime.now(),
+        ngayHieuLuc: GioVN.bayGio(),
         ngayHetHan: ngayHetHan,
         mucHuongBhyt: mucHuongTheoMaThe(soTheBhyt),
       );

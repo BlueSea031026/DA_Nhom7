@@ -9,6 +9,7 @@ import '../../app/phien_dat_lich.dart';
 import '../chon_bac_si/chon_bac_si_routes.dart';
 import '../dat_lich/dat_lich_routes.dart';
 import '../hinh_thuc_kham/widgets/lien_he_co_so.dart';
+import 'lich_su_repo.dart';
 import 'lich_su_routes.dart';
 
 /// Chi tiết lịch khám · FR-16
@@ -31,6 +32,7 @@ class AppointmentDetailScreen extends StatelessWidget {
     final thanhToan = MockData.thanhToanCuaDatLich(datLich.maDatLich);
     final lyDo = datLich.lyDoKham;
     final daDanhGia = MockData.danhGiaCuaDatLich(datLich.maDatLich) != null;
+    final int phatSinh = datLich.chiPhiPhatSinh;
 
     return Scaffold(
       appBar: const AppHeader(title: 'Chi tiết lịch khám'),
@@ -55,9 +57,16 @@ class AppointmentDetailScreen extends StatelessWidget {
                 InfoRow(label: 'Chuyên khoa', value: chuyenKhoa.tenChuyenKhoa),
                 InfoRow(label: 'Cơ sở', value: coSo.tenCoSo),
                 InfoRow(
-                  label: 'Thời gian',
-                  value: '${datLich.gioKham ?? lich.gioBatDau} · ${Fmt.ngay(lich.ngay)} (ca ${lich.khungGio})',
+                  label: 'Giờ hẹn',
+                  value: '${LichSuRepo.gioHienThi(datLich)} · ${Fmt.ngay(lich.ngay)} (ca ${lich.khungGio})',
                 ),
+                InfoRow(label: 'Đặt lúc', value: Fmt.ngayGio(datLich.ngayDat)),
+                if (datLich.khamXongLuc != null)
+                  InfoRow(
+                    label: 'Khám xong lúc',
+                    value: Fmt.ngayGio(datLich.khamXongLuc!),
+                    bold: true,
+                  ),
                 InfoRow(label: 'Hình thức', value: datLich.hinhThucKham.label),
                 if (lyDo != null) InfoRow(label: 'Lý do khám', value: lyDo),
               ],
@@ -95,15 +104,33 @@ class AppointmentDetailScreen extends StatelessWidget {
                 : Column(
                     children: [
                       InfoRow(
-                        label: 'Số tiền',
+                        label: phatSinh > 0 ? 'Phí khám' : 'Số tiền',
                         value: Fmt.tien(thanhToan.soTien),
-                        bold: true,
+                        bold: phatSinh == 0,
                       ),
                       InfoRow(
                           label: 'Phương thức',
                           value: thanhToan.phuongThuc.label),
                       InfoRow(
                           label: 'Trạng thái', value: thanhToan.trangThai.label),
+                      // Chi phí cận lâm sàng bác sĩ chỉ định khi khám xong
+                      if (phatSinh > 0) ...[
+                        const Divider(height: 20),
+                        InfoRow(
+                          label: 'Cận lâm sàng phát sinh',
+                          value: '+ ${Fmt.tien(phatSinh)}',
+                        ),
+                        InfoRow(
+                          label: 'Tổng chi phí',
+                          value: Fmt.tien(thanhToan.soTien + phatSinh),
+                          bold: true,
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Phần phát sinh thanh toán tại quầy thu ngân.',
+                          style: AppTextStyles.caption,
+                        ),
+                      ],
                     ],
                   ),
           ),

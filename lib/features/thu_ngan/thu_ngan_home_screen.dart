@@ -10,6 +10,7 @@ import 'danh_sach_hoa_don_screen.dart';
 import 'payment_screen.dart';
 import 'thu_ngan_repo.dart';
 import 'thu_ngan_routes.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// Trang chủ Thu ngân – khung tab GHIM CỐ ĐỊNH (#56) · FR-31
 /// Figma: Thu Ngân › Trang chủ thu ngân
@@ -66,7 +67,7 @@ class _TrangChuThuNgan extends StatelessWidget {
   const _TrangChuThuNgan();
 
   static String _loiChao() {
-    final int gio = DateTime.now().hour;
+    final int gio = GioVN.bayGio().hour;
     if (gio < 11) return 'Chào buổi sáng';
     if (gio < 14) return 'Chào buổi trưa';
     if (gio < 18) return 'Chào buổi chiều';

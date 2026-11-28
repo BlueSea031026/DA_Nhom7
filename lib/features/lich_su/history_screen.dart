@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/mock/mock_data.dart';
@@ -21,6 +23,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
   /// 0 = Sắp tới, 1 = Đã qua
   int _tab = 0;
 
+  /// Tự làm mới mỗi 30 giây để lịch vừa quá giờ tự chuyển sang "Đã qua"
+  /// mà không cần chuyển tab.
+  Timer? _dongHo;
+
+  @override
+  void initState() {
+    super.initState();
+    _dongHo = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _dongHo?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final tatCa =
@@ -30,6 +50,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
         .where((d) =>
             _tab == 0 ? LichSuRepo.laSapToi(d) : !LichSuRepo.laSapToi(d))
         .toList();
+    // Sắp tới: giờ hẹn gần nhất lên đầu.
+    // Đã qua: lượt vừa khám xong / vừa qua giờ hẹn lên đầu.
+    if (_tab == 0) {
+      danhSach.sort((a, b) =>
+          LichSuRepo.gioKhamCua(a).compareTo(LichSuRepo.gioKhamCua(b)));
+    } else {
+      danhSach.sort((a, b) => LichSuRepo.moc(b).compareTo(LichSuRepo.moc(a)));
+    }
 
     // #15: tổng tiền đã khám (các khoản đã thanh toán, trừ đã hoàn)
     final int tongDaTra = MockData.thanhToan
@@ -133,9 +161,21 @@ class _LichKhamCard extends StatelessWidget {
           const Divider(height: 20),
           InfoRow(
             icon: Icons.schedule_outlined,
-            label: 'Thời gian',
-            value: '${datLich.gioKham ?? lich.gioBatDau} · ${Fmt.ngay(lich.ngay)}',
+            label: 'Giờ hẹn',
+            value: '${LichSuRepo.gioHienThi(datLich)} · ${Fmt.ngay(lich.ngay)}',
           ),
+          if (datLich.khamXongLuc != null)
+            InfoRow(
+              icon: Icons.task_alt,
+              label: 'Khám xong',
+              value: Fmt.ngayGio(datLich.khamXongLuc!),
+            )
+          else
+            InfoRow(
+              icon: Icons.edit_calendar_outlined,
+              label: 'Đặt lúc',
+              value: Fmt.ngayGio(datLich.ngayDat),
+            ),
           InfoRow(
             icon: Icons.person_outline,
             label: 'Bệnh nhân',

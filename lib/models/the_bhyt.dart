@@ -1,4 +1,5 @@
 import 'map_utils.dart';
+import '../core/utils/gio_vn.dart';
 
 /// Bảng TheBHYT
 class TheBhyt {
@@ -23,7 +24,7 @@ class TheBhyt {
   final int mucHuongBhyt;
 
   bool get conHieuLuc {
-    final now = DateTime.now();
+    final now = GioVN.bayGio();
     return !now.isBefore(ngayHieuLuc) && !now.isAfter(ngayHetHan);
   }
 

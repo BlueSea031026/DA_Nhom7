@@ -5,6 +5,7 @@ import 'package:timezone/timezone.dart' as tz;
 import '../../models/models.dart';
 import '../mock/mock_data.dart';
 import 'thong_bao_service.dart';
+import '../utils/gio_vn.dart';
 
 /// FR-14 Nhắc lịch hẹn. CHỈ HẢI SỬA FILE NÀY. Không ai phải gọi file này:
 /// MockData tự gọi [dongBo] mỗi khi dữ liệu đổi.
@@ -39,7 +40,7 @@ class NhacLichService {
   static Future<void> dongBo() async {
     final TaiKhoan? phien = MockData.phienDangNhap;
     if (phien == null) return;
-    final bayGio = DateTime.now();
+    final bayGio = GioVN.bayGio();
 
     final canNhac = <DatLich>[];
     for (final d in MockData.datLichCuaTaiKhoan(phien.maTaiKhoan)) {

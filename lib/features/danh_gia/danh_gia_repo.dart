@@ -1,6 +1,7 @@
 import '../../core/firebase/kho.dart';
 import '../../core/mock/mock_data.dart';
 import '../../models/models.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// FR-18 Đánh giá bác sĩ – thay cho TRIGGER 3 (trg_DanhGia_CapNhatDiemBacSi).
 /// Phụ trách: Hải
@@ -41,7 +42,7 @@ class DanhGiaRepo {
           nguoiDanhGia: phien?.maTaiKhoan ?? datLich.datBoi,
           soSao: soSao,
           nhanXet: nhanXet,
-          ngayDanhGia: DateTime.now(),
+          ngayDanhGia: GioVN.bayGio(),
         ).toMap(),
       );
       final tong = cacSaoCu.fold<int>(0, (a, b) => a + b) + soSao;

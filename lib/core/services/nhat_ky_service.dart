@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../models/models.dart';
 import '../firebase/kho.dart';
 import '../mock/mock_data.dart';
+import '../utils/gio_vn.dart';
 
 /// Ghi nhật ký thao tác của Quản trị viên (bảng NhatKyQuanTri).
 /// CHỈ HẢI SỬA FILE NÀY – mọi màn Quản trị viên GỌI hàm [ghi] sau mỗi lần
@@ -25,7 +26,7 @@ class NhatKyService {
             maNhatKy: ma.giaTri,
             maTaiKhoan: phien.maTaiKhoan,
             hanhDong: hanhDong,
-            thoiGian: DateTime.now(),
+            thoiGian: GioVN.bayGio(),
             ghiChu: ghiChu,
           ).toMap(),
         );

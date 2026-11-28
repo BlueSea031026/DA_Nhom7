@@ -15,6 +15,7 @@ import '../tai_khoan/account_log_screen.dart';
 import '../tai_khoan/tai_khoan_routes.dart';
 import '../thong_ke/statistics_screen.dart';
 import '../thong_ke/thong_ke_routes.dart';
+import '../../../core/utils/gio_vn.dart';
 
 /// Trang chủ Quản trị viên – khung tab GHIM CỐ ĐỊNH (#38)
 /// Figma: Quản trị viên › Trang chủ admin
@@ -70,7 +71,7 @@ class _TrangChuAdmin extends StatelessWidget {
   const _TrangChuAdmin();
 
   static String _loiChao() {
-    final int gio = DateTime.now().hour;
+    final int gio = GioVN.bayGio().hour;
     if (gio < 11) return 'Chào buổi sáng';
     if (gio < 14) return 'Chào buổi trưa';
     if (gio < 18) return 'Chào buổi chiều';
@@ -111,7 +112,7 @@ class _TrangChuAdmin extends StatelessWidget {
     ];
 
     // #64: những việc cần chú ý hôm nay
-    final bayGio = DateTime.now();
+    final bayGio = GioVN.bayGio();
     final caSapDay = MockData.lichLamViec
         .where((l) =>
             l.ngay == MockData.homNay &&

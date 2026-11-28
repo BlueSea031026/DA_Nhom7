@@ -6,6 +6,7 @@ import '../../core/mock/mock_data.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/models.dart';
 import '../dat_lich/dat_lich_repo.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// Chế độ ONLINE của "Trợ lý sức khỏe": hỏi Gemini qua Firebase AI Logic.
 /// Phụ trách: Hải
@@ -143,7 +144,7 @@ class ChatbotGemini {
           '3 = 95%; 4 = 80%); app tự trừ phần BHYT chi trả.')
       ..writeln('- Người giám hộ có thể đặt lịch cho người thân.')
       ..writeln()
-      ..writeln('DỮ LIỆU (cập nhật lúc ${Fmt.ngay(DateTime.now())}):');
+      ..writeln('DỮ LIỆU (cập nhật lúc ${Fmt.ngay(GioVN.bayGio())}):');
 
     for (final CoSoYTe cs in MockData.coSoYTe.where((c) => c.trangThai)) {
       b.writeln('* Cơ sở "${cs.tenCoSo}" – ${cs.diaChi}'

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/mock/mock_data.dart';
 import '../../../core/widgets/widgets.dart';
 import 'lich_lam_viec_repo.dart';
+import '../../../core/utils/gio_vn.dart';
 
 /// Thêm ca làm việc · FR-38
 /// Figma: Quản trị viên › THÊM CA LÀM VIỆC
@@ -42,7 +43,7 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
       _maBacSi = maBacSi;
     }
     final ngay = thamSo['ngay'];
-    final now = DateTime.now();
+    final now = GioVN.bayGio();
     final homNay = DateTime(now.year, now.month, now.day);
     // Ngày đã qua thì không điền (không được thêm ca vào quá khứ)
     if (ngay is DateTime && !ngay.isBefore(homNay)) {
@@ -51,7 +52,7 @@ class _AddShiftScreenState extends State<AddShiftScreen> {
   }
 
   Future<void> _chonNgay() async {
-    final now = DateTime.now();
+    final now = GioVN.bayGio();
     final chon = await showDatePicker(
       context: context,
       initialDate: _ngay ?? now,
