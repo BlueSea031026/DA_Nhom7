@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/utils/formatters.dart';
+import '../../core/widgets/ma_qr_thanh_toan.dart';
 import '../../models/enums.dart';
 import 'thu_ngan_repo.dart';
 import 'thu_ngan_routes.dart';
@@ -100,25 +100,17 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
     );
   }
 
-  /// #58: chuyển khoản / ví → hiện mã QR nội dung chuyển tiền.
-  Widget _khoiMaQr(int soTien, String maXacNhan) {
-    final noiDung = 'TTYT NHOM7|STK 0123456789|SO TIEN $soTien|ND $maXacNhan';
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            QrImageView(data: noiDung, size: 180),
-            const SizedBox(height: 8),
-            Text('Nội dung chuyển khoản: $maXacNhan',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            const Text('Khách quét mã để chuyển, thu ngân kiểm tra rồi xác nhận.',
-                textAlign: TextAlign.center),
-          ],
-        ),
-      ),
-    );
-  }
+  /// #58: chuyển khoản → QR MB Bank, ví điện tử → QR MoMo (mã thật của
+  /// trung tâm). Khách quét, thu ngân kiểm tra tiền đã vào rồi xác nhận.
+  Widget _khoiMaQr(int soTien, String maXacNhan) => MaQrThanhToan(
+        phuongThuc: selectedMethod == 'Ví điện tử'
+            ? PhuongThucThanhToan.viDienTu
+            : PhuongThucThanhToan.chuyenKhoan,
+        soTien: soTien,
+        noiDung: maXacNhan,
+        ghiChu: 'Khách quét mã, nhập đúng số tiền và nội dung. Thu ngân kiểm '
+            'tra tiền đã vào tài khoản rồi bấm Xác nhận thanh toán.',
+      );
 
   /// Chặn bấm 2 lần → thu tiền 2 lần.
   bool _daThu = false;
