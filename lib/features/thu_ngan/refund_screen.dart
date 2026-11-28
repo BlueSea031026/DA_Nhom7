@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/utils/formatters.dart';
+import '../../models/models.dart';
 import 'thu_ngan_repo.dart';
 import 'thu_ngan_routes.dart';
 
@@ -17,6 +18,13 @@ class RefundScreen extends StatefulWidget {
 class _RefundScreenState extends State<RefundScreen> {
   final TextEditingController _reasonController = TextEditingController();
 
+  /// Số tài khoản – ngân hàng / số ví nhận tiền hoàn.
+  final TextEditingController _nhanController = TextEditingController();
+
+  /// Hình thức hoàn tiền thu ngân chọn; null = mặc định theo cách bệnh nhân
+  /// đã thanh toán.
+  PhuongThucThanhToan? _phuongThucHoan;
+
   /// Khoản thanh toán đang chọn để hoàn.
   int? _maThanhToan;
   bool _dangXuLy = false;
@@ -24,6 +32,7 @@ class _RefundScreenState extends State<RefundScreen> {
   @override
   void dispose() {
     _reasonController.dispose();
+    _nhanController.dispose();
     super.dispose();
   }
 
@@ -90,7 +99,11 @@ class _RefundScreenState extends State<RefundScreen> {
                                 ),
                               ),
                           ],
-                          onChanged: (v) => setState(() => _maThanhToan = v),
+                          onChanged: (v) => setState(() {
+                            _maThanhToan = v;
+                            _phuongThucHoan = null;
+                            _nhanController.clear();
+                          }),
                         ),
                         const SizedBox(height: 8),
                         Text('Mã hóa đơn: ${hd?.soHoaDon ?? '—'}'),
@@ -100,12 +113,65 @@ class _RefundScreenState extends State<RefundScreen> {
                         Text('Bệnh nhân: ${bn?.hoTen ?? '—'}'),
                         const SizedBox(height: 8),
                         Text(
-                          'Trạng thái: Đã thanh toán (${tt.phuongThuc.label})',
+                          'Trạng thái: ${tt.trangThai.label} '
+                          '(đã trả bằng ${tt.phuongThuc.label.toLowerCase()})',
                         ),
+                        if (tt.lyDoHoan != null) ...[
+                          const SizedBox(height: 8),
+                          Text('Yêu cầu: ${tt.lyDoHoan}'),
+                        ],
+                        if (tt.ngayYeuCauHoan != null) ...[
+                          const SizedBox(height: 8),
+                          Text('Hủy lúc: ${Fmt.ngayGio(tt.ngayYeuCauHoan!)}'),
+                        ],
                       ],
                     ),
                   ),
                 ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Hình thức hoàn tiền',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final pt in PhuongThucThanhToan.values)
+                      ChoiceChip(
+                        avatar: Icon(_icon(pt), size: 18),
+                        label: Text(pt.label),
+                        selected: pt == (_phuongThucHoan ?? tt.phuongThuc),
+                        onSelected: _dangXuLy
+                            ? null
+                            : (_) => setState(() => _phuongThucHoan = pt),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if ((_phuongThucHoan ?? tt.phuongThuc) ==
+                    PhuongThucThanhToan.tienMat)
+                  const Text(
+                    'Đưa tiền mặt trực tiếp cho bệnh nhân tại quầy và yêu cầu '
+                    'bệnh nhân ký nhận.',
+                  )
+                else
+                  TextField(
+                    controller: _nhanController,
+                    keyboardType: TextInputType.text,
+                    decoration: InputDecoration(
+                      labelText: (_phuongThucHoan ?? tt.phuongThuc) ==
+                              PhuongThucThanhToan.chuyenKhoan
+                          ? 'Số tài khoản – ngân hàng nhận'
+                          : 'Số điện thoại ví (MoMo, ZaloPay...)',
+                      hintText: (_phuongThucHoan ?? tt.phuongThuc) ==
+                              PhuongThucThanhToan.chuyenKhoan
+                          ? 'VD: 0376662897 – MB Bank'
+                          : 'VD: 0901234567 – MoMo',
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
                 const SizedBox(height: 24),
                 const Text(
                   'Lý do hoàn tiền',
@@ -116,7 +182,7 @@ class _RefundScreenState extends State<RefundScreen> {
                   controller: _reasonController,
                   maxLines: 4,
                   decoration: const InputDecoration(
-                    hintText: 'Nhập lý do hoàn tiền',
+                    hintText: 'Để trống = dùng lý do hủy lịch của bệnh nhân',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -141,7 +207,12 @@ class _RefundScreenState extends State<RefundScreen> {
                     onPressed: _dangXuLy
                         ? null
                         : () async {
-                            final lyDo = _reasonController.text.trim();
+                            final String nhap = _reasonController.text.trim();
+                            // Để trống thì dùng lý do hủy lịch của bệnh nhân
+                            final lyDo =
+                                nhap.isNotEmpty ? nhap : (tt.lyDoHoan ?? '');
+                            final phuongThucHoan =
+                                _phuongThucHoan ?? tt.phuongThuc;
                             if (lyDo.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -159,18 +230,29 @@ class _RefundScreenState extends State<RefundScreen> {
                                 thanhToan: tt,
                                 lyDo: lyDo,
                                 maThuNgan: maThuNgan,
+                                phuongThucHoan: phuongThucHoan,
+                                thongTinNhan: _nhanController.text,
                               );
 
                               if (!context.mounted) return;
                               Navigator.pushReplacementNamed(
                                 context,
                                 ThuNganRoutes.refundSuccess,
-                                arguments: {'thanhToan': tt, 'lyDo': lyDo},
+                                arguments: {
+                                  'thanhToan': tt,
+                                  'lyDo': lyDo,
+                                  'phuongThucHoan': phuongThucHoan,
+                                  'thongTinNhan': _nhanController.text.trim(),
+                                },
                               );
                             } catch (e) {
                               if (!context.mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Lỗi hoàn tiền: $e')),
+                                SnackBar(
+                                  content: Text(
+                                    'Lỗi hoàn tiền: ${e.toString().replaceFirst('Exception: ', '')}',
+                                  ),
+                                ),
                               );
                             } finally {
                               if (mounted) setState(() => _dangXuLy = false);
@@ -188,4 +270,10 @@ class _RefundScreenState extends State<RefundScreen> {
       ),
     );
   }
+
+  static IconData _icon(PhuongThucThanhToan pt) => switch (pt) {
+        PhuongThucThanhToan.tienMat => Icons.payments_outlined,
+        PhuongThucThanhToan.chuyenKhoan => Icons.account_balance,
+        PhuongThucThanhToan.viDienTu => Icons.account_balance_wallet,
+      };
 }

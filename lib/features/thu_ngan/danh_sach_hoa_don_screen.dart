@@ -140,7 +140,7 @@ class _DanhSachHoaDonScreenState extends State<DanhSachHoaDonScreen> {
                           title: Text('${hd.soHoaDon} · ${bn?.hoTen ?? '—'}'),
                           subtitle: Text(
                             '${Fmt.ngayGio(hd.ngayXuat)} · ${tt.phuongThuc.label}'
-                            '${tt.trangThai == TrangThaiThanhToan.daHoanTien ? ' · Đã hoàn tiền' : ''}',
+                            '${tt.trangThai == TrangThaiThanhToan.daThanhToan ? '' : ' · ${tt.trangThai.label}'}',
                           ),
                           trailing: Text(Fmt.tien(tt.soTien),
                               style: AppTextStyles.label
