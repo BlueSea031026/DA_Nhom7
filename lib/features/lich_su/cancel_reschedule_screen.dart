@@ -217,7 +217,8 @@ class _CancelRescheduleScreenState extends State<CancelRescheduleScreen> {
             NoteBox(
               icon: Icons.payments_outlined,
               message:
-                  'Bạn đã thanh toán ${Fmt.tien(soTienDaTra)}. Số tiền sẽ được hoàn lại trong 3–5 ngày làm việc.',
+                  'Bạn đã thanh toán ${Fmt.tien(soTienDaTra)}. Sau khi hủy, thu ngân sẽ hoàn lại '
+                  'bằng tiền mặt tại quầy, chuyển khoản hoặc ví điện tử; bạn nhận thông báo khi hoàn xong.',
             ),
           if (_doiLich && daThanhToan)
             const NoteBox(

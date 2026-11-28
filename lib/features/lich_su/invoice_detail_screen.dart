@@ -127,12 +127,24 @@ class _InvoiceBody extends StatelessWidget {
           ),
         ),
 
+        if (thanhToan.trangThai == TrangThaiThanhToan.choHoanTien) ...[
+          const SizedBox(height: 12),
+          NoteBox(
+            icon: Icons.hourglass_top,
+            message:
+                'Lịch khám đã hủy. Số tiền ${Fmt.tien(thanhToan.soTien)} đang chờ thu ngân hoàn lại '
+                '(tiền mặt tại quầy, chuyển khoản hoặc ví điện tử).',
+          ),
+        ],
         if (thanhToan.trangThai == TrangThaiThanhToan.daHoanTien) ...[
           const SizedBox(height: 12),
           NoteBox(
             icon: Icons.replay_outlined,
             message:
-                'Lịch khám đã hủy. Số tiền ${Fmt.tien(thanhToan.soTien)} đã được hoàn lại qua ${thanhToan.phuongThuc.label.toLowerCase()}.',
+                'Lịch khám đã hủy. Số tiền ${Fmt.tien(thanhToan.soTien)} đã được hoàn lại qua '
+                '${(thanhToan.phuongThucHoan ?? thanhToan.phuongThuc).label.toLowerCase()}'
+                '${thanhToan.thongTinNhanHoan != null ? ' (${thanhToan.thongTinNhanHoan})' : ''}'
+                '${thanhToan.ngayHoanTien != null ? ' lúc ${Fmt.ngayGio(thanhToan.ngayHoanTien!)}' : ''}.',
           ),
         ],
 
@@ -154,6 +166,7 @@ class _InvoiceBody extends StatelessWidget {
   static Widget _paymentChip(TrangThaiThanhToan s) {
     final (Color fg, Color bg) = switch (s) {
       TrangThaiThanhToan.daThanhToan => (AppColors.success, AppColors.successLight),
+      TrangThaiThanhToan.choHoanTien => (AppColors.info, AppColors.infoLight),
       TrangThaiThanhToan.daHoanTien => (AppColors.warning, AppColors.warningLight),
       TrangThaiThanhToan.chuaThanhToan => (AppColors.danger, AppColors.dangerLight),
     };
