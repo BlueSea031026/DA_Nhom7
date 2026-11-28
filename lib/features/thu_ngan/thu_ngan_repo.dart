@@ -5,6 +5,7 @@ import '../../core/firebase/kho.dart';
 import '../../core/mock/mock_data.dart';
 import '../../models/models.dart';
 import '../../core/utils/formatters.dart';
+import '../dat_lich/thong_tin_dat_lich.dart';
 import '../../core/utils/gio_vn.dart';
 
 /// Gom dữ liệu hiển thị cho 1 khoản chờ hoàn tiền
@@ -108,8 +109,8 @@ class ThuNganRePo {
       maDatLich: datLich.maDatLich,
       loai: LoaiThongBao.thanhToan,
       noiDung:
-          'Thanh toán thành công. '
-          'Số tiền: $soTienđ',
+          'Thanh toán thành công ${Fmt.tien(soTien)} '
+          '(${phuongThuc.label.toLowerCase()}) cho lịch ${datLich.maXacNhan}.',
     );
   }
 
@@ -415,6 +416,39 @@ class ThuNganRePo {
     );
   }
 
+  /// Số tiền bệnh nhân phải trả cho 1 lượt đặt lịch.
+  /// Ưu tiên dữ liệu realtime trong máy (MockData); nếu chưa có thì đọc
+  /// Firestore: lịch → bác sĩ → chuyên khoa.giaKhamCoBan, thẻ BHYT.mucHuongBhyt.
+  static Future<int> tinhTienPhaiTra(DatLich datLich) async {
+    try {
+      final int tien = ThongTinDatLich.tienPhaiTraCua(datLich);
+      if (tien > 0) return tien;
+    } catch (_) {
+      // MockData chưa có ca / bác sĩ → đọc thẳng Firestore bên dưới
+    }
+
+    int giaKham = 0;
+    final lichSnap = await Kho.doc(Bang.lichLamViec, datLich.maLich).get();
+    final maBacSi = (lichSnap.data()?['maBacSi'] as num?)?.toInt();
+    if (maBacSi != null) {
+      final bsSnap = await Kho.doc(Bang.bacSi, maBacSi).get();
+      final maCk = (bsSnap.data()?['maChuyenKhoa'] as num?)?.toInt();
+      if (maCk != null) {
+        final ckSnap = await Kho.doc(Bang.chuyenKhoa, maCk).get();
+        giaKham = (ckSnap.data()?['giaKhamCoBan'] as num?)?.toInt() ?? 0;
+      }
+    }
+
+    final int? maBhyt = datLich.maBhyt;
+    if (datLich.hinhThucKham == HinhThucKham.bhyt && maBhyt != null) {
+      final theSnap = await Kho.doc(Bang.theBhyt, maBhyt).get();
+      if (theSnap.exists && theSnap.data() != null) {
+        return TheBhyt.fromMap(theSnap.data()!).tienPhaiTra(giaKham);
+      }
+    }
+    return giaKham;
+  }
+
   // --- Thêm hàm này vào bên trong class ThuNganRePo ---
   static Future<ThongTinThanhToan> layThongTinThanhToan(Object? thamSo) async {
     DatLich? datLich;
@@ -451,34 +485,9 @@ class ThuNganRePo {
       tenBenhNhan = BenhNhan.fromMap(bnSnap.data()!).hoTen;
     }
 
-    // 4. Tính số tiền phải trả từ dữ liệu thật (ChuyenKhoa.phiKham & TheBhyt.mucHuong)
-    int phiKham = 0;
-    final lichSnap = await Kho.doc(Bang.lichLamViec, datLich.maLich).get();
-    if (lichSnap.exists && lichSnap.data() != null) {
-      final maBacSi = (lichSnap.data()!['maBacSi'] as num).toInt();
-      final bsSnap = await Kho.doc(Bang.bacSi, maBacSi).get();
-      if (bsSnap.exists && bsSnap.data() != null) {
-        final maCk = (bsSnap.data()!['maChuyenKhoa'] as num).toInt();
-        final ckSnap = await Kho.doc(Bang.chuyenKhoa, maCk).get();
-        if (ckSnap.exists && ckSnap.data() != null) {
-          phiKham = (ckSnap.data()!['phiKham'] as num?)?.toInt() ?? 0;
-        }
-      }
-    }
-
-    int soTienPhaiTra = phiKham;
-    if (datLich.hinhThucKham == HinhThucKham.bhyt) {
-      final bhytSnap = await Kho.bang(Bang.theBhyt)
-          .where('maBenhNhan', isEqualTo: datLich.maBenhNhan)
-          .limit(1)
-          .get();
-      if (bhytSnap.docs.isNotEmpty) {
-        final mucHuong =
-            (bhytSnap.docs.first.data()['mucHuong'] as num?)?.toDouble() ?? 0.0;
-        final bhytTra = (phiKham * mucHuong).round();
-        soTienPhaiTra = phiKham - bhytTra;
-      }
-    }
+    // 4. Số tiền phải trả = giá khám chuyên khoa (giaKhamCoBan), trừ phần
+    //    BHYT chi trả nếu khám BHYT – giống hệt cách màn đặt lịch tính.
+    final int soTienPhaiTra = await tinhTienPhaiTra(datLich);
 
     return ThongTinThanhToan(
       datLich: datLich,
