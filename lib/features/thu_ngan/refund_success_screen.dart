@@ -18,6 +18,15 @@ class RefundSuccessScreen extends StatelessWidget {
         thamSo is Map<String, dynamic> ? thamSo : null;
     final ThanhToan? tt = kq?['thanhToan'] as ThanhToan?;
     final String lyDo = (kq?['lyDo'] as String?) ?? '';
+    final PhuongThucThanhToan? pt =
+        kq?['phuongThucHoan'] as PhuongThucThanhToan? ?? tt?.phuongThuc;
+    final String nhan = (kq?['thongTinNhan'] as String?) ?? '';
+    final String cach = switch (pt) {
+      PhuongThucThanhToan.tienMat => 'bằng tiền mặt tại quầy',
+      PhuongThucThanhToan.chuyenKhoan => 'qua chuyển khoản${nhan.isEmpty ? '' : ' tới $nhan'}',
+      PhuongThucThanhToan.viDienTu => 'qua ví điện tử${nhan.isEmpty ? '' : ' $nhan'}',
+      null => '',
+    };
 
     return Scaffold(
       appBar: AppBar(
@@ -54,8 +63,7 @@ class RefundSuccessScreen extends StatelessWidget {
               Text(
                 tt == null
                     ? 'Giao dịch đã được hoàn tiền thành công.'
-                    : 'Đã hoàn ${Fmt.tien(tt.soTien)} qua '
-                        '${tt.phuongThuc.label}.\nLý do: $lyDo',
+                    : 'Đã hoàn ${Fmt.tien(tt.soTien)} $cach.\nLý do: $lyDo',
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 16),
               ),

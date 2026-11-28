@@ -61,7 +61,9 @@ class LichSuRepo {
   }
 
   /// HỦY LỊCH: DatLich → Đã hủy; trả lại 1 chỗ cho ca khám; nếu đã thanh toán
-  /// thì ThanhToan → Đã hoàn tiền (giống trigger trong SQL). Gửi thông báo.
+  /// thì ThanhToan → "Chờ hoàn tiền" để THU NGÂN hoàn lại (tiền mặt, chuyển
+  /// khoản hoặc ví điện tử). Chỉ khi thu ngân xác nhận mới thành "Đã hoàn tiền".
+  /// Gửi thông báo cho bệnh nhân.
   static Future<void> huyLich(DatLich datLich, {String? lyDo}) async {
     final loi = kiemTra(datLich);
     if (loi != null) throw Exception(loi);
@@ -97,7 +99,13 @@ class LichSuRepo {
       });
       if (refTt != null &&
           ttSnap?.data()?['trangThai'] == TrangThaiThanhToan.daThanhToan.label) {
-        tx.update(refTt, {'trangThai': TrangThaiThanhToan.daHoanTien.label});
+        tx.update(refTt, {
+          'trangThai': TrangThaiThanhToan.choHoanTien.label,
+          'lyDoHoan': (lyDo ?? '').trim().isEmpty
+              ? 'Bệnh nhân hủy lịch'
+              : 'Hủy lịch: ${lyDo!.trim()}',
+          'ngayYeuCauHoan': GioVN.bayGio().toIso8601String(),
+        });
       }
     });
 
@@ -110,7 +118,9 @@ class LichSuRepo {
       maDatLich: datLich.maDatLich,
       loai: LoaiThongBao.huyLich,
       noiDung: 'Đã hủy lịch khám ${datLich.gioKham ?? lich.gioBatDau} ngày ${Fmt.ngay(lich.ngay)}.'
-          '${soTienHoan > 0 ? ' Số tiền ${Fmt.tien(soTienHoan)} sẽ được hoàn lại.' : ''}',
+          '${soTienHoan > 0 ? ' Số tiền ${Fmt.tien(soTienHoan)} đang chờ thu ngân hoàn lại '
+              '(tiền mặt tại quầy, chuyển khoản hoặc ví điện tử). '
+              'Bạn sẽ nhận thông báo khi hoàn tiền xong.' : ''}',
     );
   }
 

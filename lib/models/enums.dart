@@ -57,6 +57,9 @@ enum PhuongThucThanhToan {
 enum TrangThaiThanhToan {
   chuaThanhToan('Chưa thanh toán'),
   daThanhToan('Đã thanh toán'),
+
+  /// Lịch đã hủy, tiền đang chờ thu ngân hoàn lại cho bệnh nhân.
+  choHoanTien('Chờ hoàn tiền'),
   daHoanTien('Đã hoàn tiền');
 
   const TrangThaiThanhToan(this.label);

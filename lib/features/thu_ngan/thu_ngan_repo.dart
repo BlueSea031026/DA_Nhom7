@@ -4,6 +4,7 @@ import 'package:da_nhom7/core/services/thong_bao_service.dart';
 import '../../core/firebase/kho.dart';
 import '../../core/mock/mock_data.dart';
 import '../../models/models.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/utils/gio_vn.dart';
 
 /// Gom dữ liệu hiển thị cho 1 khoản chờ hoàn tiền
@@ -112,10 +113,15 @@ class ThuNganRePo {
     );
   }
 
-  /// Stream lấy danh sách các giao dịch đã thanh toán nhưng lịch khám đã bị hủy (chờ hoàn tiền)
+  /// Stream các khoản CHỜ HOÀN TIỀN: bệnh nhân đã thanh toán rồi hủy lịch.
+  /// Gồm ThanhToan "Chờ hoàn tiền" và dữ liệu cũ "Đã thanh toán" nhưng lịch
+  /// đã hủy. Chỉ lấy đúng cơ sở thu ngân đang làm.
   static Stream<List<ThongTinChoHoan>> streamChoHoanTien() {
     return Kho.bang(Bang.thanhToan)
-        .where('trangThai', isEqualTo: TrangThaiThanhToan.daThanhToan.label)
+        .where('trangThai', whereIn: [
+          TrangThaiThanhToan.choHoanTien.label,
+          TrangThaiThanhToan.daThanhToan.label,
+        ])
         .snapshots()
         .asyncMap((snap) async {
           final List<ThongTinChoHoan> ketQua = [];
@@ -123,16 +129,13 @@ class ThuNganRePo {
           for (final doc in snap.docs) {
             final tt = ThanhToan.fromMap(doc.data());
 
-            // Lấy thông tin Đặt lịch tương ứng
             final dlSnap = await Kho.doc(Bang.datLich, tt.maDatLich).get();
             if (!dlSnap.exists || dlSnap.data() == null) continue;
             final dl = DatLich.fromMap(dlSnap.data()!);
 
-            // Chỉ lấy những giao dịch mà lịch khám đã bị hủy (FR-15)
-            // LƯU Ý KHI TEST: Nếu muốn hiện tất cả giao dịch đã thanh toán để test nhanh, tạm comment 2 dòng dưới:
+            // Chỉ lấy khoản mà lịch khám đã bị hủy (FR-15)
             if (dl.trangThai != TrangThaiDatLich.daHuy) continue;
 
-            // Lấy thêm Hóa đơn & Bệnh nhân để hiển thị đầy đủ trên card
             final hdSnap = await Kho.bang(Bang.hoaDon)
                 .where('maThanhToan', isEqualTo: tt.maThanhToan)
                 .limit(1)
@@ -156,26 +159,57 @@ class ThuNganRePo {
             );
           }
 
-          return ketQua;
+          // Đúng cơ sở; yêu cầu hủy sớm nhất xử lý trước
+          final int? coSo = maCoSoDangLam;
+          final loc = ketQua
+              .where((x) => coSo == null || maCoSoCua(x.datLich) == coSo)
+              .toList();
+          loc.sort((a, b) {
+            final ta = a.thanhToan.ngayYeuCauHoan ?? a.datLich.ngayDat;
+            final tb = b.thanhToan.ngayYeuCauHoan ?? b.datLich.ngayDat;
+            return ta.compareTo(tb);
+          });
+          return loc;
         });
   }
 
-  /// Xử lý hoàn tiền: cập nhật trạng thái ThanhToan -> Đã hoàn tiền + Gửi thông báo
+  /// Thu ngân HOÀN TIỀN: "Chờ hoàn tiền" → "Đã hoàn tiền".
+  /// [phuongThucHoan]: tiền mặt tại quầy / chuyển khoản / ví điện tử (có thể
+  /// khác cách bệnh nhân đã trả). [thongTinNhan]: số tài khoản – ngân hàng
+  /// hoặc số ví; bắt buộc khi không hoàn bằng tiền mặt.
   static Future<void> hoanTien({
     required ThanhToan thanhToan,
     required String lyDo,
     required int maThuNgan,
+    required PhuongThucThanhToan phuongThucHoan,
+    String? thongTinNhan,
   }) async {
+    final String? nhan =
+        (thongTinNhan ?? '').trim().isEmpty ? null : thongTinNhan!.trim();
+    if (phuongThucHoan != PhuongThucThanhToan.tienMat && nhan == null) {
+      throw Exception(phuongThucHoan == PhuongThucThanhToan.chuyenKhoan
+          ? 'Vui lòng nhập số tài khoản và ngân hàng nhận tiền hoàn.'
+          : 'Vui lòng nhập số ví điện tử nhận tiền hoàn.');
+    }
     final docRef = Kho.doc(Bang.thanhToan, thanhToan.maThanhToan);
+    final dlRef = Kho.doc(Bang.datLich, thanhToan.maDatLich);
 
     await Kho.db.runTransaction((tx) async {
       final snap = await tx.get(docRef);
+      final dlSnap = await tx.get(dlRef);
       if (!snap.exists || snap.data() == null) {
         throw Exception('Không tìm thấy giao dịch thanh toán.');
       }
+      if (dlSnap.data()?['trangThai'] != TrangThaiDatLich.daHuy.label) {
+        throw Exception('Lịch khám chưa bị hủy nên không thể hoàn tiền.');
+      }
 
       final trangThaiHienTai = snap.data()!['trangThai'] as String?;
-      if (trangThaiHienTai != TrangThaiThanhToan.daThanhToan.label) {
+      if (trangThaiHienTai == TrangThaiThanhToan.daHoanTien.label) {
+        throw Exception('Khoản này đã được hoàn tiền trước đó.');
+      }
+      if (trangThaiHienTai != TrangThaiThanhToan.choHoanTien.label &&
+          trangThaiHienTai != TrangThaiThanhToan.daThanhToan.label) {
         throw Exception('Giao dịch này không ở trạng thái có thể hoàn tiền.');
       }
 
@@ -183,16 +217,21 @@ class ThuNganRePo {
         'trangThai': TrangThaiThanhToan.daHoanTien.label,
         'ngayHoanTien': GioVN.bayGio().toIso8601String(),
         'lyDoHoan': lyDo,
+        'phuongThucHoan': phuongThucHoan.label,
+        'thongTinNhanHoan': nhan,
         'xuLyBoi': maThuNgan,
       });
     });
 
-    // Gửi thông báo cho bệnh nhân (dùng đúng signature hàm của Hải bạn đã gọi ở FR-31)
+    final String cach = switch (phuongThucHoan) {
+      PhuongThucThanhToan.tienMat => 'bằng tiền mặt tại quầy thu ngân',
+      PhuongThucThanhToan.chuyenKhoan => 'qua chuyển khoản tới $nhan',
+      PhuongThucThanhToan.viDienTu => 'qua ví điện tử $nhan',
+    };
     await ThongBaoService.gui(
       maDatLich: thanhToan.maDatLich,
       loai: LoaiThongBao.thanhToan,
-      noiDung:
-          'Hoàn tiền thành công. Số tiền: ${thanhToan.soTien}đ. Lý do: $lyDo',
+      noiDung: 'Đã hoàn ${Fmt.tien(thanhToan.soTien)} $cach. Lý do: $lyDo',
     );
   }
 

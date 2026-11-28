@@ -113,6 +113,30 @@ class AppointmentDetailScreen extends StatelessWidget {
                           value: thanhToan.phuongThuc.label),
                       InfoRow(
                           label: 'Trạng thái', value: thanhToan.trangThai.label),
+                      // Hoàn tiền khi hủy lịch (thu ngân xử lý)
+                      if (thanhToan.trangThai ==
+                          TrangThaiThanhToan.choHoanTien)
+                        const Text(
+                          'Thu ngân sẽ hoàn lại bằng tiền mặt tại quầy, chuyển '
+                          'khoản hoặc ví điện tử.',
+                          style: AppTextStyles.caption,
+                        ),
+                      if (thanhToan.trangThai ==
+                          TrangThaiThanhToan.daHoanTien) ...[
+                        InfoRow(
+                          label: 'Hoàn qua',
+                          value: [
+                            (thanhToan.phuongThucHoan ?? thanhToan.phuongThuc)
+                                .label,
+                            ?thanhToan.thongTinNhanHoan,
+                          ].join(' · '),
+                        ),
+                        if (thanhToan.ngayHoanTien != null)
+                          InfoRow(
+                            label: 'Hoàn lúc',
+                            value: Fmt.ngayGio(thanhToan.ngayHoanTien!),
+                          ),
+                      ],
                       // Chi phí cận lâm sàng bác sĩ chỉ định khi khám xong
                       if (phatSinh > 0) ...[
                         const Divider(height: 20),
