@@ -18,6 +18,7 @@ import 'widgets/family_appointment_card.dart';
 import 'widgets/family_member_avatar.dart';
 import 'widgets/guardian_header.dart';
 import 'widgets/quick_access_item.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// Trang chủ Người giám hộ – khung tab GHIM CỐ ĐỊNH (#20).
 /// Phụ trách: Hiếu
@@ -116,7 +117,7 @@ class _TrangChuGiamHoState extends State<_TrangChuGiamHo> {
   }
 
   static String _loiChao() {
-    final int gio = DateTime.now().hour;
+    final int gio = GioVN.bayGio().hour;
     if (gio < 11) return 'Chào buổi sáng';
     if (gio < 14) return 'Chào buổi trưa';
     if (gio < 18) return 'Chào buổi chiều';

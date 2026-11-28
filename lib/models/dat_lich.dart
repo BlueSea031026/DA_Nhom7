@@ -16,6 +16,8 @@ class DatLich {
     required this.ngayDat,
     this.ghiChu,
     this.gioKham,
+    this.khamXongLuc,
+    this.chiPhiPhatSinh = 0,
   });
 
   final int maDatLich;
@@ -40,6 +42,13 @@ class DatLich {
   /// hiển thị giờ bắt đầu ca.
   final String? gioKham;
 
+  /// Thời điểm bác sĩ bấm "Khám xong" (giờ VN). null = chưa khám xong.
+  final DateTime? khamXongLuc;
+
+  /// Chi phí cận lâm sàng bác sĩ chỉ định thêm (xét nghiệm, siêu âm...).
+  /// Thu tại quầy, cộng thêm vào phí khám đã trả.
+  final int chiPhiPhatSinh;
+
   factory DatLich.fromMap(Map<String, dynamic> m) => DatLich(
         maDatLich: m['maDatLich'] as int,
         maBenhNhan: m['maBenhNhan'] as int,
@@ -53,6 +62,8 @@ class DatLich {
         ngayDat: parseDate(m['ngayDat']),
         ghiChu: m['ghiChu'] as String?,
         gioKham: m['gioKham'] as String?,
+        khamXongLuc: parseDateOrNull(m['khamXongLuc']),
+        chiPhiPhatSinh: (m['chiPhiPhatSinh'] as num?)?.toInt() ?? 0,
       );
 
   Map<String, dynamic> toMap() => {
@@ -68,5 +79,7 @@ class DatLich {
         'ngayDat': ngayDat.toIso8601String(),
         'ghiChu': ghiChu,
         'gioKham': gioKham,
+        'khamXongLuc': khamXongLuc?.toIso8601String(),
+        'chiPhiPhatSinh': chiPhiPhatSinh,
       };
 }

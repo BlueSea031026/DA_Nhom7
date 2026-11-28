@@ -1,4 +1,5 @@
 import 'map_utils.dart';
+import '../core/utils/gio_vn.dart';
 
 /// Bảng BenhNhan – 1 tài khoản quản lý nhiều hồ sơ (bản thân + người thân).
 class BenhNhan {
@@ -29,7 +30,7 @@ class BenhNhan {
   bool get laBanThan => moiQuanHe == 'Bản thân';
 
   int get tuoi {
-    final now = DateTime.now();
+    final now = GioVN.bayGio();
     var t = now.year - ngaySinh.year;
     if (now.month < ngaySinh.month ||
         (now.month == ngaySinh.month && now.day < ngaySinh.day)) {

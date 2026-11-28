@@ -10,6 +10,7 @@ import '../../models/models.dart';
 import '../admin/lich_lam_viec/lich_lam_viec_repo.dart';
 import '../lich_su/lich_su_repo.dart';
 import 'thong_tin_dat_lich.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// FR-08 → FR-11 Chọn ca khám, kiểm tra chỗ, đặt lịch, thanh toán online.
 /// Phụ trách: Hiếu
@@ -52,7 +53,7 @@ class DatLichRepo {
 
   /// 1 mốc giờ trong ca đã qua chưa.
   static bool gioDaQua(LichLamViec l, String gio) =>
-      !LichSuRepo.gioKham(l, gio).isAfter(DateTime.now());
+      !LichSuRepo.gioKham(l, gio).isAfter(GioVN.bayGio());
 
   /// Các mốc giờ còn đặt được: chưa ai đặt và chưa qua giờ.
   static List<String> gioDatDuoc(LichLamViec l) => l.trangThai == 1
@@ -139,7 +140,7 @@ class DatLichRepo {
           lyDoKham: lyDoKham,
           maXacNhan: _taoMaXacNhan(ma.giaTri),
           trangThai: TrangThaiDatLich.choThanhToan,
-          ngayDat: DateTime.now(),
+          ngayDat: GioVN.bayGio(),
           gioKham: gioKham,
         );
         ma.ghiVao(tx);
@@ -209,7 +210,7 @@ class DatLichRepo {
           soTien: ThongTinDatLich.tienPhaiTraCua(d),
           phuongThuc: phuongThuc,
           trangThai: TrangThaiThanhToan.daThanhToan,
-          ngayThanhToan: DateTime.now(),
+          ngayThanhToan: GioVN.bayGio(),
           xuLyBoi: null, // thanh toán online, không có thu ngân xử lý
         );
         ma.ghiVao(tx);

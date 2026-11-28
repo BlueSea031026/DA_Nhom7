@@ -51,6 +51,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
         LoaiThongBao.thanhToan => (AppColors.warning, AppColors.warningLight),
       };
 
+  /// Về trang chủ: đang ở khung tab thì chuyển sang tab Trang chủ,
+  /// mở từ trang khác (bác sĩ, lễ tân...) thì quay về màn đầu tiên.
+  void _veTrangChu() {
+    if (KhungTab.chuyenTab(context, 0)) return;
+    Navigator.popUntil(context, (route) => route.isFirst);
+  }
+
   @override
   Widget build(BuildContext context) {
     final conChuaDoc = _daDoc.length < _danhSach.length;
@@ -58,6 +65,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
     return Scaffold(
       appBar: AppHeader(
         title: 'Thông báo',
+        leading: IconButton(
+          tooltip: 'Về trang chủ',
+          icon: const Icon(Icons.home_outlined),
+          onPressed: _veTrangChu,
+        ),
         actions: [
           if (conChuaDoc)
             TextButton(

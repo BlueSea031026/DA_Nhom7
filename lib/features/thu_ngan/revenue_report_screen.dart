@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/utils/formatters.dart';
 import 'revenue_report_pdf_service.dart';
 import 'thu_ngan_repo.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// Báo cáo doanh thu · FR-34
 /// Phụ trách: Lân
@@ -16,7 +17,7 @@ class RevenueReportScreen extends StatefulWidget {
 
 class _RevenueReportState extends State<RevenueReportScreen> {
   KieuBaoCao kieuBaoCao = KieuBaoCao.ngay;
-  DateTime selectedDate = DateTime.now();
+  DateTime selectedDate = GioVN.bayGio();
 
   @override
   Widget build(BuildContext context) {

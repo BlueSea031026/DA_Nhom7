@@ -13,6 +13,7 @@ import 'doctor_profile_screen.dart';
 import 'khong_co_ho_so.dart';
 import 'patient_list_screen.dart';
 import 'work_schedule_screen.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// Trang chủ Bác sĩ – khung tab GHIM CỐ ĐỊNH (#27).
 /// Figma: Bác sĩ › trang home bác sĩ
@@ -76,7 +77,7 @@ class _TrangChuBacSiState extends State<_TrangChuBacSi> {
   }
 
   static String _loiChao() {
-    final int gio = DateTime.now().hour;
+    final int gio = GioVN.bayGio().hour;
     if (gio < 11) return 'Chào buổi sáng';
     if (gio < 14) return 'Chào buổi trưa';
     if (gio < 18) return 'Chào buổi chiều';
@@ -88,7 +89,7 @@ class _TrangChuBacSiState extends State<_TrangChuBacSi> {
     final BacSi? bacSi = BacSiRepo.bacSiDangNhap;
     if (bacSi == null) return const KhongCoHoSoBacSi();
     final chuyenKhoa = MockData.chuyenKhoaById(bacSi.maChuyenKhoa);
-    final DateTime bayGio = DateTime.now();
+    final DateTime bayGio = GioVN.bayGio();
 
     final lichHomNay = MockData.lichCuaBacSi(bacSi.maBacSi)
         .where((l) => l.soLuongCho > 0 && l.ngay == MockData.homNay)

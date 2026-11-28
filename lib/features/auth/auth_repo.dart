@@ -6,6 +6,7 @@ import '../../core/firebase/kho.dart';
 import '../../core/firebase/phien_firebase.dart';
 import '../../models/models.dart';
 import 'auth_validators.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// Tài khoản & xác thực trên Firebase – đăng nhập (FR-02, 19, 25, 30), đăng ký
 /// (FR-01), quên / đổi mật khẩu. Phụ trách: Duy
@@ -259,7 +260,7 @@ class AuthRepo {
             email: tt.email?.toLowerCase(),
             hoTen: tt.hoTen,
             vaiTro: tt.vaiTro,
-            ngayTao: DateTime.now(),
+            ngayTao: GioVN.bayGio(),
           ).toMap(),
           'uid': uid,
         });

@@ -3,6 +3,7 @@ import '../../core/mock/mock_data.dart';
 import '../../core/services/thong_bao_service.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/models.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// Nghiệp vụ phía Bác sĩ (FR-20 đến FR-23). Phụ trách: Thương
 class BacSiRepo {
@@ -76,7 +77,7 @@ class BacSiRepo {
     final p = l.gioKetThuc.split(':');
     final DateTime ketThuc = DateTime(l.ngay.year, l.ngay.month, l.ngay.day,
         int.parse(p[0]), int.parse(p[1]));
-    return DateTime.now().isAfter(ketThuc);
+    return GioVN.bayGio().isAfter(ketThuc);
   }
 
   static List<TrangThaiDatLich> cacBuocHopLe(DatLich d) {
@@ -108,34 +109,42 @@ class BacSiRepo {
     }
   }
 
-  /// Đã đến → Đã khám, lưu ghiChu (bắt buộc) + chi phí phát sinh (nếu có),
-  /// rồi mời bệnh nhân đánh giá.
+  /// Đã đến → Đã khám: lưu kết quả (bắt buộc), giờ khám xong và chi phí cận
+  /// lâm sàng phát sinh (nếu có). Thông báo gửi bệnh nhân dùng ĐÚNG các dữ liệu
+  /// vừa lưu nên khớp với mục "Chi tiết lịch khám" trong Lịch sử.
   static Future<void> khamXong(
-    DatLich d, 
+    DatLich d,
     String ghiChu, {
     int chiPhiPhatSinh = 0,
   }) async {
     final String ketQua = ghiChu.trim();
     if (ketQua.isEmpty) throw Exception('Vui lòng nhập kết quả khám');
-    
-    // Nếu có chi phí phát sinh, tự động nối thêm vào ghi chú để lưu trữ
-    String ghiChuFull = ketQua;
-    if (chiPhiPhatSinh > 0) {
-      ghiChuFull += '\n[Tổng chi phí cận lâm sàng: ${Fmt.tien(chiPhiPhatSinh)}]';
-    }
+    final DateTime xongLuc = GioVN.bayGio();
 
     await _doiTrangThai(d,
         tu: TrangThaiDatLich.daDen,
         den: TrangThaiDatLich.daKham,
-        ghiChu: ghiChuFull); // Truyền ghi chú đã nối chi phí vào
-    
+        ghiChu: ketQua,
+        them: {
+          'khamXongLuc': xongLuc.toIso8601String(),
+          'chiPhiPhatSinh': chiPhiPhatSinh,
+        });
+
     final BacSi? bs = bacSiDangNhap;
-    final LichLamViec lich = MockData.lichById(d.maLich);
+    // Gom kết quả nhiều dòng thành 1 dòng cho thông báo
+    final String kq = ketQua
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .replaceAll(RegExp(r'[.\s]+$'), '');
+    final String phatSinh = chiPhiPhatSinh > 0
+        ? ' Chi phí cận lâm sàng phát sinh ${Fmt.tien(chiPhiPhatSinh)}, '
+            'vui lòng thanh toán tại quầy thu ngân.'
+        : '';
     await ThongBaoService.gui(
       maDatLich: d.maDatLich,
       loai: LoaiThongBao.xacNhan,
-      noiDung: 'Mời bạn đánh giá bác sĩ ${bs?.tenHienThi ?? ''} sau buổi '
-          'khám ngày ${Fmt.ngay(lich.ngay)}.',
+      noiDung: 'Đã khám xong lúc ${Fmt.ngayGio(xongLuc)} với bác sĩ '
+          '${bs?.tenHienThi ?? ''}. Kết quả: $kq.$phatSinh '
+          'Xem chi tiết trong Lịch sử đặt lịch và đánh giá bác sĩ.',
     );
   }
 
@@ -152,6 +161,7 @@ class BacSiRepo {
     required TrangThaiDatLich tu,
     required TrangThaiDatLich den,
     String? ghiChu,
+    Map<String, Object?> them = const {},
   }) async {
     final BacSi? bs = bacSiDangNhap;
     final LichLamViec lich = MockData.lichById(d.maLich);
@@ -171,6 +181,7 @@ class BacSiRepo {
         tx.update(ref, {
           'trangThai': den.label,
           'ghiChu': ?ghiChu,
+          ...them,
         });
       });
     } on Exception catch (e) {

@@ -5,6 +5,7 @@ import '../../app/phien_dat_lich.dart';
 import '../../core/widgets/widgets.dart';
 import 'bhyt_repo.dart';
 import 'hinh_thuc_kham_routes.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// Nhập thông tin thẻ BHYT · FR-04
 /// Figma: Bệnh Nhân › BHYTScreen
@@ -195,7 +196,7 @@ class _BhytScreen extends State<BhytScreen> {
                             context: context,
                             initialDate: DateTime(2000),
                             firstDate: DateTime(1900),
-                            lastDate: DateTime.now(),
+                            lastDate: GioVN.bayGio(),
                           );
                           if (pickedDate != null) {
                             _ngaySinhController.text =
@@ -229,7 +230,7 @@ class _BhytScreen extends State<BhytScreen> {
                           if (_ngayHetHan == null) {
                             return 'Vui lòng chọn ngày hết hạn thẻ';
                           }
-                          final homNay = DateTime.now();
+                          final homNay = GioVN.bayGio();
                           final mocHomNay = DateTime(
                             homNay.year,
                             homNay.month,
@@ -241,7 +242,7 @@ class _BhytScreen extends State<BhytScreen> {
                           return null;
                         },
                         onTap: () async {
-                          final homNay = DateTime.now();
+                          final homNay = GioVN.bayGio();
                           final picked = await showDatePicker(
                             context: context,
                             initialDate:

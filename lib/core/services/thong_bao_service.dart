@@ -6,6 +6,7 @@ import 'package:timezone/timezone.dart' as tz;
 import '../../models/models.dart';
 import '../firebase/kho.dart';
 import '../mock/mock_data.dart';
+import '../utils/gio_vn.dart';
 
 /// FR-13 Gửi thông báo + hiện thông báo trên thanh trạng thái.
 /// CHỈ HẢI SỬA FILE NÀY – mọi người GỌI hàm [gui].
@@ -75,7 +76,7 @@ class ThongBaoService {
           maDatLich: maDatLich,
           loaiThongBao: loai,
           noiDung: noiDung,
-          thoiGianGui: DateTime.now(),
+          thoiGianGui: GioVN.bayGio(),
         );
         tx.set(Kho.doc(Bang.thongBao, ma.giaTri), {
           ...tb.toMap(),
@@ -113,7 +114,7 @@ class ThongBaoService {
       _lanDau = false;
       return;
     }
-    final gioiHan = DateTime.now().subtract(const Duration(minutes: 5));
+    final gioiHan = GioVN.bayGio().subtract(const Duration(minutes: 5));
     for (final tb in cuaToi) {
       if (_daHien.contains(tb.maThongBao)) continue;
       _daHien.add(tb.maThongBao);

@@ -7,6 +7,7 @@ import 'auth_repo.dart';
 import 'auth_routes.dart';
 import 'auth_validators.dart';
 import 'widgets/auth_widgets.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// Đăng ký tài khoản + chọn loại (cá nhân / người giám hộ)
 
@@ -90,7 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _chonNgaySinh() async {
-    final now = DateTime.now();
+    final now = GioVN.bayGio();
     final chon = await showDatePicker(
       context: context,
       initialDate: _ngaySinh ??

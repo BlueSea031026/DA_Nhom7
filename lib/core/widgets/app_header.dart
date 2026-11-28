@@ -8,16 +8,21 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     required this.title,
     this.actions,
     this.showBack = true,
+    this.leading,
   });
 
   final String title;
   final List<Widget>? actions;
   final bool showBack;
 
+  /// Nút bên trái tiêu đề (VD nút về trang chủ). null = nút quay lại mặc định.
+  final Widget? leading;
+
   @override
   Widget build(BuildContext context) {
     return AppBar(
       title: Text(title),
+      leading: leading,
       automaticallyImplyLeading: showBack,
       actions: actions,
     );

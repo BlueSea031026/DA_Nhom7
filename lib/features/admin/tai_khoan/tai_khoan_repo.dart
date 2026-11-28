@@ -3,6 +3,7 @@ import '../../../core/firebase/phien_firebase.dart';
 import '../../../core/mock/mock_data.dart';
 import '../../../core/services/nhat_ky_service.dart';
 import '../../../models/models.dart';
+import '../../../core/utils/gio_vn.dart';
 
 /// FR-39 Quản lý tài khoản người dùng (5 vai trò). Phụ trách: Hải
 class TaiKhoanRepo {
@@ -52,7 +53,7 @@ class TaiKhoanRepo {
               : email.trim().toLowerCase(),
           hoTen: hoTen.trim(),
           vaiTro: vaiTro,
-          ngayTao: DateTime.now(),
+          ngayTao: GioVN.bayGio(),
         ).toMap(),
         'uid': uid,
       });
@@ -79,7 +80,7 @@ class TaiKhoanRepo {
             maNhanVien: maNv.giaTri,
             maTaiKhoan: maTk.giaTri,
             maCoSo: maCoSo,
-            ngayVaoLam: DateTime.now(),
+            ngayVaoLam: GioVN.bayGio(),
           ).toMap(),
         );
       }
@@ -126,7 +127,7 @@ class TaiKhoanRepo {
           soDienThoai: sdt,
           hoTen: bacSi.hoTen,
           vaiTro: VaiTro.bacSi,
-          ngayTao: DateTime.now(),
+          ngayTao: GioVN.bayGio(),
         ).toMap(),
         'uid': uid,
       });

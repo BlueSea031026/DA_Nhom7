@@ -7,6 +7,7 @@ import '../../models/models.dart';
 import '../firebase/kho.dart';
 import '../services/nhac_lich_service.dart';
 import '../services/thong_bao_service.dart';
+import '../utils/gio_vn.dart';
 
 /// KHO DỮ LIỆU DÙNG CHUNG – đọc từ Firestore, tự cập nhật theo thời gian thực.
 ///
@@ -23,7 +24,7 @@ import '../services/thong_bao_service.dart';
 class MockData {
   MockData._();
 
-  static DateTime get _now => DateTime.now();
+  static DateTime get _now => GioVN.bayGio();
 
   /// Ngày hôm nay (00:00). Là getter nên qua 0 giờ vẫn đúng.
   static DateTime get homNay => DateTime(_now.year, _now.month, _now.day);

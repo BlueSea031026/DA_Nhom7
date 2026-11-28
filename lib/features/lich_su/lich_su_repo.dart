@@ -5,6 +5,7 @@ import '../../core/mock/mock_data.dart';
 import '../../core/services/thong_bao_service.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/models.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// FR-15 Hủy / đổi lịch hẹn – thay cho TRIGGER 2 (trg_DatLich_HuyLich) của SQL.
 /// Phụ trách: Hải
@@ -34,8 +35,12 @@ class LichSuRepo {
     final Duration choThem = d.trangThai == TrangThaiDatLich.daDen
         ? const Duration(hours: 3)
         : const Duration(minutes: 60);
-    return gioKhamCua(d).add(choThem).isAfter(DateTime.now());
+    return gioKhamCua(d).add(choThem).isAfter(GioVN.bayGio());
   }
+
+  /// Mốc thời gian của 1 lượt trong mục "Đã qua": giờ bác sĩ khám xong nếu
+  /// có, không thì giờ hẹn riêng của lượt (không lấy giờ bắt đầu ca).
+  static DateTime moc(DatLich d) => d.khamXongLuc ?? gioKhamCua(d);
 
   /// Chuỗi giờ hiển thị của 1 lượt đặt, VD "08:12".
   static String gioHienThi(DatLich d) =>
@@ -48,7 +53,7 @@ class LichSuRepo {
         d.trangThai != TrangThaiDatLich.hoan) {
       return 'Lịch khám ở trạng thái "${d.trangThai.label}" không thể thay đổi.';
     }
-    final conLai = gioKhamCua(d).difference(DateTime.now());
+    final conLai = gioKhamCua(d).difference(GioVN.bayGio());
     if (conLai < const Duration(hours: soGioToiThieu)) {
       return 'Chỉ được hủy/đổi trước giờ khám ít nhất $soGioToiThieu giờ.';
     }
@@ -80,7 +85,7 @@ class LichSuRepo {
       tx.update(refDl, {
         'trangThai': TrangThaiDatLich.daHuy.label,
         'lyDoHuy': lyDo,
-        'ngayHuy': DateTime.now().toIso8601String(),
+        'ngayHuy': GioVN.bayGio().toIso8601String(),
       });
       final daDat = (lich.data()?['soLuongDaDat'] as num?)?.toInt() ?? 1;
       final gio = dl.data()?['gioKham'] as String?;
@@ -137,7 +142,7 @@ class LichSuRepo {
       // Giờ riêng sớm nhất còn trống (và chưa qua) của ca mới
       final lichMoi = LichLamViec.fromMap(moi.data()!);
       final gioMoi = lichMoi.gioConTrong
-          .where((g) => gioKham(lichMoi, g).isAfter(DateTime.now()))
+          .where((g) => gioKham(lichMoi, g).isAfter(GioVN.bayGio()))
           .firstOrNull;
       if (gioMoi == null) {
         throw Exception('Ca mới không còn giờ trống, vui lòng chọn ca khác.');

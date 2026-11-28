@@ -9,6 +9,7 @@ import '../auth/auth_routes.dart';
 import '../ho_so_nguoi_than/ho_so_nguoi_than_routes.dart';
 import 'widgets/logout_dialog.dart';
 import '../lich_su/lich_su_repo.dart';
+import '../../core/utils/gio_vn.dart';
 
 /// Trang cá nhân
 class ProfileScreen extends StatelessWidget {
@@ -227,7 +228,7 @@ class ProfileScreen extends StatelessWidget {
         .where((d) =>
             (d.trangThai == TrangThaiDatLich.choThanhToan ||
                 d.trangThai == TrangThaiDatLich.daThanhToan) &&
-            LichSuRepo.gioKhamCua(d).isAfter(DateTime.now()))
+            LichSuRepo.gioKhamCua(d).isAfter(GioVN.bayGio()))
         .length;
     final int daKham =
         cacLich.where((d) => d.trangThai == TrangThaiDatLich.daKham).length;
