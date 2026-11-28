@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/mock/mock_data.dart';
 import '../../core/utils/formatters.dart';
@@ -173,7 +172,7 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
               if (_phuongThuc == PhuongThucThanhToan.chuyenKhoan)
                 _buildChuyenKhoan(datLich, soTien)
               else
-                _buildViDienTu(),
+                _buildViDienTu(datLich, soTien),
               const SizedBox(height: 12),
             ],
             // Không ghi gì: lịch giữ nguyên "Chờ thanh toán"
@@ -272,7 +271,7 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
         : Icons.account_balance_wallet;
     final String moTa = pt == PhuongThucThanhToan.chuyenKhoan
         ? 'Quét mã QR bằng ứng dụng ngân hàng'
-        : 'MoMo, ZaloPay, VNPay…';
+        : 'Quét mã QR bằng ứng dụng MoMo';
 
     return AppCard(
       onTap: _dangXuLy ? null : () => setState(() => _phuongThuc = pt),
@@ -306,47 +305,69 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
     );
   }
 
-  // QR chuyển khoản
+  // Ảnh mã QR thanh toán (assets/images), bấm vào để phóng to.
+  Widget _anhQr(String duongDan) {
+    return GestureDetector(
+      onTap: () => showDialog<void>(
+        context: context,
+        builder: (_) => Dialog(
+          backgroundColor: AppColors.surface,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Image.asset(duongDan, fit: BoxFit.contain),
+          ),
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.infoLight),
+        ),
+        child: Image.asset(duongDan, width: 200, height: 200,
+            fit: BoxFit.contain),
+      ),
+    );
+  }
+
+  Widget _ghiChuQr() => Text(
+        'Mã QR tĩnh: nhập đúng số tiền và nội dung chuyển khoản như trên, '
+        'sau đó bấm "Tôi đã thanh toán". Chạm vào mã để phóng to.',
+        textAlign: TextAlign.center,
+        style: AppTextStyles.caption,
+      );
+
+  // QR chuyển khoản ngân hàng (VietQR)
   Widget _buildChuyenKhoan(DatLich datLich, int soTien) {
-    final String noiDungQr = 'DEMO|TTYT|${datLich.maXacNhan}|$soTien';
     return AppCard(
       child: Column(
         children: [
-          QrImageView(
-            data: noiDungQr,
-            version: QrVersions.auto,
-            size: 180,
-            backgroundColor: AppColors.surface,
-          ),
+          _anhQr('assets/images/qr_chuyen_khoan.png'),
           const SizedBox(height: 8),
-          InfoRow(label: 'Ngân hàng', value: 'Ngân hàng DEMO'),
-          InfoRow(label: 'Chủ tài khoản', value: 'TRUNG TAM Y TE (demo)'),
+          InfoRow(label: 'Ngân hàng', value: 'MB Bank'),
+          InfoRow(label: 'Số tài khoản', value: '0376662897', bold: true),
           InfoRow(label: 'Số tiền', value: Fmt.tien(soTien), bold: true),
           InfoRow(label: 'Nội dung CK', value: datLich.maXacNhan, bold: true),
           const SizedBox(height: 4),
-          Text(
-            'Mã QR minh họa cho giai đoạn giao diện, chưa nối cổng thanh toán.',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.caption,
-          ),
+          _ghiChuQr(),
         ],
       ),
     );
   }
 
-  Widget _buildViDienTu() {
+  // QR ví điện tử MoMo
+  Widget _buildViDienTu(DatLich datLich, int soTien) {
     return AppCard(
-      child: Row(
+      child: Column(
         children: [
-          const Icon(Icons.info_outline, color: AppColors.info),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Bấm "Tôi đã thanh toán" để giả lập chuyển sang ví điện tử và '
-              'thanh toán thành công.',
-              style: AppTextStyles.bodySecondary,
-            ),
-          ),
+          _anhQr('assets/images/qr_momo.png'),
+          const SizedBox(height: 8),
+          InfoRow(label: 'Ví', value: 'MoMo'),
+          InfoRow(label: 'Số tiền', value: Fmt.tien(soTien), bold: true),
+          InfoRow(label: 'Lời nhắn', value: datLich.maXacNhan, bold: true),
+          const SizedBox(height: 4),
+          _ghiChuQr(),
         ],
       ),
     );
