@@ -79,10 +79,12 @@ class LichSuRepo {
         // Trả lại giờ riêng để người khác đặt được
         if (gio != null) 'gioDaDat': FieldValue.arrayRemove([gio]),
       });
-      if (refTt != null &&
-          ttSnap?.data()?['trangThai'] == TrangThaiThanhToan.daThanhToan.label) {
-        tx.update(refTt, {'trangThai': TrangThaiThanhToan.daHoanTien.label});
-      }
+
+      //?Doan nay se lam trang thai thanh toan khi huy luon là da thanh toan
+      // if (refTt != null &&
+      //     ttSnap?.data()?['trangThai'] == TrangThaiThanhToan.daThanhToan.label) {
+      //   tx.update(refTt, {'trangThai': TrangThaiThanhToan.daHoanTien.label});
+      // }
     });
 
     final lich = MockData.lichById(datLich.maLich);
