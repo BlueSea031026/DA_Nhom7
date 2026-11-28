@@ -11,3 +11,4 @@ export 'khung_tab.dart';
 export 'misc_widgets.dart';
 export 'placeholder_screen.dart';
 export 'status_chip.dart';
+export 'ma_qr_thanh_toan.dart';
