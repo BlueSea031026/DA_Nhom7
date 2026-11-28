@@ -305,71 +305,21 @@ class _OnlinePaymentScreenState extends State<OnlinePaymentScreen> {
     );
   }
 
-  // Ảnh mã QR thanh toán (assets/images), bấm vào để phóng to.
-  Widget _anhQr(String duongDan) {
-    return GestureDetector(
-      onTap: () => showDialog<void>(
-        context: context,
-        builder: (_) => Dialog(
-          backgroundColor: AppColors.surface,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Image.asset(duongDan, fit: BoxFit.contain),
-          ),
-        ),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.infoLight),
-        ),
-        child: Image.asset(duongDan, width: 200, height: 200,
-            fit: BoxFit.contain),
-      ),
-    );
-  }
-
-  Widget _ghiChuQr() => Text(
-        'Mã QR tĩnh: nhập đúng số tiền và nội dung chuyển khoản như trên, '
-        'sau đó bấm "Tôi đã thanh toán". Chạm vào mã để phóng to.',
-        textAlign: TextAlign.center,
-        style: AppTextStyles.caption,
+  // QR chuyển khoản ngân hàng (VietQR MB Bank)
+  Widget _buildChuyenKhoan(DatLich datLich, int soTien) => MaQrThanhToan(
+        phuongThuc: PhuongThucThanhToan.chuyenKhoan,
+        soTien: soTien,
+        noiDung: datLich.maXacNhan,
+        ghiChu: 'Mã QR tĩnh: nhập đúng số tiền và nội dung chuyển khoản như '
+            'trên, sau đó bấm "Tôi đã thanh toán". Chạm vào mã để phóng to.',
       );
 
-  // QR chuyển khoản ngân hàng (VietQR)
-  Widget _buildChuyenKhoan(DatLich datLich, int soTien) {
-    return AppCard(
-      child: Column(
-        children: [
-          _anhQr('assets/images/qr_chuyen_khoan.png'),
-          const SizedBox(height: 8),
-          InfoRow(label: 'Ngân hàng', value: 'MB Bank'),
-          InfoRow(label: 'Số tài khoản', value: '0376662897', bold: true),
-          InfoRow(label: 'Số tiền', value: Fmt.tien(soTien), bold: true),
-          InfoRow(label: 'Nội dung CK', value: datLich.maXacNhan, bold: true),
-          const SizedBox(height: 4),
-          _ghiChuQr(),
-        ],
-      ),
-    );
-  }
-
   // QR ví điện tử MoMo
-  Widget _buildViDienTu(DatLich datLich, int soTien) {
-    return AppCard(
-      child: Column(
-        children: [
-          _anhQr('assets/images/qr_momo.png'),
-          const SizedBox(height: 8),
-          InfoRow(label: 'Ví', value: 'MoMo'),
-          InfoRow(label: 'Số tiền', value: Fmt.tien(soTien), bold: true),
-          InfoRow(label: 'Lời nhắn', value: datLich.maXacNhan, bold: true),
-          const SizedBox(height: 4),
-          _ghiChuQr(),
-        ],
-      ),
-    );
-  }
+  Widget _buildViDienTu(DatLich datLich, int soTien) => MaQrThanhToan(
+        phuongThuc: PhuongThucThanhToan.viDienTu,
+        soTien: soTien,
+        noiDung: datLich.maXacNhan,
+        ghiChu: 'Mã QR tĩnh: nhập đúng số tiền và lời nhắn như trên, sau đó '
+            'bấm "Tôi đã thanh toán". Chạm vào mã để phóng to.',
+      );
 }
